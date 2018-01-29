@@ -1,0 +1,25 @@
+add_llvm_target(Verilog
+  Allocation.cpp
+  Binding.cpp
+  FiniteStateMachine.cpp
+  GenerateRTL.cpp
+  GlobalNames.cpp
+  Hungarian.cpp
+  LegupPass.cpp
+  LegupSchedulerDAG.cpp
+  MetaScheduler.cpp
+  Ram.cpp
+  ResourceEstimator.cpp
+  RTL.cpp
+  SchedulerPass.cpp
+  SimpleASAPScheduler.cpp
+  State.cpp
+  utils.cpp
+  Verilog.cpp
+  VerilogWriter.cpp
+  SDCScheduler.cpp
+  LegupConfig.cpp
+  LeguoConfig.h
+)
+
+add_subdirectory(TargetInfo)
