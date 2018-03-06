@@ -1,6 +1,5 @@
 #define DEBUG_LEVEL  0
-
-
+#include "llvm/IR/Dominators.h"
 #include "AcceleratorAnalysis.h"
 
 /*
@@ -15,7 +14,6 @@
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Instruction.h"
-#include "llvm/IR/Dominators.h"
 #include "llvm/IR/CFG.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/ValueSymbolTable.h"

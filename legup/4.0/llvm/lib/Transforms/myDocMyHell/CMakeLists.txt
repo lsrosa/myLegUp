@@ -8,6 +8,7 @@ add_llvm_loadable_module(LLVMLeandro
   NIModuloScheduler.cpp
   SMModuloScheduler.cpp
   GAModuloScheduler.cpp
+  LoopSelect.cpp
 )
 #link_directories(/opt/gurobi/lib)
 #include_directories(/opt/gurobi/include)

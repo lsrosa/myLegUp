@@ -405,6 +405,7 @@ void ILPModuloScheduler::evaluateIndividual(Individual * individual, int II){
     //std::cout << "variableIndices[" << count << "]=" << varIndex << '\n';
     count++;
   }
+
   assert(count == numInst);
   set_obj_fnex(lp, count, variableCoefficients, variableIndices);
   set_minim(lp);
@@ -496,8 +497,9 @@ void ILPModuloScheduler::evaluateIndividual(Individual * individual, int II){
   solvetime += elapsedTime;
   // printf("%f\n", solvetime);
   nsdcs += ns;
+  //std::cout << "ns: " << ns << std::endl;
 
-  //std::cout << "ret: " << ret << " - nonBackEdgeret: " << nonBackEdgeret << '\n';
+  //std::cout << "ret: " << ret << '\n';
   lprec * lpres;
   GRBVar * GRBres;
   if (ret < 2) {
@@ -937,6 +939,13 @@ std::pair<std::map<InstructionNode *, std::pair<int, int>>*, int> *  ILPModuloSc
   solvetime += (double)(tocsv - ticsv) / CLOCKS_PER_SEC;
   nsdcs++;
 
+  int optimstatus = GAGRBmodel->get(GRB_IntAttr_Status);
+
+  if (optimstatus == GRB_INFEASIBLE) {
+    //std::cout << "here" << std::endl;
+    return NULL;
+  }
+
   REAL *solution = new REAL[numInst];
   if(solver.compare("gurobi")==0){
     for(int i=0; i<numVars; i++){
@@ -979,7 +988,7 @@ std::pair<std::map<InstructionNode *, std::pair<int, int>>*, int> *  ILPModuloSc
   return individual;
 }
 
-void ILPModuloScheduler::initializePopulation(unsigned * IIin){
+bool ILPModuloScheduler::initializePopulation(unsigned * IIin){
   //just in case
   if(GAdebug){
     File() << "-------------- initializePopulation ---------- \n";
@@ -990,9 +999,16 @@ void ILPModuloScheduler::initializePopulation(unsigned * IIin){
   population[ii] = specimina;
 
   Individual * asapindividual;
-  int insemination = ceil(0.1*nPop);
+  int insemination = ceil(0.05*nPop);
+
   for(int i = 0; i < insemination; i++){
     asapindividual = NonResourceConstrainedASAPIndividual(ii);
+
+    if(asapindividual == NULL){
+      //std::cout << "here2" << std::endl;
+      return false;
+    }
+
     specimina->push_back(asapindividual);
     //std::cout << "asap individual fit: " << asapindividual->second << '\n';
   }
@@ -1012,9 +1028,10 @@ void ILPModuloScheduler::initializePopulation(unsigned * IIin){
   assert(false);
   */
   //std::cout << "creating population" << '\n';
-  for (std::pair<unsigned, Specimina*> pop : population) {
-    Specimina * specimina = pop.second;
-    int ii = pop.first;
+  //for (std::pair<unsigned, Specimina*> pop : population) {
+    //Specimina * specimina = pop.second;
+    
+    //int ii = pop.first;
     //std::cout << "creatin ii pop" << ii << '\n';
     for (unsigned j = 0; j < nPop; j++) {
       //std::cout << "asap individual fit: " << asapindividual->second << '\n';
@@ -1035,10 +1052,10 @@ void ILPModuloScheduler::initializePopulation(unsigned * IIin){
       evaluateIndividual(individual, ii);
       specimina->push_back(individual);
     }
-  }
+  //}
 
   *IIin = ii;
-  return;
+  return true;
 }
 
 void ILPModuloScheduler::selection(unsigned ii){
@@ -1934,7 +1951,8 @@ void ILPModuloScheduler::getBestSolution(){
     //report_fatal_error("LP solver could not find an optimal solution");
     //return;
   }
-  std::cout << "/* message */" << '\n';
+  //std::cout << "/* message */" << '\n';
+
   REAL *solution = new REAL[numInst];
   if(solver.compare("gurobi")==0){
     for(int i=0; i<numVars; i++){
@@ -2301,6 +2319,7 @@ void ILPModuloScheduler::GA(unsigned * minII, unsigned * maxII){
     if(incII){
       (*ii) = (*ii)+1;
     }
+    std::cout << "II:" << *ii << '\n';
 
     //std::cout << "create base LPs" << '\n';
     //createBaseLPS(*minII, *maxII);
@@ -2309,37 +2328,43 @@ void ILPModuloScheduler::GA(unsigned * minII, unsigned * maxII){
 
     //std::cout << "initialize pop" << '\n';
     //initializePopulation(minII, maxII);
-    initializePopulation(ii);
-    //std::cout << "popInitialized" << '\n';
-    unsigned gen=0;
-    //std::cout << "npop: " << nPop <<'\n';
-    //std::cout << "gen: " << gen << " - maxGen: " << maxGen << '\n';
-    do{
-      std::cout << "\ngen: " << gen << '\n';
-      //std::cout << "calculate new pop, gen: " << gen << '\n';
-      //calculateNewPopulation(minII, maxII);
-      calculateNewPopulation(ii);
-      //std::cout << "selection" << '\n';
-      selection(*ii);
+    bool infeasibleII = initializePopulation(ii);
+    //std::cout << "n_solves" << nsdcs << std::endl;
 
-      gen++;
-      std::cout << "feasible: " << feasible << '\n';
 
-      if(gen >= 2*maxGen && !feasible){
-        std::cout << "incrementing II" << '\n';
-        best_ever = std::pair<Individual *, unsigned>((Individual*)NULL, 0);
-        incII = true;
-        break;
+    if(infeasibleII == true){
+      std::cout << "popInitialized" << '\n';
+      unsigned gen=0;
+      std::cout << "npop: " << nPop <<'\n';
+      std::cout << "gen: " << gen << " - maxGen: " << maxGen << '\n';
+      do{
+        std::cout << "\ngen: " << gen << '\n';
+        std::cout << "calculate new pop, gen: " << gen << '\n';
+        //calculateNewPopulation(minII, maxII);
+        calculateNewPopulation(ii);
+        //std::cout << "selection" << '\n';
+        selection(*ii);
+
+        gen++;
+        std::cout << "feasible: " << feasible << '\n';
+
+        if(gen >= 2*maxGen && !feasible){
+          std::cout << "incrementing II" << '\n';
+          best_ever = std::pair<Individual *, unsigned>((Individual*)NULL, 0);
+          incII = true;
+          break;
+        }
+        std::cout << "(gen>=maxGen && feasible): " << (gen>=maxGen && feasible) << '\n';
+      }while(!(gen>=maxGen && feasible));
+
+      if(feasible){
+        std::cout << "trying to get best sol" << '\n';
+        getBestSolution();
+        printMRT(best_ever.first->first);
+        incII = false;
       }
-      //std::cout << "(gen>=maxGen && feasible): " << (gen>=maxGen && feasible) << '\n';
-    }while(!(gen>=maxGen && feasible));
-    //}while(!(gen>=maxGen));
-
-    if(feasible){
-      std::cout << "trying to get best sol" << '\n';
-      getBestSolution();
-      printMRT(best_ever.first->first);
-      incII = false;
+    }else{
+      incII = true;
     }
 
   }while(incII);

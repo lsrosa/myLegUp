@@ -1861,6 +1861,9 @@ bool ILPModuloScheduler::NI(int II){
   // Create variables
   bool success;
   success = NonResourceConstrainedASAP(II);
+  if(success == false){
+    return false;
+  }
   assert(success && "something went wrong with non res. constrained ASAP");
   success = NonResourceConstrainedALAP(II);
   assert(success && "something went wrong with non res. constrained ALAP");

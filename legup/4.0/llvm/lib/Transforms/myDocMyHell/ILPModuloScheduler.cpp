@@ -67,11 +67,15 @@ bool ILPModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
     initLoop();
 
     int MII = getInitialMII();
+
     //TODO change this
     unsigned maxII = getMaxPossibleII(BB);
-    if((unsigned)MII > maxII)
+
+    if((unsigned)MII >= maxII)
       maxII = MII + 1;
     // ModuloSchedulo
+    MII = recmii;
+    std::cout << "maxII:" << maxII << std::endl;
     moduloScheduler.II = MII;
 
     int userII = moduloScheduler.PipelineTclInfo.II;
@@ -129,7 +133,7 @@ bool ILPModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
       if (LEGUP_CONFIG->getParameterInt("GA_POPULATION_SIZE")) {
           nPop = (unsigned)size*(unsigned)LEGUP_CONFIG->getParameterInt("GA_POPULATION_SIZE");
       }
-      nPop = ceil(0.20*nPop);
+      nPop = ceil(0.10*nPop);
       // yes, I like even numbers
       //Offspring creation does not require this, but it will generate an even number of individuals.
       if(nPop%2 != 0){
@@ -140,11 +144,10 @@ bool ILPModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
       if (LEGUP_CONFIG->getParameterInt("GA_MAXIMUM_GENERATIONS")) {
           maxGen = (unsigned)size*(unsigned)LEGUP_CONFIG->getParameterInt("GA_MAXIMUM_GENERATIONS");
       }
-      maxGen = 5;//ceil(0.05*maxGen);
-      //if(maxGen>5) {
-      //  maxGen=5;
-    //    std::cout << "\n5555" << '\n';
-    //  }
+      maxGen = ceil(0.05*maxGen);
+      if(maxGen>5) {
+        maxGen=5;
+      }
 
       mutationProb = 1;
       if (LEGUP_CONFIG->getParameterInt("GA_MUTATION_PROB")) {
@@ -222,7 +225,7 @@ bool ILPModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
       int numOps = BB->size();
 
       while (!iterativeSchedule(budgetRatio * numOps)) {
-        printf("min II = %d\n", moduloScheduler.II);
+        printf("II = %d\n", moduloScheduler.II);
         if (moduloScheduler.PipelineTclInfo.user_II) {
             errs() << "ERROR: user specified II couldn't be achieved!\n";
             return false;
@@ -1699,6 +1702,7 @@ bool ILPModuloScheduler::schedulingConflictSDC(Instruction *I, int timeSlot) {
     return depConflict;
 }
 
+
 bool ILPModuloScheduler::checkFeasible() {
     if (LEGUP_CONFIG->getParameterInt("INCREMENTAL_SDC")) {
         bool isFeasible = sdcSolver.unprocessed.empty();
@@ -1711,7 +1715,7 @@ bool ILPModuloScheduler::checkFeasible() {
 
         if (isFeasible) {
             // update the schedule times
-            saveSchedule(/*lpSolve=*/false);
+            saveSchedule2(/*lpSolve=*/false);
         }
 
         return isFeasible;
@@ -1998,6 +2002,7 @@ bool ILPModuloScheduler::SDCWithBacktracking(int budget) {
     // the step the instruction would be scheduled to under ASAP scheduling
     initializeSDC(moduloScheduler.II);
     bool initialSolve = scheduleSDC();
+    if(initialSolve==false) return false;
     assert(initialSolve);
     map<Instruction *, int> instStepASAP;
     findASAPTimeForEachInst(instStepASAP);
@@ -2953,6 +2958,8 @@ int ILPModuloScheduler::getInitialMII() {
     }
 
     MII = max(recMII, resMII);
-    //std::cout << "\nRecMII: " << recMII << " - resMII: " << resMII << " - MII: " << MII << '\n';
+    std::cout << "\nRecMII: " << recMII << " - resMII: " << resMII << " - MII: " << MII << '\n';
+    recmii = resMII;
     return MII;
+    //return resMII;
 }

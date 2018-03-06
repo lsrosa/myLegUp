@@ -90,6 +90,7 @@ class ILPModuloScheduler {
 
     // leandro measunring time
   private:
+    int recmii;
     std::string solver="lpsolve";
 
     double totaltime = 0, solvetime = 0, step;
@@ -192,7 +193,7 @@ class ILPModuloScheduler {
     //overloading methods for single II only
     void createBaseLPS(unsigned ii);
     void fixCongruenceDependecies(MRT * mrt, int II);
-    void initializePopulation(unsigned * IIin);
+    bool initializePopulation(unsigned * IIin);
     void calculateNewPopulation(unsigned * IIin);
 
     //--------------------
@@ -1014,6 +1015,72 @@ class ILPModuloScheduler {
                 File() << "INSTR OPCODE: " << i->getOpcodeName()
                        << " (IDX: " << idx + 1
                        << ") CLOCK CYCLE ASSIGNED: " << cstep << "\n";
+
+            sdcSchedTime[i] = cstep;
+            maxCstep = std::max(maxCstep, cstep);
+
+            // only need to save *resource constrained* instructions
+            if (!moduloScheduler.isResourceConstrained(i))
+                continue;
+
+            sdcSchedInst[cstep].push_back(i);
+        }
+
+        if (lpSolve && LEGUP_CONFIG->getParameterInt("INCREMENTAL_SDC")) {
+            if (SDCdebug)
+                File() << "Resetting incremental feasible solution to LP "
+                          "solution\n";
+            assert((int)sdcSolver.FeasibleSoln.size() == numVars);
+            for (int i = 0; i < numVars; i++) {
+                // reset feasible soln:
+                unsigned val = (unsigned)variables[i];
+
+                float old = sdcSolver.getD(sdcSolver.FeasibleSoln, i + 1);
+
+                if (old != val) {
+                    // changing
+                    // if(SDCdebug) File() << "changing Feasible soln idx: " <<
+                    // i+1 << " " <<
+                    // old <<
+                    //    " -> " << val << "\n";
+                }
+                sdcSolver.setD(sdcSolver.FeasibleSoln, i + 1, val);
+            }
+
+            sdcSolver.verifyFeasibleSoln();
+
+            delete[] variables;
+        }
+    }
+
+    void saveSchedule2(bool lpSolve) {
+        REAL *variables = new REAL[numVars];
+
+        if (lpSolve) {
+          get_variables(sdcSolver.lp, variables);
+        }
+
+        sdcSchedInst.clear();
+
+        maxCstep = 0;
+
+        // iterate over the instructions in a BB
+        for (BasicBlock::iterator i = BB->begin(), ie = BB->end(); i != ie;
+             i++) {
+            int idx = startVariableIndex[dag->getInstructionNode(i)];
+            assert(idx <= numVars);
+
+            // if(SDCdebug) File() << "Before rounding: " << variables[idx] <<
+            // "\n";
+            unsigned cstep;
+            if (lpSolve) {
+                cstep = (unsigned)variables[idx];
+            } else {
+                int cstep_incr =
+                    sdcSolver.getD(sdcSolver.FeasibleSoln, idx + 1);
+                assert(cstep_incr >= 0);
+                cstep = cstep_incr;
+            }
 
             sdcSchedTime[i] = cstep;
             maxCstep = std::max(maxCstep, cstep);

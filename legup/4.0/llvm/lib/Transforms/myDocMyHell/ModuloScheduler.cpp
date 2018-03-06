@@ -586,7 +586,7 @@ void ModuloScheduler::sanityCheckII(int II) {
     // assume every instruction is dependent and executed sequentially
     for (BasicBlock::iterator instr = BB->begin(), ie = BB->end(); instr != ie;
          ++instr) {
-        largestPossibleII += 1; // delay(instr);
+        largestPossibleII += delay(instr);
     }
     if (SDCdebug)
         File() << "largestPossibleII: " << largestPossibleII << "\n";
