@@ -1,0 +1,47 @@
+package require -exact qsys 13.0
+load_system legup_system.qsys
+
+add_instance legup_accelerator_bridge_mt_0 legup_accelerator_bridge
+set_instance_parameter_value legup_accelerator_bridge_mt_0 ADDR_WIDTH 5
+add_connection clk.clk legup_accelerator_bridge_mt_0.clock
+add_connection clk.clk_reset legup_accelerator_bridge_mt_0.reset
+add_connection Tiger_MIPS.data_master legup_accelerator_bridge_mt_0.from_cpu
+add_connection legup_accelerator_bridge_mt_0.to_memory DCache.cache_slave
+
+set_connection_parameter_value Tiger_MIPS.data_master/legup_accelerator_bridge_mt_0.from_cpu baseAddress "0xf0000000"
+set_connection_parameter_value legup_accelerator_bridge_mt_0.to_memory/DCache.cache_slave baseAddress "0x00000000"
+
+add_instance mt_0 mt
+add_connection clk.clk mt_0.clockreset
+add_connection clk.clk_reset mt_0.clockreset_reset
+
+add_connection legup_accelerator_bridge_mt_0.to_accel mt_0.s1
+set_connection_parameter_value legup_accelerator_bridge_mt_0.to_accel/mt_0.s1 baseAddress "0x0"
+
+add_connection mt_0.ACCEL legup_accelerator_bridge_mt_0.from_accel
+
+set_connection_parameter_value mt_0.ACCEL/legup_accelerator_bridge_mt_0.from_accel baseAddress "0x00000000"
+
+add_instance legup_accelerator_bridge_mt2_0 legup_accelerator_bridge
+set_instance_parameter_value legup_accelerator_bridge_mt2_0 ADDR_WIDTH 5
+add_connection clk.clk legup_accelerator_bridge_mt2_0.clock
+add_connection clk.clk_reset legup_accelerator_bridge_mt2_0.reset
+add_connection Tiger_MIPS.data_master legup_accelerator_bridge_mt2_0.from_cpu
+add_connection legup_accelerator_bridge_mt2_0.to_memory DCache.cache_slave
+
+set_connection_parameter_value Tiger_MIPS.data_master/legup_accelerator_bridge_mt2_0.from_cpu baseAddress "0xf0000020"
+set_connection_parameter_value legup_accelerator_bridge_mt2_0.to_memory/DCache.cache_slave baseAddress "0x00000000"
+
+add_instance mt2_0 mt2
+add_connection clk.clk mt2_0.clockreset
+add_connection clk.clk_reset mt2_0.clockreset_reset
+
+add_connection legup_accelerator_bridge_mt2_0.to_accel mt2_0.s1
+set_connection_parameter_value legup_accelerator_bridge_mt2_0.to_accel/mt2_0.s1 baseAddress "0x0"
+
+add_connection mt2_0.ACCEL legup_accelerator_bridge_mt2_0.from_accel
+
+set_connection_parameter_value mt2_0.ACCEL/legup_accelerator_bridge_mt2_0.from_accel baseAddress "0x00000000"
+
+save_system
+

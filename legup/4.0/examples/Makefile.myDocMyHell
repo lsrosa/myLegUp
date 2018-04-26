@@ -136,6 +136,7 @@ endif # DEBUG_KEEP_VARS_IN_MEM
 	# produces verilog: $(NAME).v
 	$(LLVM_HOME)llc $(LLC_FLAGS) -march=v $(NAME).bc -o $(VFILE)
 
+
 ################################################################################
 # Cleaning targets
 ################################################################################
@@ -173,6 +174,15 @@ cleanall: clean
 # end cleaning targets
 
 
+################################################################################
+# dependency targets
+################################################################################
+function:
+	#hybridHwOnlyPass \
+	$(LLVM_HOME)opt -legup-config=config.tcl $(OPT_FLAGS) -legup-hw-only < $(NAME).prelto.bc > $(NAME).prelto.hw.bc
+	$(LLVM_HOME)llvm-dis $(NAME).prelto.hw.bc \
+	hybridHWloweringLinking \
+	HWVerilogbackend
 
 ################################################################################
 # dependency targets

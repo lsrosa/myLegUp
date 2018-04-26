@@ -206,8 +206,6 @@ endif # LLVM_PROFILE
 	# produces verilog: $(NAME).v
 	$(LLVM_HOME)llc $(LLC_FLAGS) -march=v $(NAME).bc -o $(VFILE)
 
-
-
 syn: $(OBJS)
 ifndef DEVICE_FAMILY
 	$(shell $(FPGA_BOARD_CMD))
@@ -876,6 +874,20 @@ hybrid: \
     addHWToSystem \
     gen_legup_system
 
+function: cleanall \
+	create_output_directory \
+	qII_project \
+	$(FULLNAME).bc \
+	hybridFrontend \
+	customVerilogPass \
+	hybridHwOnlyPass \
+	hybridSwOnlyPass \
+	$(FULLNAME).elf \
+	hybridHWloweringLinking \
+  HWVerilogbackend \
+  #addHWToSystem \
+  #gen_legup_system
+
 #simulate the hybrid system
 hybridsim: hybrid simulation
 
@@ -1062,7 +1074,6 @@ hybridHWloweringLinking:
 	$(LLVM_HOME)llvm-dis $(NAME).hw3.bc
 	#need to run this pass again since the linker may have introduced other intrinsics
 	$(LLVM_HOME)opt $(OPT_FLAGS) -legup-prelto < $(NAME).hw3.bc > $(NAME).hw.bc
-	$(LLVM_HOME)llvm-dis $(NAME).hw.bc
 	$(LLVM_HOME)llvm-dis $(NAME).hw.bc
 #$(LLVM_HOME)opt $(OPT_FLAGS) -disable-inlining -internalize-public-api-list=$(ACCELS) -std-link-opts $(NAME).hw.bc -o $(NAME).hw.11.bc
 	$(LLVM_HOME)opt -internalize-public-api-list=$(ACCELS) -internalize -instcombine -globaldce -adce $(NAME).hw.bc -o $(NAME).hw.11.bc
