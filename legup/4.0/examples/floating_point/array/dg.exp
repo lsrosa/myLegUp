@@ -1,9 +1,0 @@
-load_lib legup.exp
-
-cd floating_point/array
-set test "array"
-set expected {return_val=\s+10\s+}
-
-run-test $test $expected
-
-cd ../..
