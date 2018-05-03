@@ -1,0 +1,265 @@
+\documentclass[landscape]{article}
+\usepackage{gantt}
+\pagestyle{empty}
+\begin{document}
+\begin{figure}
+\begin{gantt}[fontsize=\scriptsize]{3}{2}
+\begin{ganttitle}
+\numtitle{0}{1}{1}{1}
+\end{ganttitle}
+\ganttbar{  \%1 = icmp eq i32 \%dlt, 0}{1}{1}
+\ganttcon{2}{1}{1}{2}
+\ganttbar{  br i1 \%1, label \%.preheader, label \%.preheader1}{1}{1}
+\end{gantt}
+\end{figure}
+\begin{figure}
+\begin{gantt}[fontsize=\scriptsize]{72}{26}
+\begin{ganttitle}
+\numtitle{0}{1}{25}{1}
+\end{ganttitle}
+\ganttbar{  \%2 = load i32* \%dlti, align 4, !tbaa !1}{1}{2}
+\ganttcon{3}{1}{3}{14}
+\ganttbar{  \%7 = load i32* \%bli, align 4, !tbaa !1}{1}{2}
+\ganttcon{3}{2}{3}{15}
+\ganttbar{  \%11 = getelementptr inbounds i32* \%dlti, i32 1}{1}{1}
+\ganttcon{2}{3}{5}{22}
+\ganttbar{  \%17 = getelementptr inbounds i32* \%bli, i32 1}{1}{1}
+\ganttcon{2}{4}{8}{31}
+\ganttcon{2}{4}{5}{23}
+\ganttbar{  \%22 = getelementptr inbounds i32* \%dlti, i32 2}{1}{1}
+\ganttcon{2}{5}{9}{32}
+\ganttbar{  \%28 = getelementptr inbounds i32* \%bli, i32 2}{1}{1}
+\ganttcon{2}{6}{12}{41}
+\ganttcon{2}{6}{9}{33}
+\ganttbar{  \%33 = getelementptr inbounds i32* \%dlti, i32 3}{1}{1}
+\ganttcon{2}{7}{13}{42}
+\ganttbar{  \%39 = getelementptr inbounds i32* \%bli, i32 3}{1}{1}
+\ganttcon{2}{8}{16}{51}
+\ganttcon{2}{8}{13}{43}
+\ganttbar{  \%44 = getelementptr inbounds i32* \%dlti, i32 4}{1}{1}
+\ganttcon{2}{9}{17}{52}
+\ganttbar{  \%50 = getelementptr inbounds i32* \%bli, i32 4}{1}{1}
+\ganttcon{2}{10}{20}{61}
+\ganttcon{2}{10}{17}{53}
+\ganttbar{  \%55 = getelementptr inbounds i32* \%dlti, i32 5}{1}{1}
+\ganttcon{2}{11}{21}{62}
+\ganttbar{  \%61 = getelementptr inbounds i32* \%bli, i32 5}{1}{1}
+\ganttcon{2}{12}{24}{71}
+\ganttcon{2}{12}{21}{63}
+\ganttbar{  br label \%89}{1}{1}
+\ganttbar{  \%3 = mul nsw i32 \%2, \%dlt}{3}{1}
+\ganttcon{4}{14}{4}{16}
+\ganttbar{  \%8 = mul nsw i32 \%7, 255}{3}{1}
+\ganttcon{4}{15}{4}{19}
+\ganttbar{  \%4 = ashr i32 \%3, 31}{4}{1}
+\ganttcon{5}{16}{4}{17}
+\ganttbar{  \%5 = and i32 \%4, -256}{4}{1}
+\ganttcon{5}{17}{4}{18}
+\ganttbar{  \%6 = or i32 \%5, 128}{4}{1}
+\ganttcon{5}{18}{4}{20}
+\ganttbar{  \%9 = ashr i32 \%8, 8}{4}{1}
+\ganttcon{5}{19}{4}{20}
+\ganttbar{  \%10 = add nsw i32 \%6, \%9}{4}{1}
+\ganttcon{5}{20}{4}{21}
+\ganttbar{  store i32 \%10, i32* \%bli, align 4, !tbaa !1}{4}{1}
+\ganttbar{  \%12 = load i32* \%11, align 4, !tbaa !1}{5}{2}
+\ganttcon{7}{22}{7}{24}
+\ganttbar{  \%18 = load i32* \%17, align 4, !tbaa !1}{5}{2}
+\ganttcon{7}{23}{7}{25}
+\ganttbar{  \%13 = mul nsw i32 \%12, \%dlt}{7}{1}
+\ganttcon{8}{24}{8}{26}
+\ganttbar{  \%19 = mul nsw i32 \%18, 255}{7}{1}
+\ganttcon{8}{25}{8}{29}
+\ganttbar{  \%14 = ashr i32 \%13, 31}{8}{1}
+\ganttcon{9}{26}{8}{27}
+\ganttbar{  \%15 = and i32 \%14, -256}{8}{1}
+\ganttcon{9}{27}{8}{28}
+\ganttbar{  \%16 = or i32 \%15, 128}{8}{1}
+\ganttcon{9}{28}{8}{30}
+\ganttbar{  \%20 = ashr i32 \%19, 8}{8}{1}
+\ganttcon{9}{29}{8}{30}
+\ganttbar{  \%21 = add nsw i32 \%16, \%20}{8}{1}
+\ganttcon{9}{30}{8}{31}
+\ganttbar{  store i32 \%21, i32* \%17, align 4, !tbaa !1}{8}{1}
+\ganttbar{  \%23 = load i32* \%22, align 4, !tbaa !1}{9}{2}
+\ganttcon{11}{32}{11}{34}
+\ganttbar{  \%29 = load i32* \%28, align 4, !tbaa !1}{9}{2}
+\ganttcon{11}{33}{11}{35}
+\ganttbar{  \%24 = mul nsw i32 \%23, \%dlt}{11}{1}
+\ganttcon{12}{34}{12}{36}
+\ganttbar{  \%30 = mul nsw i32 \%29, 255}{11}{1}
+\ganttcon{12}{35}{12}{39}
+\ganttbar{  \%25 = ashr i32 \%24, 31}{12}{1}
+\ganttcon{13}{36}{12}{37}
+\ganttbar{  \%26 = and i32 \%25, -256}{12}{1}
+\ganttcon{13}{37}{12}{38}
+\ganttbar{  \%27 = or i32 \%26, 128}{12}{1}
+\ganttcon{13}{38}{12}{40}
+\ganttbar{  \%31 = ashr i32 \%30, 8}{12}{1}
+\ganttcon{13}{39}{12}{40}
+\ganttbar{  \%32 = add nsw i32 \%27, \%31}{12}{1}
+\ganttcon{13}{40}{12}{41}
+\ganttbar{  store i32 \%32, i32* \%28, align 4, !tbaa !1}{12}{1}
+\ganttbar{  \%34 = load i32* \%33, align 4, !tbaa !1}{13}{2}
+\ganttcon{15}{42}{15}{44}
+\ganttbar{  \%40 = load i32* \%39, align 4, !tbaa !1}{13}{2}
+\ganttcon{15}{43}{15}{45}
+\ganttbar{  \%35 = mul nsw i32 \%34, \%dlt}{15}{1}
+\ganttcon{16}{44}{16}{46}
+\ganttbar{  \%41 = mul nsw i32 \%40, 255}{15}{1}
+\ganttcon{16}{45}{16}{49}
+\ganttbar{  \%36 = ashr i32 \%35, 31}{16}{1}
+\ganttcon{17}{46}{16}{47}
+\ganttbar{  \%37 = and i32 \%36, -256}{16}{1}
+\ganttcon{17}{47}{16}{48}
+\ganttbar{  \%38 = or i32 \%37, 128}{16}{1}
+\ganttcon{17}{48}{16}{50}
+\ganttbar{  \%42 = ashr i32 \%41, 8}{16}{1}
+\ganttcon{17}{49}{16}{50}
+\ganttbar{  \%43 = add nsw i32 \%38, \%42}{16}{1}
+\ganttcon{17}{50}{16}{51}
+\ganttbar{  store i32 \%43, i32* \%39, align 4, !tbaa !1}{16}{1}
+\ganttbar{  \%45 = load i32* \%44, align 4, !tbaa !1}{17}{2}
+\ganttcon{19}{52}{19}{54}
+\ganttbar{  \%51 = load i32* \%50, align 4, !tbaa !1}{17}{2}
+\ganttcon{19}{53}{19}{55}
+\ganttbar{  \%46 = mul nsw i32 \%45, \%dlt}{19}{1}
+\ganttcon{20}{54}{20}{56}
+\ganttbar{  \%52 = mul nsw i32 \%51, 255}{19}{1}
+\ganttcon{20}{55}{20}{59}
+\ganttbar{  \%47 = ashr i32 \%46, 31}{20}{1}
+\ganttcon{21}{56}{20}{57}
+\ganttbar{  \%48 = and i32 \%47, -256}{20}{1}
+\ganttcon{21}{57}{20}{58}
+\ganttbar{  \%49 = or i32 \%48, 128}{20}{1}
+\ganttcon{21}{58}{20}{60}
+\ganttbar{  \%53 = ashr i32 \%52, 8}{20}{1}
+\ganttcon{21}{59}{20}{60}
+\ganttbar{  \%54 = add nsw i32 \%49, \%53}{20}{1}
+\ganttcon{21}{60}{20}{61}
+\ganttbar{  store i32 \%54, i32* \%50, align 4, !tbaa !1}{20}{1}
+\ganttbar{  \%56 = load i32* \%55, align 4, !tbaa !1}{21}{2}
+\ganttcon{23}{62}{23}{64}
+\ganttbar{  \%62 = load i32* \%61, align 4, !tbaa !1}{21}{2}
+\ganttcon{23}{63}{23}{65}
+\ganttbar{  \%57 = mul nsw i32 \%56, \%dlt}{23}{1}
+\ganttcon{24}{64}{24}{66}
+\ganttbar{  \%63 = mul nsw i32 \%62, 255}{23}{1}
+\ganttcon{24}{65}{24}{69}
+\ganttbar{  \%58 = ashr i32 \%57, 31}{24}{1}
+\ganttcon{25}{66}{24}{67}
+\ganttbar{  \%59 = and i32 \%58, -256}{24}{1}
+\ganttcon{25}{67}{24}{68}
+\ganttbar{  \%60 = or i32 \%59, 128}{24}{1}
+\ganttcon{25}{68}{24}{70}
+\ganttbar{  \%64 = ashr i32 \%63, 8}{24}{1}
+\ganttcon{25}{69}{24}{70}
+\ganttbar{  \%65 = add nsw i32 \%60, \%64}{24}{1}
+\ganttcon{25}{70}{24}{71}
+\ganttbar{  store i32 \%65, i32* \%61, align 4, !tbaa !1}{24}{1}
+\end{gantt}
+\end{figure}
+\begin{figure}
+\begin{gantt}[fontsize=\scriptsize]{36}{8}
+\begin{ganttitle}
+\numtitle{0}{1}{7}{1}
+\end{ganttitle}
+\ganttbar{  \%66 = load i32* \%bli, align 4, !tbaa !1}{1}{2}
+\ganttcon{3}{1}{3}{16}
+\ganttbar{  \%69 = getelementptr inbounds i32* \%bli, i32 1}{1}{1}
+\ganttcon{2}{2}{4}{23}
+\ganttcon{2}{2}{1}{3}
+\ganttbar{  \%70 = load i32* \%69, align 4, !tbaa !1}{1}{2}
+\ganttcon{3}{3}{3}{17}
+\ganttbar{  \%73 = getelementptr inbounds i32* \%bli, i32 2}{1}{1}
+\ganttcon{2}{4}{5}{27}
+\ganttcon{2}{4}{2}{14}
+\ganttbar{  \%77 = getelementptr inbounds i32* \%bli, i32 3}{1}{1}
+\ganttcon{2}{5}{5}{29}
+\ganttcon{2}{5}{2}{15}
+\ganttbar{  \%81 = getelementptr inbounds i32* \%bli, i32 4}{1}{1}
+\ganttcon{2}{6}{6}{33}
+\ganttcon{2}{6}{3}{18}
+\ganttbar{  \%85 = getelementptr inbounds i32* \%bli, i32 5}{1}{1}
+\ganttcon{2}{7}{6}{35}
+\ganttcon{2}{7}{3}{19}
+\ganttbar{  \%.pre = getelementptr inbounds i32* \%dlti, i32 4}{1}{1}
+\ganttbar{  \%.pre7 = getelementptr inbounds i32* \%dlti, i32 5}{1}{1}
+\ganttbar{  \%.pre9 = getelementptr inbounds i32* \%dlti, i32 3}{1}{1}
+\ganttbar{  \%.pre11 = getelementptr inbounds i32* \%dlti, i32 2}{1}{1}
+\ganttbar{  \%.pre13 = getelementptr inbounds i32* \%dlti, i32 1}{1}{1}
+\ganttbar{  br label \%89}{1}{1}
+\ganttbar{  \%74 = load i32* \%73, align 4, !tbaa !1}{2}{2}
+\ganttcon{4}{14}{4}{24}
+\ganttbar{  \%78 = load i32* \%77, align 4, !tbaa !1}{2}{2}
+\ganttcon{4}{15}{4}{25}
+\ganttbar{  \%67 = mul nsw i32 \%66, 255}{3}{1}
+\ganttcon{4}{16}{4}{20}
+\ganttbar{  \%71 = mul nsw i32 \%70, 255}{3}{1}
+\ganttcon{4}{17}{4}{22}
+\ganttbar{  \%82 = load i32* \%81, align 4, !tbaa !1}{3}{2}
+\ganttcon{5}{18}{5}{30}
+\ganttbar{  \%86 = load i32* \%85, align 4, !tbaa !1}{3}{2}
+\ganttcon{5}{19}{5}{31}
+\ganttbar{  \%68 = ashr i32 \%67, 8}{4}{1}
+\ganttcon{5}{20}{4}{21}
+\ganttbar{  store i32 \%68, i32* \%bli, align 4, !tbaa !1}{4}{1}
+\ganttbar{  \%72 = ashr i32 \%71, 8}{4}{1}
+\ganttcon{5}{22}{4}{23}
+\ganttbar{  store i32 \%72, i32* \%69, align 4, !tbaa !1}{4}{1}
+\ganttbar{  \%75 = mul nsw i32 \%74, 255}{4}{1}
+\ganttcon{5}{24}{5}{26}
+\ganttbar{  \%79 = mul nsw i32 \%78, 255}{4}{1}
+\ganttcon{5}{25}{5}{28}
+\ganttbar{  \%76 = ashr i32 \%75, 8}{5}{1}
+\ganttcon{6}{26}{5}{27}
+\ganttbar{  store i32 \%76, i32* \%73, align 4, !tbaa !1}{5}{1}
+\ganttbar{  \%80 = ashr i32 \%79, 8}{5}{1}
+\ganttcon{6}{28}{5}{29}
+\ganttbar{  store i32 \%80, i32* \%77, align 4, !tbaa !1}{5}{1}
+\ganttbar{  \%83 = mul nsw i32 \%82, 255}{5}{1}
+\ganttcon{6}{30}{6}{32}
+\ganttbar{  \%87 = mul nsw i32 \%86, 255}{5}{1}
+\ganttcon{6}{31}{6}{34}
+\ganttbar{  \%84 = ashr i32 \%83, 8}{6}{1}
+\ganttcon{7}{32}{6}{33}
+\ganttbar{  store i32 \%84, i32* \%81, align 4, !tbaa !1}{6}{1}
+\ganttbar{  \%88 = ashr i32 \%87, 8}{6}{1}
+\ganttcon{7}{34}{6}{35}
+\ganttbar{  store i32 \%88, i32* \%85, align 4, !tbaa !1}{6}{1}
+\end{gantt}
+\end{figure}
+\begin{figure}
+\begin{gantt}[fontsize=\scriptsize]{16}{7}
+\begin{ganttitle}
+\numtitle{0}{1}{6}{1}
+\end{ganttitle}
+\ganttbar{  \%.pre-phi14 = phi i32* [ \%11, \%.preheader1 ], [ \%.pre13, \%.preheader ]}{1}{1}
+\ganttcon{2}{1}{4}{13}
+\ganttbar{  \%.pre-phi12 = phi i32* [ \%22, \%.preheader1 ], [ \%.pre11, \%.preheader ]}{1}{1}
+\ganttcon{2}{2}{2}{8}
+\ganttbar{  \%.pre-phi10 = phi i32* [ \%33, \%.preheader1 ], [ \%.pre9, \%.preheader ]}{1}{1}
+\ganttcon{2}{3}{4}{12}
+\ganttcon{2}{3}{1}{7}
+\ganttbar{  \%.pre-phi8 = phi i32* [ \%55, \%.preheader1 ], [ \%.pre7, \%.preheader ]}{1}{1}
+\ganttcon{2}{4}{3}{10}
+\ganttbar{  \%.pre-phi = phi i32* [ \%44, \%.preheader1 ], [ \%.pre, \%.preheader ]}{1}{1}
+\ganttcon{2}{5}{3}{11}
+\ganttcon{2}{5}{1}{6}
+\ganttbar{  \%90 = load i32* \%.pre-phi, align 4, !tbaa !1}{1}{2}
+\ganttcon{3}{6}{3}{10}
+\ganttbar{  \%91 = load i32* \%.pre-phi10, align 4, !tbaa !1}{1}{2}
+\ganttcon{3}{7}{3}{11}
+\ganttbar{  \%92 = load i32* \%.pre-phi12, align 4, !tbaa !1}{2}{2}
+\ganttcon{4}{8}{4}{12}
+\ganttbar{  \%93 = load i32* \%dlti, align 4, !tbaa !1}{2}{2}
+\ganttcon{4}{9}{4}{13}
+\ganttbar{  store i32 \%90, i32* \%.pre-phi8, align 4, !tbaa !1}{3}{1}
+\ganttbar{  store i32 \%91, i32* \%.pre-phi, align 4, !tbaa !1}{3}{1}
+\ganttbar{  store i32 \%92, i32* \%.pre-phi10, align 4, !tbaa !1}{4}{1}
+\ganttbar{  store i32 \%93, i32* \%.pre-phi14, align 4, !tbaa !1}{4}{1}
+\ganttbar{  store i32 \%dlt, i32* \%dlti, align 4, !tbaa !1}{5}{1}
+\ganttbar{  ret void}{6}{1}
+\end{gantt}
+\end{figure}
+\end{document}
