@@ -65,12 +65,15 @@ class LoopSelect : public ModulePass {
 
     //string = name and operand, min, and max
     using Constraint=std::tuple<std::string, int, int>;
-    std::vector<Constraint*> TCLConstraints;
+    using ConstraintVector=std::vector<Constraint*>;
+    std::map<llvm::Loop*, ConstraintVector*> TCLConstraintsMap;
 
     void clean();
+    void clearTCLConstraintsMAP();
     void analyzeLoops();
     LoopData * getLoopBasicMetrics(llvm::Loop * loop);
-    void addRAMConstraints();
+    void addRAMConstraints(llvm::Loop *loop);
+    void addResourcesConstraints(llvm::Loop *loop);
     void createTCLConfigs(llvm::Loop *loop);
     void saveLoopAsFunction(llvm::Loop *loop);
     void printLoopsData();

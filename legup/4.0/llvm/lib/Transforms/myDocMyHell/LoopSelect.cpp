@@ -2,6 +2,17 @@
 #include <sys/stat.h>
 #include "ModuloScheduler.h"
 
+void LoopSelect::clearTCLConstraintsMAP(){
+  for(auto entry : TCLConstraintsMap){
+    for(auto constr : *(entry.second)){
+      delete constr;
+    }
+    entry.second->clear();
+  }
+  TCLConstraintsMap.clear();
+  return;
+}
+
 void LoopSelect::clean(){
   //delete loop datas
   for(auto entry:loopDataMap){
@@ -17,10 +28,7 @@ void LoopSelect::clean(){
 
   bbMap.clear();
 
-  for(auto entry : TCLConstraints){
-    delete entry;
-  }
-  TCLConstraints.clear();
+  clearTCLConstraintsMAP();
 
   return;
 
@@ -51,6 +59,8 @@ void LoopSelect::printLoopData(LoopData *ldin){
 
 void LoopSelect::analyzeLoops(){
   bbMap.clear();
+  clearTCLConstraintsMAP();
+
   for(auto loop : loopVec){
     std::cout << "found loop:\n";
     loop->dump();
@@ -59,8 +69,9 @@ void LoopSelect::analyzeLoops(){
     //create config.tcl
     createTCLConfigs(loop);
   }
-  bbMap.clear();
 
+  bbMap.clear();
+  clearTCLConstraintsMAP();
   //TODO this
   //automate a make run with each different config.
 }
@@ -108,18 +119,36 @@ LoopData * LoopSelect::getLoopBasicMetrics(llvm::Loop * loop){
 
 using Constraint = std::tuple<std::string, int, int>;
 
-void LoopSelect::addRAMConstraints(){
+void LoopSelect::addRAMConstraints(llvm::Loop *loop){
   Constraint *constraint = new Constraint("set_parameter LOCAL_RAMS", 0, 1);
-  TCLConstraints.push_back(constraint);
+  TCLConstraintsMap[loop]->push_back(constraint);
+  return;
+}
+
+void LoopSelect::addResourcesConstraints(llvm::Loop *loop){
+  LoopData * ld = loopDataMap[loop];
+
+  Constraint *constraint = NULL;
+  for(auto entry : ld->nFUs){
+    std::string constrName = std::string("set_parameter ");
+    constrName.append(entry.first);
+
+    constraint = new Constraint(constrName, 1, entry.second);
+    TCLConstraintsMap[loop]->push_back(constraint);
+  }
+
   return;
 }
 
 void LoopSelect::createTCLConfigs(llvm::Loop *loop){
-  //add the Local RAM constraints in the TCL constraints list
-  addRAMConstraints();
+  //create a new vector for this loop
+  TCLConstraintsMap[loop] = new ConstraintVector();
 
-  //TODO
+  //add the Local RAM constraints in the TCL constraints list
+  addRAMConstraints(loop);
   //ADD resource constraints
+  addResourcesConstraints(loop);
+  //TODO
   //ADD pipeline constraints
 
   std::string filename = std::string("loops_out/");
