@@ -33,9 +33,10 @@ int main() {
 __legup_label("loop1");
         loop2: for (b = 0; b < 2; b++) {
 __legup_label("loop2");
+            result = array[a*2+b*2+c]/array[a*2+b*2+c];
             loop3: for (c = 0; c < 3; c++) {
 __legup_label("loop3");
-                result += array[a*2+b*2+c];
+                result += array[a*2+b*2+c]+array[a*3+b*2+c];
             }
         }
     }

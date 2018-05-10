@@ -1,23 +1,32 @@
 #include "LoopSelect.h"
 #include <sys/stat.h>
+#include <iostream>
+#include <fstream>
 #include "ModuloScheduler.h"
 
-void LoopSelect::clearTCLConstraintsMAP(){
-  for(auto entry : TCLConstraintsMap){
-    for(auto constr : *(entry.second)){
-      delete constr;
-    }
-    entry.second->clear();
+using Constraint = std::tuple<std::string, int, int>;
+
+void LoopSelect::clearLoopData(LoopData *ld){
+  for(auto constr : ld->TCLConstraints){
+    delete constr;
   }
-  TCLConstraintsMap.clear();
+  ld->TCLConstraints.clear();
+
+  for(auto subloopdata : ld->subLoopsData){
+    clearLoopData(subloopdata);
+    delete subloopdata;
+  }
+
   return;
 }
 
 void LoopSelect::clean(){
   //delete loop datas
   for(auto entry:loopDataMap){
+    clearLoopData(entry.second);
     delete entry.second;
   }
+  loopDataMap.clear();
 
   //delete the loop infos we have created
   for(auto loopinfo : loopInfoVec){
@@ -27,9 +36,6 @@ void LoopSelect::clean(){
   alloc->~Allocation();
 
   bbMap.clear();
-
-  clearTCLConstraintsMAP();
-
   return;
 
 }
@@ -37,14 +43,15 @@ void LoopSelect::clean(){
 void LoopSelect::printLoopsData(){
   for(auto entry : loopDataMap){
     printLoopData(entry.second);
+      std::cout << "\n----------------------------------\n\n";
   }
-  std::cout << "\n\n";
   return;
 }
 
 void LoopSelect::printLoopData(LoopData *ldin){
   std::cout << "\nloop: " << ldin->label << "\n";
   ldin->loop->dump();
+
   for(auto entry : ldin->nFUs){
     std::cout << "FU:" << entry.first << " - used by " << entry.second << " instructions\n";
   }
@@ -54,16 +61,28 @@ void LoopSelect::printLoopData(LoopData *ldin){
     printLoopData(subLoopData);
   }
 
+  //skip if there is no constraints for this loop (a.k.a its a subloop)
+  if(ldin->TCLConstraints.empty()){
+    return;
+  }
+
+  std::cout << "\nconstraints:\n" << std::endl;
+  std::cout << "size: " << ldin->TCLConstraints.size() << std::endl;
+  for(auto cs : ldin->TCLConstraints){
+    std::cout << std::get<0>(*cs) << " - min: " << std::get<1>(*cs) << " - max: " << std::get<2>(*cs) << "\n";
+  }
   return;
 }
 
 void LoopSelect::analyzeLoops(){
   bbMap.clear();
-  clearTCLConstraintsMAP();
 
   for(auto loop : loopVec){
-    std::cout << "found loop:\n";
-    loop->dump();
+    if(debug){
+      std::cout << "found loop:\n";
+      loop->dump();
+    }
+
     loopDataMap[loop] = getLoopBasicMetrics(loop);
     saveLoopAsFunction(loop);
     //create config.tcl
@@ -71,7 +90,6 @@ void LoopSelect::analyzeLoops(){
   }
 
   bbMap.clear();
-  clearTCLConstraintsMAP();
   //TODO this
   //automate a make run with each different config.
 }
@@ -117,55 +135,177 @@ LoopData * LoopSelect::getLoopBasicMetrics(llvm::Loop * loop){
   return ld;
 }
 
-using Constraint = std::tuple<std::string, int, int>;
 
-void LoopSelect::addRAMConstraints(llvm::Loop *loop){
+void LoopSelect::addRAMConstraints(LoopData *ld){
   Constraint *constraint = new Constraint("set_parameter LOCAL_RAMS", 0, 1);
-  TCLConstraintsMap[loop]->push_back(constraint);
+  ld->TCLConstraints.push_back(constraint);
+
+  if(debug){
+    std::cout << "adding Local RAM constraint to loop: " << ld->label << "\n";
+  }
+
   return;
 }
 
-void LoopSelect::addResourcesConstraints(llvm::Loop *loop){
-  LoopData * ld = loopDataMap[loop];
-
+void LoopSelect::addResourcesConstraints(LoopData *ld){
   Constraint *constraint = NULL;
   for(auto entry : ld->nFUs){
     std::string constrName = std::string("set_parameter ");
     constrName.append(entry.first);
 
     constraint = new Constraint(constrName, 1, entry.second);
-    TCLConstraintsMap[loop]->push_back(constraint);
+    ld->TCLConstraints.push_back(constraint);
+  }
+
+  for(auto subloopdata:ld->subLoopsData){
+    addResourcesConstraints(subloopdata);
   }
 
   return;
 }
 
-void LoopSelect::createTCLConfigs(llvm::Loop *loop){
-  //create a new vector for this loop
-  TCLConstraintsMap[loop] = new ConstraintVector();
 
-  //add the Local RAM constraints in the TCL constraints list
-  addRAMConstraints(loop);
-  //ADD resource constraints
-  addResourcesConstraints(loop);
-  //TODO
-  //ADD pipeline constraints
-
-  std::string filename = std::string("loops_out/");
-  filename.append(loopDataMap[loop]->label);
-  filename.append("/tcl.config");
-  FILE * file = NULL;
-
-  file = fopen(filename.c_str(), "w");
-  if(file == NULL){
-    std::cout << "Error creating tcl.config!\n";
-    exit(1);
+void LoopSelect::addPipelineConstraint(LoopData *ld){
+  //if this loop has no sub-loops
+  if(ld->subLoopsData.size() == 0){
+    Constraint *constraint = NULL;
+    std::string constrName = std::string("loop_pipeline \"");
+    constrName.append(ld->label);
+    constrName.append("\"");
+    constraint = new Constraint(constrName, 0, 0);
+    ld->TCLConstraints.push_back(constraint);
+    return;
   }
 
-  //TODO
-  //write in the TCL file
+  //if there are nested loops
+  for(auto subloopdata:ld->subLoopsData){
+    addPipelineConstraint(subloopdata);
+  }
 
-  fclose(file);
+  return;
+}
+
+std::vector<Constraint*> LoopSelect::parseConstraints(LoopData *ld){
+  std::vector<Constraint*> constraintsVec;
+  std::map<std::string, Constraint*> constraintsMap;
+
+  //concatenate the constraints of all subloops
+  constraintsVec.insert(constraintsVec.end(), ld->TCLConstraints.begin(), ld->TCLConstraints.end());
+  for(auto subloopdata : ld->subLoopsData){
+    std::vector<Constraint*> subloopConstraintsVec = parseConstraints(subloopdata);
+    constraintsVec.insert(constraintsVec.end(), subloopConstraintsVec.begin(), subloopConstraintsVec.end());
+  }
+
+  for(auto constraint : constraintsVec){
+    std::string name = std::get<0>(*constraint);
+
+    //if the constraints is not yet in the map
+    if(constraintsMap.find(name) == constraintsMap.end()){
+      constraintsMap[name] = constraint;
+    }else{
+      int invecMin = std::get<1>(*(constraintsMap[name]));
+      int invecMax = std::get<2>(*(constraintsMap[name]));
+      int currMin = std::get<1>(*constraint);
+      int currMax = std::get<2>(*constraint);
+      int min = std::min(invecMin, currMin);
+      int max = std::max(invecMax, currMax);
+      constraintsMap[name] = new Constraint(name, min, max);
+    }
+  }
+
+
+  constraintsVec.clear();
+  for(auto entry : constraintsMap){
+    constraintsVec.push_back(entry.second);
+  }
+
+  //constraintsMap.clear();
+  return constraintsVec;
+}
+
+void LoopSelect::createTCLConfigs(llvm::Loop *loop){
+  //create a new vector for this loop
+  LoopData *ld = loopDataMap[loop];
+
+  //add the Local RAM constraints in the TCL constraints list
+  addRAMConstraints(ld);
+  //ADD resource constraints
+  addResourcesConstraints(ld);
+  addPipelineConstraint(ld);
+  //TODO
+  //deal with unroll
+
+  std::vector<Constraint*> constraintsVec = parseConstraints(ld);
+
+  if(debug){
+    std::cout << "\n--------------------------- \n Final Constraints for Loop Nest: \n";
+    for(auto cs : constraintsVec){
+      std::cout << std::get<0>(*cs) << " - min: " << std::get<1>(*cs) << " - max: " << std::get<2>(*cs) << "\n";
+    }
+    std::cout << "\n---------------------------\n";
+  }
+
+  //calculate the number of TCL config files
+  unsigned nconfigs = 1;
+  for(auto cs : constraintsVec){
+    int min = std::get<1>(*cs), max = std::get<2>(*cs);
+    if(min != 0 || max != 0){
+      nconfigs *= max - min + 1;
+    }
+  }
+
+  if(debug){
+    std::cout << "There are " << nconfigs << " possible configs" << " for " << constraintsVec.size() << " constraints\n";
+  }
+
+  std::string basename = std::string("loops_out/");
+  basename.append(loopDataMap[loop]->label);
+  //nconfigs file pointers initialized as NULL
+
+  ofstream file;
+  unsigned m, m0 = nconfigs, nconstraints = constraintsVec.size();
+  unsigned i, j;
+  std::string filename;
+
+  //matrix for debug mostly
+  int * constmatrix = (int*)malloc(nconstraints*nconfigs*sizeof(int));
+
+  for(i=0; i < nconfigs; i++){
+    m = m0;
+    filename = std::string(basename);
+    filename.append(std::string("/tcl")+std::to_string(i)+std::string(".config"));
+    file.open(filename.c_str());
+
+    for(j=0; j != nconstraints; j++){
+      int l = std::get<1>(*(constraintsVec[j]));
+      int u = std::get<2>(*(constraintsVec[j]));
+      int d = u-l+1;
+
+      m = floor(m/d);
+      constmatrix[j*nconfigs+i] = l+((int)floor(i/m))%d;
+
+      //always on constraints as loop pipeline
+      if(l==0 && u==0){
+        file << std::get<0>(*(constraintsVec[j])) << "\n";
+      }else{
+        file << std::get<0>(*(constraintsVec[j])) << " " << constmatrix[j*nconfigs+i] << "\n";
+      }
+    }
+
+    file.close();
+  }
+
+  if(debug){
+    std::cout << "\nConstranint matrix:";
+    for(j=0; j < constraintsVec.size(); j++){
+      std::cout << "\n";
+      for(i=0; i < nconfigs; i++){
+        std::cout << constmatrix[j*nconfigs+i] << " ";
+      }
+    }
+    std::cout << "\n";
+  }
+
   return;
 }
 
@@ -185,10 +325,6 @@ void LoopSelect::saveLoopAsFunction(llvm::Loop *loop){
   if (-1 == dir_err && errno != EEXIST){
     std::cout << "Error creating" << outdir << "directory!\n";
     exit(1);
-  }
-
-  if(debug){
-    std::cout << "-----------" << std::endl;
   }
 
   //TODO save as function

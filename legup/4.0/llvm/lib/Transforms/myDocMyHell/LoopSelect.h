@@ -33,11 +33,17 @@ void initializeLoopSelectPass(llvm::PassRegistry &);
 
 namespace {
 
+//string = name and operand, min, and max
+using Constraint=std::tuple<std::string, int, int>;
+
 typedef struct loopData{
   llvm::Loop *loop = NULL;
+  //llvm::Loop *outmostLoop = NULL;
+  //llvm::Loop *parentLoop = NULL;
   std::string label;
   std::map<std::string, int> nFUs;
   std::vector<loopData*> subLoopsData;
+  std::vector<Constraint*> TCLConstraints;
 }LoopData;
 
 class LoopSelect : public ModulePass {
@@ -63,18 +69,17 @@ class LoopSelect : public ModulePass {
     std::map<llvm::Loop*, LoopData*> loopDataMap;
     std::map<llvm::BasicBlock*, bool> bbMap;
 
-    //string = name and operand, min, and max
-    using Constraint=std::tuple<std::string, int, int>;
-    using ConstraintVector=std::vector<Constraint*>;
-    std::map<llvm::Loop*, ConstraintVector*> TCLConstraintsMap;
-
     void clean();
-    void clearTCLConstraintsMAP();
+    void clearLoopData(LoopData *ld);
     void analyzeLoops();
     LoopData * getLoopBasicMetrics(llvm::Loop * loop);
-    void addRAMConstraints(llvm::Loop *loop);
-    void addResourcesConstraints(llvm::Loop *loop);
+
+    void addRAMConstraints(LoopData *ld);
+    void addResourcesConstraints(LoopData *ld);
+    void addPipelineConstraint(LoopData *ld);
+    std::vector<Constraint*> parseConstraints(LoopData *ld);
     void createTCLConfigs(llvm::Loop *loop);
+
     void saveLoopAsFunction(llvm::Loop *loop);
     void printLoopsData();
     void printLoopData(LoopData* loop);

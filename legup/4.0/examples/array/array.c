@@ -28,8 +28,9 @@ int main() {
 
     loop1: for (a = 0; a < 2; a++) {
         loop2: for (b = 0; b < 2; b++) {
+            result = array[a*2+b*2+c]/array[a*2+b*2+c];
             loop3: for (c = 0; c < 3; c++) {
-                result += array[a*2+b*2+c];
+                result += array[a*2+b*2+c]+array[a*3+b*2+c];
             }
         }
     }
