@@ -1,7 +1,0 @@
-set_resource_constraint signed_add_32 1
-set_resource_constraint signed_multiply_32 1
-set_resource_constraint signed_add_64 1
-set_resource_constraint divide 1
-
-set_accelerator_function "mt"
-set_accelerator_function "mt2"
