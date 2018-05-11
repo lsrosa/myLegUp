@@ -545,47 +545,6 @@ FiniteStateMachine *SchedulerMapping::createFSM(Function *F,
     return fsm;
 }
 
-// leandro - this is for debug purposes
-bool SchedulerMapping::compare(SchedulerMapping *m2) {
-    SchedulerMapping *m1 = this;
-
-    std::cout << "\ncomparing insts" << '\n';
-    assert(m1->map.size() == m2->map.size());
-
-    for (DenseMap<InstructionNode *, unsigned>::iterator
-             m1i = m1->map.begin(),
-             m1e = m1->map.end(), m2i = m2->map.begin(), m2e = m2->map.end();
-         (m1i != m1e) && (m2i != m2e); ++m1i, ++m2i) {
-        if ((m1i->second != m2i->second) || (m1i->first != m2i->first)) {
-            std::cout << getLabel(m1i->first->getInst()) << " and "
-                      << m1i->second << " -- against -- "
-                      << getLabel(m2i->first->getInst()) << " and "
-                      << m2i->second << '\n';
-            m1i->first->getInst()->dump();
-            m2i->first->getInst()->dump();
-            return false;
-        }
-    }
-
-    std::cout << "\ncomparing BBs" << '\n';
-    assert(m1->stateNum.size() == m2->stateNum.size());
-
-    for (DenseMap<BasicBlock *, unsigned>::iterator m1i = m1->stateNum.begin(),
-                                                    m1e = m1->stateNum.end(),
-                                                    m2i = m2->stateNum.begin(),
-                                                    m2e = m2->stateNum.end();
-         (m1i != m1e) && (m2i != m2e); ++m1i, ++m2i) {
-        if ((m1i->second != m2i->second) || (m1i->first != m2i->first)) {
-            std::cout << getLabel(m1i->first) << " and " << m1i->second
-                      << " -- against -- " << getLabel(m2i->first) << " and "
-                      << m2i->second << '\n';
-            return false;
-        }
-    }
-
-    return true;
-}
-
 void printNodeLabel(raw_ostream &out, InstructionNode *I) {
     out << *I->getInst();
 }

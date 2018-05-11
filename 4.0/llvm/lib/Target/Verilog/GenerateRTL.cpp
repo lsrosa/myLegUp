@@ -40,11 +40,6 @@ using namespace legup;
 
 namespace legup {
 
-//leandro - methods to exposed sched info
-double GenerateRTL::getSchedMappingTime(){return sched->mappingtime;}
-double GenerateRTL::getSchedSolveTime(){return sched->solvetime;}
-double GenerateRTL::getSchedFSMTime(){return sched->fsmtime;}
-
 void GenerateRTL::updateOperationUsage(
 		std::map<std::string, int> &_OperationUsage) {
 	for (std::map<std::string, int>::iterator i =
@@ -589,7 +584,7 @@ RTLWidth GenerateRTL::getOutSizeShared(Instruction *instr) {
 // Instantiate a pipelined divider module
 RTLSignal *GenerateRTL::createDivFU(Instruction *instr, RTLSignal *op0, RTLSignal *op1) {
 
-
+  
   std::set<Instruction *>::iterator instIter;
 
   RTLModule *d;
@@ -649,7 +644,7 @@ RTLSignal *GenerateRTL::createDivFU(Instruction *instr, RTLSignal *op0, RTLSigna
 
   RTLSignal *unused = rtl->addWire(verilogName(instr) + "_unused",
 				   RTLWidth(instr->getType()));
-
+  
   if (isDiv(instr)) {
     d->addOut(nm["quotient"])->connect(FU);
     d->addOut(nm["remain"])->connect(unused);
@@ -693,7 +688,7 @@ RTLSignal *GenerateRTL::createDivFU(Instruction *instr, RTLSignal *op0, RTLSigna
 
   // numerator/denominator sizes must be the same in LLVM
   std::string sign = "\"UNSIGNED\"";
-  if (instr->getOpcode() == Instruction::SDiv || instr->getOpcode() == Instruction::SRem)
+  if (instr->getOpcode() == Instruction::SDiv || instr->getOpcode() == Instruction::SRem) 
     sign = "\"SIGNED\"";
 
   //Get the size of the numerator
@@ -728,7 +723,7 @@ RTLSignal *GenerateRTL::createDivFU(Instruction *instr, RTLSignal *op0, RTLSigna
     }
     size = min(size, minSize);
   }
-
+  
   d->addIn(nm["denom"], RTLWidth(size))->connect(op1);
 
   if (isDiv(instr))
@@ -748,11 +743,11 @@ RTLSignal *GenerateRTL::createDivFU(Instruction *instr, RTLSignal *op0, RTLSigna
   }
 
   RTLWidth w = getOutSizeShared(instr);
-
+  
   RTLSignal *FUout = rtl->addWire("lpm_divide_" + verilogName(instr) + "_out",w);
   FUout->connect(FU);
   return FUout;
-}
+}  
 
 RTLSignal *GenerateRTL::createFPFU(Instruction *instr, RTLSignal *op0,
 		RTLSignal *op1, unsigned opCode) {
@@ -1045,11 +1040,11 @@ RTLSignal *GenerateRTL::createFU(Instruction *instr, RTLSignal *op0,
 
 	RTLSignal *FUoutput = FUop;
 
-	//        FUop->setWidth(RTLWidth(MBW->getMinBitwidth(instr)));
-	//        FUop->setNativeWidth(RTLWidth(instr->getType()));
-	//        if(MBW->isSigned(instr)) FUop->setSigned(true);
-	//    if(MBW->bitwidthIsKnown(instr) && MBW->isSigned(instr)) FUop->getWidth().setSigned(true);
-	//    FUop->getWidth().setSigned(MBW->isSigned(instr));
+//        FUop->setWidth(RTLWidth(MBW->getMinBitwidth(instr)));
+//        FUop->setNativeWidth(RTLWidth(instr->getType()));
+//        if(MBW->isSigned(instr)) FUop->setSigned(true);
+//    if(MBW->bitwidthIsKnown(instr) && MBW->isSigned(instr)) FUop->getWidth().setSigned(true);
+//    FUop->getWidth().setSigned(MBW->isSigned(instr));
 
 	int latency = Scheduler::getNumInstructionCycles(instr);
 	if (latency > 0 && !LEGUP_CONFIG->does_flow_support_multicycle_paths()) {
@@ -1329,9 +1324,9 @@ void GenerateRTL::visitLoadInst(LoadInst &I) {
 		int ignore = (bytes == 0) ? 0 : (int) log2(bytes);
 		wordAddr->setOperand(1, new RTLConst(utostr(ignore), RTLWidth(3)));
 
-		connectSignalToDriverInState(rtl->find(name + "_address_" + port),
+		connectSignalToDriverInState(rtl->find(name + "_address_" + port), 
                 wordAddr, this->state, instr);
-		connectSignalToDriverInState(rtl->find(name + "_write_enable_" + port),
+		connectSignalToDriverInState(rtl->find(name + "_write_enable_" + port), 
                 ZERO, this->state, instr);
 		connectSignalToDriverInState(loadWire, rtl->find(name + "_out_" + port),
                 endState, instr);
@@ -1340,8 +1335,8 @@ void GenerateRTL::visitLoadInst(LoadInst &I) {
 		loadStoreCommon(&I, addr);
         RTLSignal *memOut;
 
-        // for parallel function
-        // readdata needs to be taken from stored register
+        // for parallel function 
+        // readdata needs to be taken from stored register        
         bool isParallelFunction = Fp->hasFnAttribute("totalNumThreads");
         if (isParallelFunction) {
 		    memOut = rtl->find("memory_controller_out_stored_on_datavalid_" + port);
@@ -1581,7 +1576,7 @@ void GenerateRTL::createMemoryReaddataLogicForParallelInstance(RTLSignal *gnt,
 			memRead);
 
 	RTLSignal *wait, *memoryControllerOut;
-	// choose the correct memory controller signal depending on
+	// choose the correct memory controller signal depending on 
     // whether this function uses Pthreads or not
 	if (usesPthreads) {
 		wait = rtl->find("memory_controller_waitrequest_arbiter");
@@ -1590,13 +1585,13 @@ void GenerateRTL::createMemoryReaddataLogicForParallelInstance(RTLSignal *gnt,
 		wait = rtl->find("memory_controller_waitrequest");
 		memoryControllerOut = rtl->find("memory_controller_out" + postfix);
 	}
-
+	
     RTLSignal *reset;
 	reset = rtl->find("reset");
 	RTLOp *notWait = rtl->addOp(RTLOp::Not)->setOperands(wait);
 
     // this signal is high one state after the read is granted
-    dataReady0->addCondition(reset, ZERO);
+    dataReady0->addCondition(reset, ZERO);    
     dataReady0->addCondition(notWait, memReadGranted);
 
     // this signal is high when the data read is ready to be stored
@@ -1609,7 +1604,7 @@ void GenerateRTL::createMemoryReaddataLogicForParallelInstance(RTLSignal *gnt,
         // hence this
 	    dataReady1->addCondition(notWait, dataReady0);
     } else {
-        // for pure HW flow, the data is available on
+        // for pure HW flow, the data is available on 
         // the next clock edge after dataReady0
     	dataReady1->connect(dataReady0);
     }
@@ -1624,9 +1619,9 @@ void GenerateRTL::createMemoryReaddataLogicForParallelInstance(RTLSignal *gnt,
     // retain this data to avoid inferring a latch
     out->setDefaultDriver(out_reg);
     out->addCondition(
-            dataReady1,
+            dataReady1, 
             memoryControllerOut);
-
+    
     // register used to avoid inferring a latch
     // stores the readdata on posedge clk
     out_reg->addCondition(reset,
@@ -2352,7 +2347,7 @@ void GenerateRTL::createPthreadSignals(CallInst *CI) {
 void GenerateRTL::connectFunctionMemorySignals(
     State *callState, CallInst *CI, std::string name, std::string postfix,
     const int numThreads, const std::string functionType, const int loopIndex) {
-			//CI->dump();
+
     std::string instanceName = getInstanceName(CI, loopIndex);
 
     // creating memory_controller signals
@@ -2484,7 +2479,7 @@ void GenerateRTL::createFunctionPropagatingSignals(
 			ps->getPropagatingSignalsForFunctionNamed(funcName);
 
     stripInvalidCharacters(funcName);
-
+        
 	// Iterate through propagating signals and add wires and states for them
 	//
     for (std::vector<PropagatingSignal *>::iterator si =
@@ -2654,7 +2649,8 @@ void GenerateRTL::generateAllLoopPipelines() {
 	pipeRTLFile() << "Found " << this->pipelinedBBs.size()
 			<< " loops to pipeline\n";
 
-	for (std::set<BasicBlock *>::iterator BB = this->pipelinedBBs.begin(), be = this->pipelinedBBs.end(); BB != be; ++BB) {
+	for (std::set<BasicBlock *>::iterator BB = this->pipelinedBBs.begin(), be =
+			this->pipelinedBBs.end(); BB != be; ++BB) {
 		generateLoopPipeline(*BB);
 	}
 
@@ -2812,7 +2808,7 @@ void GenerateRTL::generateLoopPipeline(BasicBlock *BB) {
 	int II = getMetadataInt(TI, "legup.II");
 	int totalTime = getMetadataInt(TI, "legup.totalTime");
 	int maxStage = getMetadataInt(TI, "legup.maxStage");
-  //std::string label = getMetadataStr(TI, "legup.label");
+//    std::string label = getMetadataStr(TI, "legup.label");
 	std::string label = getPipelineLabel(BB);
 
 	// generate valid bits
@@ -2839,8 +2835,9 @@ void GenerateRTL::generateLoopPipeline(BasicBlock *BB) {
 
 	// begin = (start & ~started & ~waitrequest)
 	RTLOp *not_started = rtl->addOp(RTLOp::Not)->setOperands(started);
-	RTLOp *begin = rtl->addOp(RTLOp::And)->setOperands(waitrequest, rtl->addOp(RTLOp::And)->setOperands(start, not_started));
-	//RTLOp *begin = rtl->addOp(RTLOp::And)->setOperands(start, not_started);
+	RTLOp *begin = rtl->addOp(RTLOp::And)->setOperands(waitrequest,
+			rtl->addOp(RTLOp::And)->setOperands(start, not_started));
+//    RTLOp *begin = rtl->addOp(RTLOp::And)->setOperands(start, not_started);
 
 	started->addCondition(begin, ONE);
 
@@ -2855,7 +2852,7 @@ void GenerateRTL::generateLoopPipeline(BasicBlock *BB) {
 		RTLOp *eq = rtl->addOp(RTLOp::And)->setOperands(waitrequest,
 				rtl->addOp(RTLOp::EQ)->setOperands(ii_state,
 						new RTLConst(utostr(i - 1), ii_state_width)));
-						//RTLOp *eq = rtl->addOp(RTLOp::EQ)->setOperands( ii_state, new
+//        RTLOp *eq = rtl->addOp(RTLOp::EQ)->setOperands( ii_state, new
 		//              RTLConst(utostr(i-1), ii_state_width));
 		int next = (i == II) ? 0 : i;
 		ii_state->addCondition(eq, new RTLConst(utostr(next), ii_state_width));
@@ -2902,12 +2899,12 @@ void GenerateRTL::generateLoopPipeline(BasicBlock *BB) {
 	RTLOp *lastII = rtl->addOp(RTLOp::And)->setOperands(waitrequest,
 			rtl->addOp(RTLOp::EQ)->setOperands(ii_state,
 					new RTLConst(utostr(II - 1), ii_state_width)));
-					//    RTLOp *lastII = rtl->addOp(RTLOp::EQ)->setOperands( ii_state, new
-					//            RTLConst(utostr(II-1), ii_state_width));
+//    RTLOp *lastII = rtl->addOp(RTLOp::EQ)->setOperands( ii_state, new
+//            RTLConst(utostr(II-1), ii_state_width));
 	RTLOp *incrementCond = rtl->addOp(RTLOp::And)->setOperands(waitrequest,
 			rtl->addOp(RTLOp::And)->setOperands(lastII, validBits.at(II - 1)));
-			//    RTLOp *incrementCond = rtl->addOp(RTLOp::And)->setOperands( lastII,
-			//            validBits.at(II-1));
+//    RTLOp *incrementCond = rtl->addOp(RTLOp::And)->setOperands( lastII,
+//            validBits.at(II-1));
 	RTLOp *incrementInduction = rtl->addOp(RTLOp::Add)->setOperands(
 			inductionVarStages[0], ONE);
 	// else if (ii_state == 2 & valid_bit_2 == 1)
@@ -2961,13 +2958,13 @@ void GenerateRTL::generateLoopPipeline(BasicBlock *BB) {
 	RTLSignal *not_epilogue = rtl->addOp(RTLOp::Not)->setOperands(epilogue);
 	RTLSignal *done1 = rtl->addOp(RTLOp::And)->setOperands(started,
 			not_epilogue);
-			//    RTLSignal *done2 = rtl->addOp(RTLOp::And)->setOperands(waitrequest,
-	//		rtl->addOp(RTLOp::And)->setOperands(done1, not_exitcond));
+//    RTLSignal *done2 = rtl->addOp(RTLOp::And)->setOperands(waitrequest, 
+//		rtl->addOp(RTLOp::And)->setOperands(done1, not_exitcond));
 	RTLSignal *done2 = rtl->addOp(RTLOp::And)->setOperands(done1, not_exitcond);
 	RTLSignal *valid = rtl->addOp(RTLOp::Or)->setOperands(begin, done2);
-	//    validBits.at(0)->connect(valid);
+//    validBits.at(0)->connect(valid);
 	//validBits.at(0)->addCondition(rtl->addOp(RTLOp::EQ)->setOperands(rtl->find("reset"), ZERO), valid);
-	//    validBits.at(0)->setDefaultDriver(valid);
+//    validBits.at(0)->setDefaultDriver(valid);
 	validBits.at(0)->addCondition(waitrequest, valid);
 	validBits.at(0)->addCondition(rtl->find("reset"), ZERO); //reset needs to added after to avaid X assertion
 
@@ -4158,7 +4155,7 @@ void GenerateRTL::shareRegistersForFU(std::set<Instruction *> &Instructions,
 					independent = false;
 				}
 			}
-			//            errs() << "Independent?:"<<utostr(independent)<<"\n";
+//            errs() << "Independent?:"<<utostr(independent)<<"\n";
 			if (independent) {
 				isSharable = true;
 				//errs() << "Shared output: " << *sharedRegInstr << "\n";
@@ -4183,13 +4180,13 @@ void GenerateRTL::shareRegistersForFU(std::set<Instruction *> &Instructions,
 				newWidth = min(newWidth,
 						sharedRegInstr->getType()->getPrimitiveSizeInBits());
 				//              errs() << "Setting sharedReg to width:"<<utostr(newWidth)<<"\n";
-				//                sharedReg->setWidth(RTLWidth(newWidth));
+//                sharedReg->setWidth(RTLWidth(newWidth));
 				sharedReg->setWidth(
 						RTLWidth(newWidth,
 								sharedReg->getWidth().numNativeBits(rtl, alloc),
 								newIsSigned));
 				//               errs() << "Setting sharedReg to signed:"<<utostr(newIsSigned)<<"\n";
-				//                sharedReg->getWidth().setSigned(newIsSigned);
+//                sharedReg->getWidth().setSigned(newIsSigned);
 
                 // now make sure the shared register is active at the
                 // correct times
@@ -4208,7 +4205,7 @@ void GenerateRTL::shareRegistersForFU(std::set<Instruction *> &Instructions,
 			}
 		}
 		if (!isSharable) {
-			// errs()<<"Creating a new shared register\n";
+//            errs()<<"Creating a new shared register\n";
 			// create a new shared register
 			registers[instr].insert(instr);
 		}
@@ -4814,7 +4811,7 @@ void GenerateRTL::generateVariableDeclarationsSignalsMemory(
 
     const RTLSignal *defaultDriver = out->getDefaultDriver();
     if (!defaultDriver) {
-        out->setDefaultDriver(ZERO);
+        out->setDefaultDriver(ZERO);        
     }
 
 	t->addOut("memory_controller_enable" + postfix)->connect(en);
@@ -5239,11 +5236,11 @@ GenerateRTL::generateRoundRobinArbiterDeclaration(const std::string fctName,
 	//t->addIn("rst_an")->connect(rtl->find("reset"));
 	t->addIn("rst_an")->connect(
 			rtl->addOp(RTLOp::Not)->setOperands(rtl->find("reset")));
-	//    if (LEGUP_CONFIG->isHybridFlow())
+//    if (LEGUP_CONFIG->isHybridFlow())
 	t->addIn("waitrequest")->connect(
 			rtl->find("memory_controller_waitrequest"));
-			//    else
-			//        t->addIn("waitrequest")->connect(ZERO);
+//    else
+//        t->addIn("waitrequest")->connect(ZERO);
 
 	//need to concatenate memory_controller_enable signals from each parallel function instance
 	//and connect to the request signal
@@ -5275,9 +5272,9 @@ GenerateRTL::generateRoundRobinArbiterDeclaration(const std::string fctName,
 		//if (LEGUP_CONFIG->numAccelerators() > 0) {
 		if (LEGUP_CONFIG->isHybridFlow()) {
 			req = en;
-			//            gnt_stall = rtl->find("gnt_stall" + instancenum);
-			//            req = rtl->addop(rtlop::and)->setoperands(en,
-			//                    rtl->addop(rtlop::not)->setoperands(gnt_stall));
+//            gnt_stall = rtl->find("gnt_stall" + instancenum);
+//            req = rtl->addop(rtlop::and)->setoperands(en,
+//                    rtl->addop(rtlop::not)->setoperands(gnt_stall)); 
 		} else {
 			req = en;
 		}
@@ -5505,10 +5502,10 @@ RTLSignal *GenerateRTL::getOp(State *state, Value *op, int &value) {
                 // add an offset to the tag
                 RTLSignal *tag;
 		        RTLSignal *originalTag = rtl->addConst("`" + ram->getTagAddrName(),
-						RTLWidth("`MEMORY_CONTROLLER_ADDR_SIZE-1"));
+						RTLWidth("`MEMORY_CONTROLLER_ADDR_SIZE-1"));                
                 if (ram->getNumInstances() > 1) {
                     tag = rtl->addOp(RTLOp::Add)->setOperands(
-                            originalTag,
+                            originalTag, 
                             rtl->addConst("tag_addr_offset",
                                 RTLWidth("`MEMORY_CONTROLLER_ADDR_SIZE-1")));
                 } else {
@@ -5718,14 +5715,14 @@ void GenerateRTL::generateDatapath() {
 			waitReqLow->setOperand(0,
 					rtl->find("memory_controller_waitrequest"));
 			waitReqLow->setOperand(1, ZERO);
-			RTLOp *waitReq = rtl->addOp(RTLOp::And);
+			RTLOp *waitReq = rtl->addOp(RTLOp::And);            
 			waitReq->setOperand(0, inState);
 			waitReq->setOperand(1, waitReqHigh);
 
 			transition = rtl->addOp(RTLOp::And);
 			transition->setOperand(0, inState);
 			transition->setOperand(1, waitReqLow);
-
+			
             curState->addCondition(waitReq, getStateSignal(state));
 
 		} else {
@@ -5992,9 +5989,9 @@ void GenerateRTL::createRTLSignalsForLocalRams() {
 }
 
 // this function is used to create memory_controller_storage_port signal
-// inside a parallel function, which is used to store the data from memory
+// inside a parallel function, which is used to store the data from memory 
 // in the correct cycle (two state after memory read)
-// For parallel functions, loads are taken from
+// For parallel functions, loads are taken from 
 // memory_controller_storage_port signal instead of the regular
 // memory_controller_out_port signal
 void GenerateRTL::createMemoryReaddataStorageForParallelFunction() {
@@ -6003,27 +6000,27 @@ void GenerateRTL::createMemoryReaddataStorageForParallelFunction() {
     // the data is valid in the first cycle
     // of the finish state of the load
     // i.e two states after load when memory access latency = 2
-    RTLSignal *firstStateAfterMemoryRead = rtl->addReg("first_state_after_memory_read");
+    RTLSignal *firstStateAfterMemoryRead = rtl->addReg("first_state_after_memory_read");    
     RTLSignal *secondStateAfterMemoryRead = rtl->addReg("second_state_after_memory_read");
     RTLSignal *wait = rtl->find("memory_controller_waitrequest");
 
     // invert the waitrequest and register it
     // this gives the signal that is asserted high
     // in the very first cycle of a state
-	RTLOp *notWait = rtl->addOp(RTLOp::Not)->setOperands(wait);
+	RTLOp *notWait = rtl->addOp(RTLOp::Not)->setOperands(wait);    
     RTLSignal *notWait_reg = rtl->addReg("memory_controller_waitrequest_inverted_reg");
     notWait_reg->connect(notWait);
 
     // port A read (but not write)
     RTLSignal *memRead_portA = rtl->addOp(RTLOp::And)->setOperands(
-        rtl->find("memory_controller_enable_a"),
+        rtl->find("memory_controller_enable_a"), 
         rtl->addOp(RTLOp::Not)->setOperands(
             rtl->find("memory_controller_write_enable_a")));
     // port B read (but not write)
     RTLSignal *memRead_portB = rtl->addOp(RTLOp::And)->setOperands(
-        rtl->find("memory_controller_enable_b"),
+        rtl->find("memory_controller_enable_b"), 
         rtl->addOp(RTLOp::Not)->setOperands(
-            rtl->find("memory_controller_write_enable_b")));
+            rtl->find("memory_controller_write_enable_b")));   
 
     // when there is a read (port A read or port B read)
     RTLSignal *memRead = rtl->addOp(RTLOp::Or)->setOperands(
@@ -6034,14 +6031,14 @@ void GenerateRTL::createMemoryReaddataStorageForParallelFunction() {
     // in the first state after memory access
     RTLSignal *reset = rtl->find("reset");
 	firstStateAfterMemoryRead->addCondition(reset, ZERO);
-	firstStateAfterMemoryRead->addCondition(notWait, memRead);
+	firstStateAfterMemoryRead->addCondition(notWait, memRead);        
     // this signal is asserted high
     // in the second state after memory access
 	secondStateAfterMemoryRead->addCondition(reset, ZERO);
-	secondStateAfterMemoryRead->addCondition(notWait, firstStateAfterMemoryRead);
+	secondStateAfterMemoryRead->addCondition(notWait, firstStateAfterMemoryRead);    
 
     // create a memory readdata valid signal
-    // which is asserted in the first cycle of
+    // which is asserted in the first cycle of 
     // two states after a memory read
     RTLSignal *memReaddataValid = rtl->addWire("memory_readdata_valid");
     memReaddataValid = rtl->addOp(RTLOp::And)->setOperands(
@@ -6052,7 +6049,7 @@ void GenerateRTL::createMemoryReaddataStorageForParallelFunction() {
 }
 
 
-void GenerateRTL::createMemoryReaddataStorageForPort(RTLSignal *memReaddataValid,
+void GenerateRTL::createMemoryReaddataStorageForPort(RTLSignal *memReaddataValid, 
         RTLSignal *secondStateAfterMemoryRead, std::string postfix) {
 
     RTLSignal *reset = rtl->find("reset");
@@ -6077,7 +6074,7 @@ void GenerateRTL::createMemoryReaddataStorageForPort(RTLSignal *memReaddataValid
     memReaddata_stored->addCondition(memReaddataValid, memReaddata);
 
     // registered value created to retain valid data
-    memReaddata_stored_reg->addCondition(reset,
+    memReaddata_stored_reg->addCondition(reset, 
             rtl->addConst("0", RTLWidth("`MEMORY_CONTROLLER_DATA_SIZE-1")));
     memReaddata_stored_reg->addCondition(memReaddataValid, memReaddata);
 }

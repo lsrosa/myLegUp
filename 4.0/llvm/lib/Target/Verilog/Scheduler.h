@@ -25,9 +25,6 @@ namespace legup {
 /// @brief Legup Scheduler Pass interface
 class Scheduler {
   public:
-    double mappingtime=0, fsmtime=0, solvetime=0;
-    double ticmt, tocmt, ticft, tocft, ticst, tocst;
-
     Scheduler() : mapping(0) {}
     virtual ~Scheduler() {
         if (mapping)
@@ -44,15 +41,10 @@ class Scheduler {
 
     // shedule the function and create the fsm
     void schedule(Function *F, SchedulerDAG *dag) {
-
         mapping = createMapping(F, dag);
 
-        //leandro - measurig time for creating a FSM
         assert(mapping);
-        ticft = clock();
         fsm[F] = mapping->createFSM(F, dag);
-        tocft = clock();
-        fsmtime += (double)(tocft - ticft)/CLOCKS_PER_SEC;
     }
 
     // create the instruction -> cycle mapping

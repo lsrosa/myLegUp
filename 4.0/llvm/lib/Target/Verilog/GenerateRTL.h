@@ -66,11 +66,6 @@ class DebugType;
 /// @brief Legup Hardware Module Representation
 class GenerateRTL : public InstVisitor<GenerateRTL> {
 public:
-    //leandro - methods to make information of the scheduler public
-    double getSchedMappingTime();
-    double getSchedSolveTime();
-    double getSchedFSMTime();
-
     GenerateRTL(Allocation *alloc, Function* F) :
         sched(0), binding(0), fsm(0), bindingFSM(0),  alloc(alloc), Fp(F),
         rtl(0),  mc_force_wire_operand(false) {
@@ -83,7 +78,7 @@ public:
     RTLModule* generateRTL(MinimizeBitwidth *MBW);
 
     Function *getFunction() { return Fp; }
-
+    
     //NC changes
     RTLModule* getRTL() {return rtl;}
 
@@ -96,7 +91,7 @@ public:
     void visitInvokeInst(InvokeInst &I) {
       llvm_unreachable("Lowerinvoke pass didn't work!");
     }
-
+    
     // TODO: had to change this for LLVM 3.4 update. TerminatorInst??
     //void visitUnwindInst(UnwindInst &I) {
     void visitUnwindInst(TerminatorInst &I) {
@@ -163,10 +158,10 @@ public:
 
     FiniteStateMachine *getBindingFSM() { return bindingFSM; }
     FiniteStateMachine *getFSM() { return fsm; }
-
+    
     //NC changes...
-    std::string getVerilogName(const Value *val){return verilogName(*val);}
-    std::vector<StateStoreInfo*> statesStoreMapping;
+    std::string getVerilogName(const Value *val){return verilogName(*val);}   
+    std::vector<StateStoreInfo*> statesStoreMapping;    
 
 // Combinational path of instructions between two registers
     typedef struct path {
@@ -177,7 +172,7 @@ public:
         std::vector<Instruction *> instructions;
         //delay of each instruction
         std::vector<float> instrDelay;
-        Function *func;
+        Function *func;        
     } PATH;
 
     struct comp{
@@ -341,7 +336,7 @@ public:
     RTLSignal *getByteOffset(State *state, Value *Op, gep_type_iterator GTI);
     RTLSignal *getGEPOffset(State *state, User *GEP);
     void functionHandshaking(FiniteStateMachine *fsm);
-
+    
     //NC changes...
     RTLSignal *getOp(State *state, Value *op, int &value);
     RTLSignal *getGEP(State *state, User *GEP, int &value);
@@ -483,7 +478,7 @@ public:
     list<GenerateRTL::PATH*> func_path;
     int getNumSuccInState (Instruction *I, FiniteStateMachine *fsm);
     bool isStartOfPath (SchedulerDAG *dag, Instruction *I, FiniteStateMachine *fsm);
-    void timingAnalysis(SchedulerDAG* dag);
+    void timingAnalysis(SchedulerDAG* dag);    
     void addToOverallPathList ();
     void calculateDelay(SchedulerDAG *dag, Instruction *Curr, float partialDelay, State *startS, FiniteStateMachine *fsm, std::list<PATH*> *func_path, std::vector<Instruction *> instr, std::vector<float> instrDelay);
     void printSchedulingInfo();
@@ -492,11 +487,11 @@ public:
     typedef std::pair<std::string, std::string>         src_dst_pair_t;
     typedef std::vector< Instruction* >                 path_t;
     typedef std::pair<path_t, unsigned>                 path_latency_pair_t;
-    typedef std::multimap< src_dst_pair_t,
+    typedef std::multimap< src_dst_pair_t, 
                            path_latency_pair_t >        src_dst_pair_to_path_map_t;
     typedef std::map< src_dst_pair_t, unsigned >        src_dst_pair_to_min_slack_t;
     typedef std::set< src_dst_pair_t >                  duplicate_src_dst_pairs_t;
-    typedef std::set< std::string >                     signals_to_keep_t;
+    typedef std::set< std::string >                     signals_to_keep_t;    
     void printSDCMultiCycleConstraints();
     std::string get_source_register_name(Instruction *source);
     std::string get_dest_register_name(Instruction *dest);
@@ -509,14 +504,14 @@ public:
         std::multimap< std::vector <Instruction*>, Value* > & paths_with_arg_srcs);
     std::string make_multicycle_constraint(std::string src, std::string dst, int multicycle_multiplier,
         std::string type, std::vector<Instruction*> intermediate_path);
-    void adjust_multicycle_multiplier_for_specific_signals(std::string dst_name,
+    void adjust_multicycle_multiplier_for_specific_signals(std::string dst_name, 
         int & multicycle_multiplier, std::vector<Instruction*> path);
     void add_multicycle_constraint_for_path_with_custom_root(std::vector<Instruction*> path,
-        std::vector<string> & sdc_constraints, std::vector<string> & qsf_constraints,
-        std::set< std::pair<Instruction*,Instruction*> > keep_reg_pairs,
-        std::set<Instruction*> drivers_with_reg_to_remove,
+        std::vector<string> & sdc_constraints, std::vector<string> & qsf_constraints, 
+        std::set< std::pair<Instruction*,Instruction*> > keep_reg_pairs, 
+        std::set<Instruction*> drivers_with_reg_to_remove, 
         std::multimap< std::vector <Instruction*>, Value* > & paths_with_arg_srcs, RTLSignal *root_signal);
-    void write_multicycle_constraint_to_vectors(std::string src_name, std::string dst_name, unsigned multicycle_multiplier,
+    void write_multicycle_constraint_to_vectors(std::string src_name, std::string dst_name, unsigned multicycle_multiplier, 
         std::vector<std::string> & sdc_constraints, std::vector<std::string> & qsf_constraints, std::vector<Instruction*> intermediate_path);
     void ipath_to_bbpath(std::vector<Instruction*> & path, std::vector<BasicBlock*> & bb_path);
     int get_dest_state(Instruction *dest);
@@ -538,11 +533,11 @@ public:
         std::set< std::pair<Instruction*,Instruction*> > & keep_reg_pairs,
     std::map<Instruction*, int> & num_unfinished_preds);
     void create_multicycle_paths_from_root(Instruction* root);
-    void signal_dfs_visit_pred(Instruction * current,
+    void signal_dfs_visit_pred(Instruction * current, 
         Instruction *pred, std::vector <Instruction*> & cur_path,
         std::vector< std::vector<Instruction*> > & paths,
         bool revisiting_pred, std::stack<Instruction*> & frontier,
-        std::set<Instruction*> & visited,
+        std::set<Instruction*> & visited, 
         std::map<Instruction*, int> & num_unfinished_preds,
         std::set< std::pair<Instruction*,Instruction*> > & keep_reg_pairs,
         std::multimap<Instruction*,Instruction*> & remove_reg_pairs,
@@ -651,7 +646,7 @@ public:
     // all pairs of Graph objects to share
     std::map<Graph*, Graph*> GraphPairs;
 
-    // a set of all instructions in Graphs, used in visitInstruction
+    // a set of all instructions in Graphs, used in visitInstruction 
     std::set<Instruction*> InstructionsInGraphs;
 
     std::map<std::string, std::set<Instruction *> > instructionsAssignedToFU;
@@ -664,7 +659,7 @@ public:
     bool MULTIPUMPING;
     bool USE_MB;
 
-    // true if this function forks pthreads
+    // true if this function forks pthreads    
     bool usesPthreads;
     std::vector<Function*> parallelFunctions;
 
@@ -686,11 +681,11 @@ public:
 
     std::set<BasicBlock *> pipelinedBBs;
     SchedulerDAG *dag;
-
+    
     // Some multi-cycle path data structures
     bool mc_force_wire_operand;
     // Keep a set of the src,dst pairs which we actually do want to synthesis keep
-    duplicate_src_dst_pairs_t duplicate_src_dst_pairs;
+    duplicate_src_dst_pairs_t duplicate_src_dst_pairs;    
     // Keep a map of every (src,dst) string to its complete path, and the path latency
     src_dst_pair_to_path_map_t src_dst_pair_to_path_map;
     // Keep a map of every (src,dst) string to its minimum latency across all paths

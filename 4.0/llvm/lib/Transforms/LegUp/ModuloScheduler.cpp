@@ -266,31 +266,26 @@ void ModuloScheduler::printModuloReservationTable() {
                                          e = constrainedFuNames.end();
          i != e; ++i) {
         std::string FuName = *i;
-        if (SDCdebug)
-            File() << "FuName: " << FuName << "\n";
+        File() << "FuName: " << FuName << "\n";
 
         for (int i = 0; i < this->II; i++) {
-            if (SDCdebug)
-                File() << "time slot: " << i;
+            File() << "time slot: " << i;
             if (MRTSlotEmpty(i, FuName)) {
-                if (SDCdebug)
-                    File() << " empty\n";
+                File() << " empty\n";
                 continue;
             }
-            if (SDCdebug)
-                File() << "\n";
+            File() << "\n";
             for (int j = 0; j < numIssueSlots(FuName); j++) {
                 // TODO: LLVM 3.5 update: cannot print value if it is NULL so
                 // check it here
                 if (getReservationTable(FuName, j, i) == NULL) {
-                    if (SDCdebug)
-                        File() << "   issue slot: " << j << " instr: "
-                               << "printing a <null> value"
-                               << "\n";
+                    File() << "   issue slot: " << j << " instr: "
+                           << "printing a <null> value"
+                           << "\n";
                 } else {
-                    if (SDCdebug)
-                        File() << "   issue slot: " << j << " instr: "
-                               << *getReservationTable(FuName, j, i) << "\n";
+                    File() << "   issue slot: " << j
+                           << " instr: " << *getReservationTable(FuName, j, i)
+                           << "\n";
                 }
             }
         }
@@ -381,8 +376,7 @@ int ModuloScheduler::distance(Instruction *i, Instruction *j) {
             return 0;
         Value *v = phi->getIncomingValue(index);
         if (v == i) {
-            if (SDCdebug)
-                File() << "distance 1 from: " << *i << " to " << *phi << "\n";
+            File() << "distance 1 from: " << *i << " to " << *phi << "\n";
             return 1;
         }
     }
@@ -397,9 +391,7 @@ int ModuloScheduler::distance(Instruction *i, Instruction *j) {
 
         if (memory_dependence(j, i)) {
             // memory dependency from j -> i (cross-iteration)
-            if (SDCdebug)
-                File() << "distance 1 from memory: " << *j << " to " << *i
-                       << "\n";
+            File() << "distance 1 from memory: " << *j << " to " << *i << "\n";
             return 1;
         }
     }
@@ -427,13 +419,10 @@ void ModuloScheduler::gather_pipeline_stats() {
     }
 
     int numStages = this->maxStage + 1;
-    if (SDCdebug)
-        File() << "Final Pipeline Schedule:\n";
-    if (SDCdebug)
-        File() << "Total pipeline stages: " << numStages << "\n";
+    File() << "Final Pipeline Schedule:\n";
+    File() << "Total pipeline stages: " << numStages << "\n";
     for (int stage = 0; stage < numStages; stage++) {
-        if (SDCdebug)
-            File() << "Stage: " << stage << "\n";
+        File() << "Stage: " << stage << "\n";
         for (int ii = 0; ii < this->II; ii++) {
             int time = this->II * stage + ii;
             for (std::vector<Instruction *>::iterator
@@ -442,15 +431,13 @@ void ModuloScheduler::gather_pipeline_stats() {
                  i != e; ++i) {
                 Instruction *I = *i;
 
-                if (SDCdebug)
-                    File() << "Time: " << schedTime[I]
-                           << " Stage: " << schedStage[I] << " instr: " << *I
-                           << "\n";
+                File() << "Time: " << schedTime[I]
+                       << " Stage: " << schedStage[I] << " instr: " << *I
+                       << "\n";
             }
         }
     }
-    if (SDCdebug)
-        File() << "\n\n";
+    File() << "\n\n";
 }
 
 void ModuloScheduler::pipeline_table_headers(std::stringstream &stage_header,
@@ -527,8 +514,7 @@ void ModuloScheduler::print_pipeline_table() {
     table << "\n";
 
     table.flush();
-    if (SDCdebug)
-        File() << table.str();
+    File() << table.str();
 }
 
 void ModuloScheduler::set_llvm_metadata() {
@@ -588,8 +574,7 @@ void ModuloScheduler::sanityCheckII(int II) {
          ++instr) {
         largestPossibleII += 1; // delay(instr);
     }
-    if (SDCdebug)
-        File() << "largestPossibleII: " << largestPossibleII << "\n";
+    File() << "largestPossibleII: " << largestPossibleII << "\n";
 
     assert(II <= largestPossibleII && "Error: II should never be this large");
 }
@@ -773,8 +758,7 @@ int ModuloScheduler::getCycleRecMII(std::list<Instruction *> &path) {
         if (isa<PHINode>(I)) {
             cycleDelay++;
         }
-        if (SDCdebug)
-            File() << "delay: " << cycleDelay << " I: " << *I << "\n";
+        File() << "delay: " << cycleDelay << " I: " << *I << "\n";
     }
     assert(prev);
     assert(first);
@@ -786,28 +770,22 @@ int ModuloScheduler::getCycleRecMII(std::list<Instruction *> &path) {
         cycleDistance = edgeDistance;
     }
     if (multipleBackEdges) {
-        if (SDCdebug)
-            File() << "More than one back edge -- ignoring\n";
+        File() << "More than one back edge -- ignoring\n";
         return 0;
     }
     assert(cycleDistance);
-    if (SDCdebug)
-        File() << "Total cycle delay: " << cycleDelay << "\n";
-    if (SDCdebug)
-        File() << "Total cycle dependency distance: " << cycleDistance << "\n";
+    File() << "Total cycle delay: " << cycleDelay << "\n";
+    File() << "Total cycle dependency distance: " << cycleDistance << "\n";
     int cycleRecMII = ceil((float)cycleDelay / (float)cycleDistance);
-    if (SDCdebug)
-        File() << "recMII = ceil(delay/distance) = " << cycleRecMII << "\n";
-    if (SDCdebug)
-        File() << "\n";
+    File() << "recMII = ceil(delay/distance) = " << cycleRecMII << "\n";
+    File() << "\n";
 
     return cycleRecMII;
 }
 
 int ModuloScheduler::findLoopRecurrences() {
     printLineBreak();
-    if (SDCdebug)
-        File() << "Finding all Loop Recurrences\n";
+    File() << "Finding all Loop Recurrences\n";
 
     if (LEGUP_CONFIG->getParameterInt("SKIP_ELEM_CYCLES")) {
         return 1;
@@ -815,9 +793,7 @@ int ModuloScheduler::findLoopRecurrences() {
 
     initElementaryCycles();
     EC.solve();
-    if (SDCdebug)
-        File() << "Found " << EC.cycles.size()
-               << " elementary recurrence cycles\n";
+    File() << "Found " << EC.cycles.size() << " elementary recurrence cycles\n";
 
     int overallRecMII = 0;
     int num = 1;
@@ -825,8 +801,7 @@ int ModuloScheduler::findLoopRecurrences() {
                                                      e = EC.cycles.end();
          path != e; ++path) {
 
-        if (SDCdebug)
-            File() << "Recurrence " << num++ << ":\n";
+        File() << "Recurrence " << num++ << ":\n";
 
         int cycleRecMII = getCycleRecMII(*path);
 
@@ -839,10 +814,8 @@ int ModuloScheduler::findLoopRecurrences() {
 
         overallRecMII = std::max(overallRecMII, cycleRecMII);
     }
-    if (SDCdebug)
-        File()
-            << "Overall recMII (max of recMII from all elementary recurrence "
-               "cycles): " << overallRecMII << "\n";
+    File() << "Overall recMII (max of recMII from all elementary recurrence "
+              "cycles): " << overallRecMII << "\n";
     return overallRecMII;
     printLineBreak();
 }
@@ -855,9 +828,8 @@ bool ModuloScheduler::findInductionOffset(Value *offset, RAM *ram,
     int indexOffset = 0;
     if (offset == induction) {
         indexOffset = 0;
-        if (SDCdebug)
-            File() << "Found " << memtype << " to ram " << ram->getName()
-                   << " at index i\n";
+        File() << "Found " << memtype << " to ram " << ram->getName()
+               << " at index i\n";
     } else {
         // looking for something like:
         //      i + <num>
@@ -895,9 +867,8 @@ bool ModuloScheduler::findInductionOffset(Value *offset, RAM *ram,
             return false;
         }
 
-        if (SDCdebug)
-            File() << "Found " << memtype << " to ram " << ram->getName()
-                   << " at index i + " << indexOffset << "\n";
+        File() << "Found " << memtype << " to ram " << ram->getName()
+               << " at index i + " << indexOffset << "\n";
     }
     *indexOffsetPtr = indexOffset;
     return true;
@@ -1030,33 +1001,25 @@ void ModuloScheduler::foundLoopCarriedDependency(int distance,
     Instruction *L = loadAccess.I;
     Instruction *S = storeAccess.I;
 
-    if (SDCdebug)
-        File() << "Found a loop carried dependency:\n";
-    if (SDCdebug)
-        File() << "Distance: " << distance << "\n";
+    File() << "Found a loop carried dependency:\n";
+    File() << "Distance: " << distance << "\n";
     if (storeAccess.type == MEM_ACCESS::InductionOffset &&
         loadAccess.type == MEM_ACCESS::InductionOffset) {
-        if (SDCdebug)
-            File() << "Type: Induction offset\n";
-        if (SDCdebug)
-            File() << "Store to ram: " << storeAccess.ram->getName()
-                   << " at i + " << storeAccess.offset << " I: " << *S << "\n";
-        if (SDCdebug)
-            File() << "Load to ram: " << loadAccess.ram->getName() << " at i + "
-                   << loadAccess.offset << " I: " << *L << "\n";
+        File() << "Type: Induction offset\n";
+        File() << "Store to ram: " << storeAccess.ram->getName() << " at i + "
+               << storeAccess.offset << " I: " << *S << "\n";
+        File() << "Load to ram: " << loadAccess.ram->getName() << " at i + "
+               << loadAccess.offset << " I: " << *L << "\n";
     } else {
         assert(storeAccess.type == MEM_ACCESS::Address &&
                loadAccess.type == MEM_ACCESS::Address);
-        if (SDCdebug)
-            File() << "Type: Same address\n";
-        if (SDCdebug)
-            File() << "Store to ram: " << storeAccess.ram->getName()
-                   << " at GEP: " << getLabel(storeAccess.ptr) << " I: " << *S
-                   << "\n";
-        if (SDCdebug)
-            File() << "Load to ram: " << loadAccess.ram->getName()
-                   << " at GEP: " << getLabel(loadAccess.ptr) << " I: " << *L
-                   << "\n";
+        File() << "Type: Same address\n";
+        File() << "Store to ram: " << storeAccess.ram->getName()
+               << " at GEP: " << getLabel(storeAccess.ptr) << " I: " << *S
+               << "\n";
+        File() << "Load to ram: " << loadAccess.ram->getName()
+               << " at GEP: " << getLabel(loadAccess.ptr) << " I: " << *L
+               << "\n";
     }
     localMemDistances[S][L] = distance;
 
@@ -1328,17 +1291,16 @@ bool ModuloScheduler::restructureBinaryOperation(Instruction *curOp,
     // fanout
     curOp->replaceAllUsesWith(newCurOp);
 
-    if (SDCdebug)
-        File() << "Associative Restructuring:\n"
-               << "curOp: " << *curOp << "\n"
-               << "curOp = (lateParent + earlyParent) + early\n"
-               << "      = lateParent + (earlyParent + early)\n"
-               << "lateParent: " << *lateParent << "\n"
-               << "earlyParent: " << *earlyParent << "\n"
-               << "early: " << *early << "\n"
-               << "late: " << *late << "\n"
-               << "newEarly: " << *newEarly << "\n"
-               << "newCurOp: " << *newCurOp << "\n\n";
+    File() << "Associative Restructuring:\n"
+           << "curOp: " << *curOp << "\n"
+           << "curOp = (lateParent + earlyParent) + early\n"
+           << "      = lateParent + (earlyParent + early)\n"
+           << "lateParent: " << *lateParent << "\n"
+           << "earlyParent: " << *earlyParent << "\n"
+           << "early: " << *early << "\n"
+           << "late: " << *late << "\n"
+           << "newEarly: " << *newEarly << "\n"
+           << "newCurOp: " << *newCurOp << "\n\n";
 
     return true;
 }
@@ -1353,8 +1315,7 @@ void ModuloScheduler::simpleDCE() {
 
             if (!isInstructionTriviallyDead(Inst))
                 continue;
-            if (SDCdebug)
-                File() << "DCE removing: " << *Inst << "\n";
+            File() << "DCE removing: " << *Inst << "\n";
             Inst->eraseFromParent();
             deletedInst = true;
         }
@@ -1365,8 +1326,7 @@ void ModuloScheduler::simpleDCE() {
 // this can be slow because after every restructure we need to calculate
 // all the loop recurrences again by calling findLoopRecurrences()
 void ModuloScheduler::restructureDFG() {
-    if (SDCdebug)
-        File() << "Restructuring expression tree to minimize recurrences\n";
+    File() << "Restructuring expression tree to minimize recurrences\n";
 
     for (BasicBlock::iterator i = BB->begin(), ie = BB->end(); i != ie; ++i) {
         BinaryOperator *curOp = dyn_cast<BinaryOperator>(i);
@@ -1378,27 +1338,23 @@ void ModuloScheduler::restructureDFG() {
         if (!isAdd(curOp) && !isSub(curOp) && !isMul(curOp))
             continue;
 
-        if (SDCdebug)
-            File() << "Checking: " << *curOp << "\n";
+        File() << "Checking: " << *curOp << "\n";
 
         if (!onCriticalPath(curOp)) {
-            if (SDCdebug)
-                File() << "Skipping. Not critical\n";
+            File() << "Skipping. Not critical\n";
             continue;
         }
 
         Instruction *early = dyn_cast<Instruction>(getEarlyDefiner(curOp));
         Instruction *late = getLateDefiner(curOp);
         if (!early || !late) {
-            if (SDCdebug)
-                File() << "Skipping. Can't find early/late definer\n";
+            File() << "Skipping. Can't find early/late definer\n";
             continue;
         }
 
         // just deal with all addition for now
         if (!isAdd(late) && !isSub(late) && !isMul(late)) {
-            if (SDCdebug)
-                File() << "Skipping. Late definer isn't an add/sub\n";
+            File() << "Skipping. Late definer isn't an add/sub\n";
             continue;
         }
 

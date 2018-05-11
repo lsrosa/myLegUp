@@ -43,8 +43,6 @@ public:
     ~Allocation();
 
     GenerateRTL *createGenerateRTL(Function *F);
-    //reversed map leandro
-    Function *getFunctionFromHW(GenerateRTL * HW);
 
     /// verilogName - return the verilog variable name of a LLVM value
     std::string verilogName(const Value *val);
@@ -151,7 +149,7 @@ public:
 
     //NC changes
     int getRamTagNum(RAM* ram);
-
+    
     int getRamTagNum(const Value *op);
 
     /// getNumRAMs - return the number of RAM objects
@@ -211,7 +209,7 @@ public:
     void add_registered_instruction(Instruction *i, int s)
         { registered_instruction_to_state[i]=s; }
     int get_registered_instruction_state(Instruction *i);
-    void set_register_type(Instruction *i, std::string s)
+    void set_register_type(Instruction *i, std::string s) 
         { registered_instruction_to_type[i]=s; }
     std::string get_register_type(Instruction *i);
     bool is_registered_instruction(Instruction *i);
@@ -274,9 +272,6 @@ private:
         std::map <Function *, std::map <std::string, int> > mapFunctionMaxFUs);
 
     std::map<Function*, GenerateRTL*> mapFctModule;
-    //reversed map leandro
-    std::map<GenerateRTL*, Function*> mapModuleFct;
-
     std::map<const Value*, RAM*> mapValueRam;
     std::map<RAM*, int> mapRamTag;
     HwListType hwList;
@@ -311,27 +306,27 @@ private:
 
     // ProfileInfo pass
     //ProfileInfo *PI;
-
+    
     // Cached statistic used to calculate execution frequencies
     int profile_total_bb_executions;
-
+    
     // Number of states in each BB
-    std::map< BasicBlock*, int > BB_to_num_states;
-
+    std::map< BasicBlock*, int > BB_to_num_states; 
+    
     // These 3 are for flows where registers are moved from data paths.
-
+    
     // Some instructions must have registers (e.g. loads, return instructions,
     // and for now instructions used across BB). Store these instructions which
     // must have registers, as well as their state #, and their type. Type can
     // be e.g. ret, load, cross_bb
     std::map< Instruction*, int > registered_instruction_to_state;
     std::map< Instruction*, std::string > registered_instruction_to_type;
-
+    
     // All the multi-cycle dividers
     std::set< Instruction* > multicycled_dividers;
     /// ------------------------------------------------------------------------
-
-
+    
+    
     raw_fd_ostream memoryFile, bindingFile, patternFile, schedulingFile,
                    multipumpingFile, pipelineDotFile, pipeliningRTLFile,
                    TimingReportFile, generateRTLFile;
@@ -356,7 +351,7 @@ class PropagatingSignal {
 public:
 
     // All public constructors take an RTLSignal.
-    //
+    // 
     // The main constructor optionally takes a function
     // at which the signal should stop propagating and
     // exist as a wire.
@@ -498,7 +493,7 @@ public:
     bool operator==(const FunctionWithSignals& rhs) const {
 	return name == rhs.name;
     }
-
+    
 private:
     std::string name;
     std::vector<PropagatingSignal> signals;
@@ -522,9 +517,9 @@ private:
     std::vector<PropagatingSignal *> referenceVectorForSignalVector(std::vector<PropagatingSignal> &sigVec);
     void mergePropagatingSignalsWithExistingSignalsInVector(std::vector<PropagatingSignal> &signals,
 							    std::vector<PropagatingSignal *> &vector);
-
-    std::vector<FunctionWithSignals *> functionsAndSignals;
-
+    
+    std::vector<FunctionWithSignals *> functionsAndSignals;    
+    
 };
 } // End legup namespace
 

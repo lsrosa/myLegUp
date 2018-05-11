@@ -170,8 +170,8 @@ index fec5cf0..98b2cc7 100644
        /*
 @@ -4328,7 +4343,10 @@ FeasibleQueue(raw_fd_ostream &File) :file (File) {}
  
-       if(SDCdebug) if(SDCdebug) File() << "Found Loop: " << *loop << "\n";
-       if(SDCdebug) if(SDCdebug) File() << "Label: " << loopLabel << "\n";
+       File() << "Found Loop: " << *loop << "\n";
+       File() << "Label: " << loopLabel << "\n";
 -      this->tripCount = L->getSmallConstantTripCount();
 +      //this->tripCount = L->getSmallConstantTripCount();
 +	  // TODO: this may be wrong, just needed to do something to make it compile
@@ -179,7 +179,7 @@ index fec5cf0..98b2cc7 100644
 +      this->tripCount = SE->getSmallConstantTripCount(L, L->getExitingBlock());
        // trip count might not be constant -> in which case the trip count is 0
        //assert(this->tripCount);
-       if(SDCdebug) if(SDCdebug) File() << "Trip count: " << this->tripCount << "\n";
+       File() << "Trip count: " << this->tripCount << "\n";
 @@ -4530,7 +4548,7 @@ FeasibleQueue(raw_fd_ostream &File) :file (File) {}
        AU.addRequired<RegionInfo>();
        AU.addRequired<ScopDetection>();

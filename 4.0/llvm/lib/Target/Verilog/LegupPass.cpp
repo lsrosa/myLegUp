@@ -18,11 +18,9 @@
 #include "LegupConfig.h"
 #include "Scheduler.h"
 #include "ResourceEstimator.h"
-#include "llvm/IR/InstIterator.h"
 //#include "llvm/Analysis/ProfileInfo.h"
 #include "Debug.h"
 #include <fstream>
-#include <time.h>
 //NC changes
 #include "Debugging.h"
 
@@ -66,7 +64,7 @@ class FunctionSortingWrapper {
     Function *function;
   };
 
-  // Returns a set of functions ordered such that the
+  // Returns a set of functions ordered such that the   
 std::vector<Function*> LegupPass::getDepthFirstSortedFunctions(Module &M) {
   // TODO: Use a more efficient algorithm for this.
   size_t previousSetSize = 0;
@@ -81,15 +79,15 @@ std::vector<Function*> LegupPass::getDepthFirstSortedFunctions(Module &M) {
 					F.getName().str()) != addedFunctionNames.end())
 	continue;
       bool allCalledFunctionsAddedToSet = true;
-
+      
       for (Function::iterator b = F.begin(), be = F.end(); b != be; ++b) {
-
+	
 				for (BasicBlock::iterator instr = b->begin(), ie = b->end();
 						instr != ie; ++instr) {
 					if (isaDummyCall(instr))
 						continue;
-
-	  if (CallInst *CI = dyn_cast<CallInst>(instr)) {
+	  
+	  if (CallInst *CI = dyn_cast<CallInst>(instr)) {	
 	    llvm::Function *called = getCalledFunction(CI);
 						if (std::find(addedFunctionNames.begin(),
 								addedFunctionNames.end(),
@@ -116,29 +114,9 @@ std::vector<Function*> LegupPass::getDepthFirstSortedFunctions(Module &M) {
 }
 
 bool LegupPass::doInitialization(Module &M) {
-    FILE * pFile;
-
-    //leandro time measing for individual steps
-    std::string rptname ("DetailedLegUPTiming");
-    std::ifstream f(rptname);
-    if(!f.good()){
-      pFile = fopen (rptname.c_str(),"w");
-      fprintf(pFile, "Name\tInstCount\tAllocation\tScheduling\tBinding\tSchedMapping\tSchedSolve\tSchedFSM\toverhead\n");
-      fclose(pFile);
-    }
-    /*
-    else{
-      pFile = fopen (rptname.c_str(),"a");
-    }
-    */
-    //printf("aaaaaaaaaaaaaaaaa!!!!!!!!!!!!!!!aaaaaaaaaa \n");
-    clock_t tic = clock();
     allocation = new Allocation(&M);
     Scheduler::alloc = allocation;
-    clock_t toc = clock();
-    alloctime = (double)(toc - tic)/CLOCKS_PER_SEC;
-    //fprintf(pFile, "%f\t", (double)(toc - tic)/CLOCKS_PER_SEC);
-    //fclose(pFile);
+
     // no modification
     return false;
 }
@@ -230,16 +208,17 @@ void LegupPass::printBBStats(Function &F) {
 }
 
 bool LegupPass::runOnModule(Module &M) {
-  // NC changes
-  // Debugging dbger;
-  if (LEGUP_CONFIG->getParameterInt("INSPECT_DEBUG") ||
-      LEGUP_CONFIG->getParameterInt("INSPECT_ONCHIP_BUG_DETECT_DEBUG")) {
-      std::cout << "***LegUp Inspect-Debug mode is selected***" << std::endl;
-      std::cout << "it is assumed that you already set NO_OPT, NO_INLINE and "
-                   "DEBUG_G_FLAG Makefile variables to 1.";
-      std::cout << " If not, the inspect debug behavior will be unknown."
-			<< std::endl;
-	if (LEGUP_CONFIG->getParameterInt("LOCAL_RAMS") != 0
+
+    // NC changes
+    // Debugging dbger;
+    if (LEGUP_CONFIG->getParameterInt("INSPECT_DEBUG") ||
+        LEGUP_CONFIG->getParameterInt("INSPECT_ONCHIP_BUG_DETECT_DEBUG")) {
+        std::cout << "***LegUp Inspect-Debug mode is selected***" << std::endl;
+        std::cout << "it is assumed that you already set NO_OPT, NO_INLINE and "
+                     "DEBUG_G_FLAG Makefile variables to 1.";
+        std::cout << " If not, the inspect debug behavior will be unknown."
+				<< std::endl;
+		if (LEGUP_CONFIG->getParameterInt("LOCAL_RAMS") != 0
 				|| LEGUP_CONFIG->getParameterInt("GROUP_RAMS") != 0
 				|| LEGUP_CONFIG->getParameterInt("NO_ROMS") == 0) {
 			std::cout << "LOCAL_RAMS: "
@@ -254,7 +233,7 @@ bool LegupPass::runOnModule(Module &M) {
 					<< std::endl;
             exit(1);
         }
-
+        
         /*Timer timer;
         timer.init(StringRef("timer"));
         timer.startTimer();*/
@@ -266,9 +245,11 @@ bool LegupPass::runOnModule(Module &M) {
 
 	pipelineLabelSanityCheck(M);
 
-	std::vector<Function *> sortedFunctionSet =	this->getDepthFirstSortedFunctions(M);
+	std::vector<Function *> sortedFunctionSet =
+			this->getDepthFirstSortedFunctions(M);
 
-	for (std::vector<Function *>::iterator fw = sortedFunctionSet.begin(), FWE = sortedFunctionSet.end(); fw != FWE; ++fw) {
+	for (std::vector<Function *>::iterator fw = sortedFunctionSet.begin(), FWE =
+			sortedFunctionSet.end(); fw != FWE; ++fw) {
 	  Function &F = *(*fw);
 
         // can't call a function analysis pass on a function declaration
@@ -276,140 +257,104 @@ bool LegupPass::runOnModule(Module &M) {
 		if (F.isDeclaration() || LEGUP_CONFIG->isCustomVerilog(F))
 			continue;
 
-    DEBUG(errs() << "Entering function: " << F.getName() << "\n");
+        DEBUG(errs() << "Entering function: " << F.getName() << "\n");
 
-    // debugging: view a dot graph of function control flow graph:
-    //F->viewCFG();
-
+        // debugging: view a dot graph of function control flow graph:
+        //F->viewCFG();
+        
         //NC changes
-		if (LEGUP_CONFIG->getParameterInt("INSPECT_DEBUG") || LEGUP_CONFIG->getParameterInt( "INSPECT_ONCHIP_BUG_DETECT_DEBUG")) {
-      dbger.fillDebugDB(&F);
+		if (LEGUP_CONFIG->getParameterInt("INSPECT_DEBUG")
+				|| LEGUP_CONFIG->getParameterInt(
+						"INSPECT_ONCHIP_BUG_DETECT_DEBUG")) {
+            dbger.fillDebugDB(&F);
+        }
+
+        // Do not codegen any 'extern' functions at all, they have
+        // definitions outside the translation unit.
+        if (F.hasAvailableExternallyLinkage()) {
+            DEBUG(errs() << "Skipping function (extern)\n");
+            continue;
+        }
+
+        // Create an RTL Generator for this function
+        allocation->createGenerateRTL(&F);
+
+        printBBStats(F);
     }
-
-    // Do not codegen any 'extern' functions at all, they have
-    // definitions outside the translation unit.
-    if (F.hasAvailableExternallyLinkage()) {
-        DEBUG(errs() << "Skipping function (extern)\n");
-        continue;
-    }
-
-    // leandro debugging
-    //printf("!!!!!!!! created a hw for function %s\n", F.getName());
-    // Create an RTL Generator for this function
-    allocation->createGenerateRTL(&F);
-
-    printBBStats(F);
-  }
-
-  allocation->addAA(&getAnalysis<AliasAnalysis>());
-
-    // If software profiling was done in this compilation, read in the
+    
+    allocation->addAA(&getAnalysis<AliasAnalysis>());	
+  	
+    // If software profiling was done in this compilation, read in the  
     // llvmprof.out file and cache some info about the execution
 	// TODO LLVM 3.4 update.  profileInfo no longer exists.  commenting out for now.
     //if (LEGUP_CONFIG->getParameterInt("LLVM_PROFILE")) {
         //allocation->addPI(&getAnalysis<ProfileInfo>());
     //}
-  clock_t tic, toc;
-  // Schedule the operations in each function
-  for (Allocation::hw_iterator i = allocation->hw_begin(), ie = allocation->hw_end(); i != ie; ++i) {
-    double t;
-    int ic = 0;
-    std::string n;
 
-    GenerateRTL *HW = *i;
-    //Schedstats *ss = new Schedstats();
-    //schedstats_vector.emplace_back(Schedstats());
-
-    //reversed map leandro
-    Function * ftest = allocation->getFunctionFromHW(HW);
-    n = ftest->getName();
-    //printf("aaaaaaaaaaaaaaaaa!!!!!!!!!!!!!!!aaaaaaaaaa - %s\n", ftest->getName());
-
-    for(inst_iterator i = inst_begin(ftest), e = inst_end(ftest); i != e; ++i){
-      ic++;
+    // Schedule the operations in each function
+    for (Allocation::hw_iterator i = allocation->hw_begin(), ie =
+            allocation->hw_end(); i != ie; ++i) {
+        GenerateRTL *HW = *i;
+	HW->scheduleOperations();
     }
 
+    // Calculate the required functional units (multipliers/dividers) required
+    // This requires scheduling information to get a complete picture of the
+    // overall resource usage
+    allocation->calculateRequiredFunctionalUnits();
 
-    tic = clock();
-    HW->scheduleOperations();
-    toc = clock();
-    t = (double)(toc - tic)/CLOCKS_PER_SEC;
+    // Gather debugger information
+    if (allocation->getDbgInfo()->isDatabaseEnabled()) {
+        allocation->getDbgInfo()->generateVariableInfo();
+        allocation->getDbgInfo()->analyzeProgram();
+    }
 
-    schedstats_vector.push_back(Schedstats(t, HW->getSchedMappingTime()-HW->getSchedSolveTime(), HW->getSchedSolveTime(), HW->getSchedFSMTime(), ic, n));
-    //fprintf(pFile, "%f\t", (double)(toc - tic)/CLOCKS_PER_SEC);
-  }
+    // Generate the RTL
+    for (Allocation::hw_iterator i = allocation->hw_begin(), ie =
+            allocation->hw_end(); i != ie; ++i) {
+        GenerateRTL *HW = *i;
+        Function *F = HW->getFunction();
 
-  // Calculate the required functional units (multipliers/dividers) required
-  // This requires scheduling information to get a complete picture of the
-  // overall resource usage
-  tic = clock();
-  allocation->calculateRequiredFunctionalUnits();
-  toc = clock();
-  bindtime = (double)(toc - tic)/CLOCKS_PER_SEC;
+        allocation->addLVA(F, &getAnalysis<LiveVariableAnalysis>(*F));
+        MinimizeBitwidth *MBW = &getAnalysis<MinimizeBitwidth>(*F);
+        allocation->addLI(F, &getAnalysis<LoopInfo>(*F));
 
-  FILE * pFile;
-  pFile = fopen ("DetailedLegUPTiming","a");
+        RTLModule* rtl = HW->generateRTL(MBW);
 
-  //fprintf(pFile, "%f\n", (double)(toc - tic)/CLOCKS_PER_SEC);
-  //leandro
-  for(std::vector<Schedstats>::iterator i=schedstats_vector.begin(), ie=schedstats_vector.end(); i != ie; ++i){
-    fprintf(pFile, "%s\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", i->name.c_str(), i->instcount, alloctime, i->time, bindtime, i->mappingtime, i->solvetime, i->fsmtime, i->time-(i->mappingtime+i->solvetime+i->fsmtime));
-  }
+        // Store the RTL for this module in the Allocation object
+        allocation->addRTL(rtl);
 
-  fclose(pFile);
+        // Pair the rtl with its equivalent C function
+        allocation->setModuleForFunction(rtl, F);
 
-  // Gather debugger information
-  if (allocation->getDbgInfo()->isDatabaseEnabled()) {
-      allocation->getDbgInfo()->generateVariableInfo();
-      allocation->getDbgInfo()->analyzeProgram();
-  }
+        // NC changes...
+        if (LEGUP_CONFIG->getParameterInt("INSPECT_DEBUG")) {
+            dbger.mapIRsToStates(HW);
+        }
+    }
 
-  // Generate the RTL
-  for (Allocation::hw_iterator i = allocation->hw_begin(), ie =
-          allocation->hw_end(); i != ie; ++i) {
-      GenerateRTL *HW = *i;
-      Function *F = HW->getFunction();
+    // LLVM 3.4 update: doFinalization is called by the pass manager now?
+    // doFinalization(M);
 
-      allocation->addLVA(F, &getAnalysis<LiveVariableAnalysis>(*F));
-      MinimizeBitwidth *MBW = &getAnalysis<MinimizeBitwidth>(*F);
-      allocation->addLI(F, &getAnalysis<LoopInfo>(*F));
+    // print the latency mismatch warnings
+    LEGUP_CONFIG->printLatencyWarnings();
 
-      RTLModule* rtl = HW->generateRTL(MBW);
-
-      // Store the RTL for this module in the Allocation object
-      allocation->addRTL(rtl);
-
-      // Pair the rtl with its equivalent C function
-      allocation->setModuleForFunction(rtl, F);
-
-      // NC changes...
-      if (LEGUP_CONFIG->getParameterInt("INSPECT_DEBUG")) {
-          dbger.mapIRsToStates(HW);
-      }
-  }
-
-  // LLVM 3.4 update: doFinalization is called by the pass manager now?
-  // doFinalization(M);
-
-  // print the latency mismatch warnings
-  LEGUP_CONFIG->printLatencyWarnings();
-
-  // no modifications to IR so return false
-  return false;
+    // no modifications to IR so return false
+    return false;
 }
 
 void LegupPass::pipelineLabelSanityCheck(Module &M) {
 	std::set<std::string> pipelinedLabels;
 
-  for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
-    for (Function::iterator b = F->begin(), be = F->end(); b != be; ++b) {
-      TerminatorInst *TI = b->getTerminator();
-      if (getMetadataInt(TI, "legup.pipelined")) {
-        std::string label = getMetadataStr(TI, "legup.label");
-        pipelinedLabels.insert(label);
-      }
-    }
-  }
+    for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
+        for (Function::iterator b = F->begin(), be = F->end(); b != be; ++b) {
+			TerminatorInst *TI = b->getTerminator();
+			if (getMetadataInt(TI, "legup.pipelined")) {
+				std::string label = getMetadataStr(TI, "legup.label");
+				pipelinedLabels.insert(label);
+			}
+		}
+	}
 
 	int totalLoopsPipelined = pipelinedLabels.size();
 
@@ -425,11 +370,13 @@ void LegupPass::pipelineLabelSanityCheck(Module &M) {
 	std::map<std::string, LegupConfig::LOOP_PIPELINE> &loop_pipelines =
 		LEGUP_CONFIG->getAllLoopPipelines();
 
-	for (std::map<std::string, LegupConfig::LOOP_PIPELINE>::iterator i = loop_pipelines.begin(), ie = loop_pipelines.end(); i != ie;	++i) {
-    std::string label = i->first;
-    if (pipelinedLabels.find(label) == pipelinedLabels.end()) {
-         errs() << "Couldn't pipeline loop with label: " << label << "\n";
-    }
+	for (std::map<std::string, LegupConfig::LOOP_PIPELINE>::iterator i =
+			loop_pipelines.begin(), ie = loop_pipelines.end(); i != ie;
+			++i) {
+		std::string label = i->first;
+		if (pipelinedLabels.find(label) == pipelinedLabels.end()) {
+			errs() << "Couldn't pipeline loop with label: " << label << "\n";
+		}
 	}
 }
 
@@ -465,7 +412,8 @@ bool LegupPass::doFinalization(Module &M) {
     // verilog writer and re-enable this
     if (!LEGUP_CONFIG->getParameterInt("LOCAL_RAMS")) {
         if (!LEGUP_CONFIG->getParameterInt("KEEP_SIGNALS_WITH_NO_FANOUT")) {
-            for (Allocation::const_rtl_iterator i = allocation->rtl_begin(), e = allocation->rtl_end(); i != e; ++i) {
+            for (Allocation::const_rtl_iterator i = allocation->rtl_begin(), e =
+                    allocation->rtl_end(); i != e; ++i) {
                 RTLModule *rtl = *i;
 
                 // delete register signals that are unconnected
@@ -545,3 +493,4 @@ static RegisterPass<MinimizeBitwidth> X("legup-minimize-bitwidth",
         "Pre-Link Time Optimization Pass to shrink integer bitwidth to arbritrary precision");
 
 } // End legup namespace
+

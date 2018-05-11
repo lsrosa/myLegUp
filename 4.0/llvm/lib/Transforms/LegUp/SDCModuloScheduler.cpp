@@ -60,30 +60,6 @@ using namespace legup;
 bool SDCModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
     moduloScheduler.loop = L;
 
-    // leandro time measing for individual steps
-    // variables keep their values between loops
-    totaltime = 0;
-    solvetime = 0;
-    nsdcs = 0;
-    FILE *pFile;
-    std::string rptname("DetailedModuleSDCSchedulingTime");
-    std::ifstream f(rptname);
-    if (!f.good()) {
-        pFile = fopen(rptname.c_str(), "w");
-        fprintf(pFile, "label\tn_IRlines\tn_sdcs\tTotal\tSolving\n");
-        fclose(pFile);
-    }
-    // std::cout << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" << '\n';
-    // L->dump();
-    // std::cout << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" << '\n';
-    // std::cout << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" << '\n';
-    int nIRlines = 0;
-    for (Loop::block_iterator bb = L->block_begin(), e = L->block_end();
-         bb != e; ++bb) {
-        nIRlines += (*bb)->size();
-    }
-    // leandro - start measuring time
-
     BB = moduloScheduler.find_pipelined_bb();
     moduloScheduler.BB = BB;
     if (!BB) {
@@ -91,7 +67,6 @@ bool SDCModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
         return false;
     }
 
-    clock_t tictt = clock();
     initLoop();
 
     int MII = getInitialMII();
@@ -101,8 +76,7 @@ bool SDCModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
 
     int userII = moduloScheduler.PipelineTclInfo.II;
     if (moduloScheduler.PipelineTclInfo.user_II) {
-        if (SDCdebug)
-            File() << "user II = " << userII << "\n";
+        File() << "user II = " << userII << "\n";
         if (userII < moduloScheduler.II) {
             errs() << "ERROR: user specified II couldn't be achieved!\n";
             return false;
@@ -110,8 +84,7 @@ bool SDCModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
         moduloScheduler.II = userII;
     }
 
-    if (SDCdebug)
-        File() << "Initial II = " << moduloScheduler.II << "\n";
+    File() << "Initial II = " << moduloScheduler.II << "\n";
     initializeSDC(moduloScheduler.II);
 
     // int budgetRatio = 100;
@@ -124,22 +97,17 @@ bool SDCModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
             errs() << "ERROR: user specified II couldn't be achieved!\n";
             return false;
         }
-        if (SDCdebug)
-            File() << "Incrementing II\n";
+        File() << "Incrementing II\n";
         moduloScheduler.II++;
-        if (SDCdebug)
-            File() << "II = " << moduloScheduler.II << "\n";
+        File() << "II = " << moduloScheduler.II << "\n";
         moduloScheduler.sanityCheckII(moduloScheduler.II);
         // re-create the SDC constraints with new II
         initializeSDC(moduloScheduler.II);
     }
 
-    if (SDCdebug)
-        File() << "Scheduled.\n";
-    if (SDCdebug)
-        File() << "MII = " << MII << "\n";
-    if (SDCdebug)
-        File() << "II = " << moduloScheduler.II << "\n";
+    File() << "Scheduled.\n";
+    File() << "MII = " << MII << "\n";
+    File() << "II = " << moduloScheduler.II << "\n";
     if (LEGUP_CONFIG->getParameterInt("MODULO_DEBUG")) {
         errs() << "II = " << moduloScheduler.II << "\n";
     }
@@ -155,11 +123,9 @@ bool SDCModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
     M->getOrInsertNamedMetadata("legup.pipeline")->addOperand(Node);
 
     assert(moduloScheduler.II > 0 && "II must be > 0");
-    if (SDCdebug)
-        File() << "Final Modulo Reservation Table:\n";
+    File() << "Final Modulo Reservation Table:\n";
     printModuloReservationTable();
-    if (SDCdebug)
-        File() << "\n";
+    File() << "\n";
 
     moduloScheduler.gather_pipeline_stats();
     moduloScheduler.print_pipeline_table();
@@ -167,15 +133,6 @@ bool SDCModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
 
     moduloScheduler.totalLoopsPipelined++;
     moduloScheduler.loopsPipelined.insert(moduloScheduler.loopLabel);
-
-    clock_t toctt = clock();
-    totaltime += (double)(toctt - tictt) / CLOCKS_PER_SEC;
-
-    pFile = fopen("DetailedModuleSDCSchedulingTime", "a");
-    // leandro
-    fprintf(pFile, "%s\t%d\t%ld\t%f\t%f\n", moduloScheduler.loopLabel.c_str(),
-            nIRlines, nsdcs, totaltime, solvetime);
-    fclose(pFile);
     return true;
 }
 
@@ -206,8 +163,7 @@ void SDCModuloScheduler::computeHeight(Instruction *I) {
     // no children ?
     if (noChildren(I)) {
         // op->mem_use_begin() == op->mem_use_end()) {
-        if (SDCdebug)
-            File() << "No children (height=0): " << *I << "\n";
+        File() << "No children (height=0): " << *I << "\n";
         height[I] = 0;
     } else {
         // errs() << "children:\n";
@@ -246,8 +202,7 @@ void SDCModuloScheduler::updateHeight(Instruction *I, Instruction *child) {
 
 void SDCModuloScheduler::computeHeights() {
     printLineBreak();
-    if (SDCdebug)
-        File() << "Computing Heights\n";
+    File() << "Computing Heights\n";
     // errs() << "Loop:\n";
     for (BasicBlock::iterator instr = BB->begin(), ie = BB->end(); instr != ie;
          ++instr) {
@@ -293,9 +248,8 @@ int SDCModuloScheduler::findTimeSlot(Instruction *I, int minTime, int maxTime) {
     bool found = false;
     while (!found && curTime <= maxTime) {
         if (resourceConflict(I, curTime)) {
-            if (SDCdebug)
-                File() << "Resource conflict at time " << curTime
-                       << ". Incrementing time slot\n";
+            File() << "Resource conflict at time " << curTime
+                   << ". Incrementing time slot\n";
             // try the next time slot
             curTime++;
         } else {
@@ -313,15 +267,12 @@ int SDCModuloScheduler::findTimeSlot(Instruction *I, int minTime, int maxTime) {
     // or if minTime is greater than the time the operation was last scheduled
     // 2) previously scheduled time + 1
     if (!found) {
-        if (SDCdebug)
-            File() << "No legal slot found\n";
+        File() << "No legal slot found\n";
         if (neverScheduled[I] || minTime > prevSchedTime[I]) {
-            if (SDCdebug)
-                File() << "Forcing to minTime\n";
+            File() << "Forcing to minTime\n";
             schedSlot = minTime;
         } else {
-            if (SDCdebug)
-                File() << "Forcing to prev sched time + 1\n";
+            File() << "Forcing to prev sched time + 1\n";
             schedSlot = prevSchedTime[I] + 1;
         }
     }
@@ -345,32 +296,26 @@ void SDCModuloScheduler::printModuloReservationTable() {
              e = moduloScheduler.constrainedFuNames.end();
          i != e; ++i) {
         std::string FuName = *i;
-        if (SDCdebug)
-            File() << "FuName: " << FuName << "\n";
+        File() << "FuName: " << FuName << "\n";
 
         for (int i = 0; i < moduloScheduler.II; i++) {
-            if (SDCdebug)
-                File() << "time slot: " << i;
+            File() << "time slot: " << i;
             if (MRTSlotEmpty(i, FuName)) {
-                if (SDCdebug)
-                    File() << " empty\n";
+                File() << " empty\n";
                 continue;
             }
-            if (SDCdebug)
-                File() << "\n";
+            File() << "\n";
             for (int j = 0; j < numIssueSlots(FuName); j++) {
                 // TODO: LLVM 3.5 update: cannot print value if it is NULL so
                 // check it here
                 if (moduloScheduler.getReservationTable(FuName, j, i) == NULL) {
-                    if (SDCdebug)
-                        File() << "   issue slot: " << j << " instr: "
-                               << "printing a <null> value"
-                               << "\n";
+                    File() << "   issue slot: " << j << " instr: "
+                           << "printing a <null> value"
+                           << "\n";
                 } else {
-                    if (SDCdebug)
-                        File() << "   issue slot: " << j << " instr: "
-                               << *moduloScheduler.getReservationTable(
-                                      FuName, j, i) << "\n";
+                    File() << "   issue slot: " << j << " instr: "
+                           << *moduloScheduler.getReservationTable(FuName, j, i)
+                           << "\n";
                 }
             }
         }
@@ -387,8 +332,7 @@ void SDCModuloScheduler::unschedule(Instruction *I) {
     std::string FuName =
         LEGUP_CONFIG->getOpNameFromInst(I, moduloScheduler.alloc);
 
-    if (SDCdebug)
-        File() << "Unscheduling: " << *I << "\n";
+    File() << "Unscheduling: " << *I << "\n";
 
     unscheduledInsts.insert(I);
     unscheduledInstsConstrained.insert(I);
@@ -448,8 +392,7 @@ void SDCModuloScheduler::schedule(Instruction *I, int timeSlot) {
                     FuName, i, moduloTimeSlot);
                 assert(I != prev);
                 if (prev) {
-                    if (SDCdebug)
-                        File() << "Resource conflict\n";
+                    File() << "Resource conflict\n";
                     unschedule(prev);
                 }
             }
@@ -473,8 +416,7 @@ void SDCModuloScheduler::schedule(Instruction *I, int timeSlot) {
                       moduloScheduler.II * distance(I, succ);
             if (moduloScheduler.schedTime[succ] < min) {
                 assert(succ != I);
-                if (SDCdebug)
-                    File() << "Conflict with successor\n";
+                File() << "Conflict with successor\n";
                 unschedule(succ);
             }
         }
@@ -494,8 +436,7 @@ void SDCModuloScheduler::schedule(Instruction *I, int timeSlot) {
                       moduloScheduler.II * distance(I, succ);
             if (moduloScheduler.schedTime[succ] < min) {
                 assert(succ != I);
-                if (SDCdebug)
-                    File() << "Conflict with successor\n";
+                File() << "Conflict with successor\n";
                 unschedule(succ);
             }
         }
@@ -611,8 +552,7 @@ bool SDCModuloScheduler::iterativeClassic(int budget) {
 
     while (!unscheduledInsts.empty() && budget > 0) {
         Instruction *I = getHighestPriorityInst();
-        if (SDCdebug)
-            File() << "Scheduling: " << *I << "\n";
+        File() << "Scheduling: " << *I << "\n";
 
         int earlyStart = calcEarlyStart(I);
 
@@ -621,16 +561,11 @@ bool SDCModuloScheduler::iterativeClassic(int budget) {
 
         int timeSlot = findTimeSlot(I, minTime, maxTime);
 
-        if (SDCdebug)
-            File() << "minTime: " << minTime << "\n";
-        if (SDCdebug)
-            File() << "maxTime: " << maxTime << "\n";
-        if (SDCdebug)
-            File() << "timeSlot: " << timeSlot << "\n";
+        File() << "minTime: " << minTime << "\n";
+        File() << "maxTime: " << maxTime << "\n";
+        File() << "timeSlot: " << timeSlot << "\n";
         if (timeSlot != minTime) {
-            if (SDCdebug)
-                File()
-                    << "Moved time slot away from minTime due to conflicts\n";
+            File() << "Moved time slot away from minTime due to conflicts\n";
         }
 
         schedule(I, timeSlot);
@@ -647,11 +582,9 @@ void SDCModuloScheduler::scheduleSDCInstruction(Instruction *I, int timeSlot) {
     // handled by the LP solver due to the modulo reservation table
     assert(moduloScheduler.isResourceConstrained(I));
 
-    if (SDCdebug)
-        File() << "Successfully scheduled (at time slot: " << timeSlot
-               << "): " << *I << "\n";
-    if (SDCdebug)
-        File() << "TimeSlot: " << timeSlot << " Scheduling: " << *I << "\n";
+    File() << "Successfully scheduled (at time slot: " << timeSlot
+           << "): " << *I << "\n";
+    File() << "TimeSlot: " << timeSlot << " Scheduling: " << *I << "\n";
 
     // make sure instruction stays at the same timeSlot when
     // solving the LP in the future
@@ -713,36 +646,29 @@ bool SDCModuloScheduler::findEmptySlot(Instruction *I, int timeSlot,
 // includes both resource conflicts and dependency conflicts
 bool SDCModuloScheduler::schedulingConflictSDC(Instruction *I, int timeSlot) {
     printLineBreak();
-    if (SDCdebug)
-        File() << "Is there a conflict (resource or dependency) "
-               << "when scheduling at time slot: " << timeSlot << "?\n";
+    File() << "Is there a conflict (resource or dependency) "
+           << "when scheduling at time slot: " << timeSlot << "?\n";
 
     if (moduloScheduler.isResourceConstrained(I)) {
         int port;
         if (!findEmptySlot(I, timeSlot, &port)) {
-            if (SDCdebug)
-                File() << "Resource conflict: No available issue slot at time "
-                          "slot\n";
+            File() << "Resource conflict: No available issue slot at time "
+                      "slot\n";
             return true;
         }
-        if (SDCdebug)
-            File() << "No resource conflict: found available issue slot\n";
+        File() << "No resource conflict: found available issue slot\n";
     } else {
-        if (SDCdebug)
-            File() << "No resource conflict: not resource constrained\n";
+        File() << "No resource conflict: not resource constrained\n";
     }
 
     bool depConflict = schedulingConflictSDCIgnoreResources(I, timeSlot);
     if (depConflict) {
-        if (SDCdebug)
-            File() << "Dependency conflict";
+        File() << "Dependency conflict";
     } else {
-        if (SDCdebug)
-            File() << "No dependency conflict";
+        File() << "No dependency conflict";
     }
 
-    if (SDCdebug)
-        File() << " when scheduling at time slot: " << timeSlot << ".\n";
+    File() << " when scheduling at time slot: " << timeSlot << ".\n";
     printLineBreak();
     return depConflict;
 }
@@ -752,7 +678,7 @@ bool SDCModuloScheduler::checkFeasible() {
         bool isFeasible = sdcSolver.unprocessed.empty();
         // bool success = scheduleSDC();
         // if ( success != isFeasible) {
-        //    if(SDCdebug) File() << "UNEXPECTED mismatch\n";
+        //    File() << "UNEXPECTED mismatch\n";
         //}
         // assert(success == isFeasible);
         // return success;
@@ -772,9 +698,8 @@ SDCSolver::Constraints *SDCModuloScheduler::constrainSDC(Instruction *I,
                                                          int constr_type,
                                                          REAL constraint) {
 
-    if (SDCdebug)
-        File() << "Constraining " << lpConstraintStr(constr_type) << " "
-               << ftostr(constraint) << ": " << *I << "\n";
+    File() << "Constraining " << lpConstraintStr(constr_type) << " "
+           << ftostr(constraint) << ": " << *I << "\n";
 
     int col[1];
     REAL val[1];
@@ -796,23 +721,19 @@ SDCSolver::Constraints *SDCModuloScheduler::constrainSDC(Instruction *I,
 bool SDCModuloScheduler::schedulingConflictSDCIgnoreResources(Instruction *I,
                                                               int timeSlot) {
 
-    if (SDCdebug)
-        File() << "Can we schedule instruction at time: " << timeSlot
-               << " ignoring resource constraints?\n";
+    File() << "Can we schedule instruction at time: " << timeSlot
+           << " ignoring resource constraints?\n";
     SDCSolver::Constraints *C = constrainSDC(I, EQ, timeSlot);
 
     bool success = checkFeasible();
 
     if (success) {
-        if (SDCdebug)
-            File() << "Yes. Feasible";
+        File() << "Yes. Feasible";
     } else {
-        if (SDCdebug)
-            File() << "No. Not feasible";
+        File() << "No. Not feasible";
     }
-    if (SDCdebug)
-        File() << " to schedule instruction at time: " << timeSlot
-               << " ignoring resource constraints.\n";
+    File() << " to schedule instruction at time: " << timeSlot
+           << " ignoring resource constraints.\n";
 
     // remove the equality constraint added above
     sdcSolver.deleteConstraints(C);
@@ -880,8 +801,7 @@ void SDCModuloScheduler::findASAPTimeForEachInst(
     map<Instruction *, int> &instStepASAP) {
     instStepASAP.clear();
     printLineBreak();
-    if (SDCdebug)
-        File() << "Finding initial ASAP schedule\n";
+    File() << "Finding initial ASAP schedule\n";
     for (IntToInstMapTy::iterator j = sdcSchedInst.begin(),
                                   je = sdcSchedInst.end();
          j != je; ++j) {
@@ -891,8 +811,7 @@ void SDCModuloScheduler::findASAPTimeForEachInst(
                  e = sdcSchedInst[asapCstep].end();
              i != e; ++i) {
             instStepASAP[*i] = asapCstep;
-            if (SDCdebug)
-                File() << "Time: " << asapCstep << " I: " << **i << "\n";
+            File() << "Time: " << asapCstep << " I: " << **i << "\n";
         }
     }
     printLineBreak();
@@ -904,8 +823,7 @@ void SDCModuloScheduler::backtracking(Instruction *I, int cstep) {
     if (LEGUP_CONFIG->getParameterInt("MODULO_DEBUG")) {
         errs() << "BACKTRACKING...\n";
     }
-    if (SDCdebug)
-        File() << "Backtracking...\n";
+    File() << "Backtracking...\n";
 
     // try *all* possibilities at this point
     // you just probably want to keep track of prev schedule
@@ -935,12 +853,10 @@ void SDCModuloScheduler::backtracking(Instruction *I, int cstep) {
     // 2) previously scheduled time + 1
     int evictSlot;
     if (neverScheduled[I] || minTime > prevSchedTime[I]) {
-        if (SDCdebug)
-            File() << "Forcing to minTime\n";
+        File() << "Forcing to minTime\n";
         evictSlot = minTime;
     } else {
-        if (SDCdebug)
-            File() << "Forcing to prev sched time + 1\n";
+        File() << "Forcing to prev sched time + 1\n";
         evictSlot = prevSchedTime[I] + 1;
     }
 
@@ -952,8 +868,7 @@ void SDCModuloScheduler::backtracking(Instruction *I, int cstep) {
      }
      */
 
-    if (SDCdebug)
-        File() << "Forcing to time: " << evictSlot << "\n";
+    File() << "Forcing to time: " << evictSlot << "\n";
 
     assert(schedulingConflictSDC(I, evictSlot));
     if (resourceConflict(I, evictSlot)) {
@@ -963,8 +878,7 @@ void SDCModuloScheduler::backtracking(Instruction *I, int cstep) {
         Instruction *evicted =
             moduloScheduler.getReservationTable(FuName, 0, moduloTimeSlot);
         assert(evicted);
-        if (SDCdebug)
-            File() << "Resource conflict. Evicting: " << *evicted << "\n";
+        File() << "Resource conflict. Evicting: " << *evicted << "\n";
 
         // unschedule the old instruction that has a resource conflict
         unscheduleSDC(evicted);
@@ -1002,7 +916,7 @@ void SDCModuloScheduler::backtracking(Instruction *I, int cstep) {
            int oldTime = moduloScheduler.schedTime[possibleEviction];
            unscheduleSDC(possibleEviction);
            if (!schedulingConflictSDC(I, evictSlot)) {
-           if(SDCdebug) File() << "Dependency conflict. Evicting: " <<
+           File() << "Dependency conflict. Evicting: " <<
          *possibleEviction << "\n";
          break;
          } else {
@@ -1015,14 +929,12 @@ void SDCModuloScheduler::backtracking(Instruction *I, int cstep) {
 
         if (schedulingConflictSDC(I, evictSlot)) {
             // just evict *everything*
-            if (SDCdebug)
-                File() << "Evicting everything\n";
+            File() << "Evicting everything\n";
             for (std::list<Instruction *>::iterator j = evictionList.begin(),
                                                     je = evictionList.end();
                  j != je; ++j) {
                 Instruction *possibleEviction = *j;
-                if (SDCdebug)
-                    File() << "Evicting: " << *possibleEviction << "\n";
+                File() << "Evicting: " << *possibleEviction << "\n";
                 unscheduleSDC(possibleEviction);
             }
         }
@@ -1070,10 +982,8 @@ bool SDCModuloScheduler::SDCWithBacktracking(int budget) {
         // control step in the schedule
         unsigned cstep = sdcSchedTime[I];
 
-        if (SDCdebug)
-            File() << "Control Step: " << cstep << "\n";
-        if (SDCdebug)
-            File() << "Scheduling: " << *I << "\n";
+        File() << "Control Step: " << cstep << "\n";
+        File() << "Scheduling: " << *I << "\n";
 
         // skip already scheduled instructions
         if (unscheduledInstsConstrained.find(I) ==
@@ -1103,7 +1013,7 @@ bool SDCModuloScheduler::SDCWithBacktracking(int budget) {
                 break;
             }
 
-            if(SDCdebug) File() << "Scheduling conflict at time step: " <<
+            File() << "Scheduling conflict at time step: " <<
                 backtrackStep << "\n";
         }
         */
@@ -1163,9 +1073,8 @@ bool SDCModuloScheduler::SDCWithBacktracking(int budget) {
 
                 backtracking(I, cstep);
 
-                if (SDCdebug)
-                    File() << "Failed to schedule time >= " << (cstep + 1)
-                           << " for: " << *I << "\n";
+                File() << "Failed to schedule time >= " << (cstep + 1)
+                       << " for: " << *I << "\n";
 
                 // success = checkFeasible();
                 success = scheduleSDC();
@@ -1186,7 +1095,7 @@ bool SDCModuloScheduler::SDCWithBacktracking(int budget) {
 
         /*
         if (!success) {
-            if(SDCdebug) File() << "Can't schedule at II = " << II << "\n";
+            File() << "Can't schedule at II = " << II << "\n";
             return false;
         }
         */
@@ -1199,11 +1108,8 @@ bool SDCModuloScheduler::SDCWithBacktracking(int budget) {
     if (budget > 0) {
         assignUnconstrainedOperations();
     } else {
-        if (SDCdebug)
-            File() << "Budget exceeded. Giving up\n";
-        if (SDCdebug)
-            File() << "Failure to schedule at II = " << moduloScheduler.II
-                   << "\n";
+        File() << "Budget exceeded. Giving up\n";
+        File() << "Failure to schedule at II = " << moduloScheduler.II << "\n";
         if (LEGUP_CONFIG->getParameterInt("MODULO_DEBUG")) {
             errs() << "Failure to schedule at II = " << moduloScheduler.II
                    << "\n";
@@ -1274,8 +1180,7 @@ void SDCModuloScheduler::updatePriorityQueue() {
 //
 void SDCModuloScheduler::calculatePerturbation() {
     printLineBreak();
-    if (SDCdebug)
-        File() << "Calculating perturbation priority function\n";
+    File() << "Calculating perturbation priority function\n";
     std::map<Instruction *, int> origSdcSchedTime = sdcSchedTime;
     for (std::list<Instruction *>::iterator
              i = unscheduledInstPriorityQueue.begin(),
@@ -1303,13 +1208,10 @@ void SDCModuloScheduler::calculatePerturbation() {
             // bool isFeasible = sdcSolver.unprocessed.empty();
             // assert(success);
 
-            if (SDCdebug)
-                File() << "Perturbation from incr SDC: "
-                       << sdcSolver.affected.size() << "\n";
-            if (SDCdebug)
-                File() << "Before: " << before << "\n";
-            if (SDCdebug)
-                File() << "After: " << after << "\n";
+            File() << "Perturbation from incr SDC: "
+                   << sdcSolver.affected.size() << "\n";
+            File() << "Before: " << before << "\n";
+            File() << "After: " << after << "\n";
         } else {
             // tentatively add a GE constraint
             C1 = constrainSDC(I, GE, cstep + 1);
@@ -1325,8 +1227,7 @@ void SDCModuloScheduler::calculatePerturbation() {
         // assert(success);
         if (!success) {
 
-            if (SDCdebug)
-                File() << "Couldn't perturb operation. Giving it 1000\n";
+            File() << "Couldn't perturb operation. Giving it 1000\n";
             perturbation[I] = 1000;
             continue;
         }
@@ -1334,8 +1235,7 @@ void SDCModuloScheduler::calculatePerturbation() {
         // count how many operations had to move...
         int numberOfChanges = 0;
         if (LEGUP_CONFIG->getParameterInt("DEBUG_PERTURBATION")) {
-            if (SDCdebug)
-                File() << "How many instruction changed?\n";
+            File() << "How many instruction changed?\n";
         }
         for (std::map<Instruction *, int>::iterator j = sdcSchedTime.begin(),
                                                     je = sdcSchedTime.end();
@@ -1343,22 +1243,18 @@ void SDCModuloScheduler::calculatePerturbation() {
             Instruction *J = j->first;
             if (sdcSchedTime[J] != origSdcSchedTime[J]) {
                 if (LEGUP_CONFIG->getParameterInt("DEBUG_PERTURBATION")) {
-                    if (SDCdebug)
-                        File() << "\tChanged (" << origSdcSchedTime[J] << " -> "
-                               << sdcSchedTime[J] << "): " << *J << "\n";
+                    File() << "\tChanged (" << origSdcSchedTime[J] << " -> "
+                           << sdcSchedTime[J] << "): " << *J << "\n";
                 }
                 numberOfChanges++;
             }
             // else {
-            //    if(SDCdebug) File() << "\tUnchanged (" << origSdcSchedTime[J]
-            //    << " -> "
+            //    File() << "\tUnchanged (" << origSdcSchedTime[J] << " -> "
             //        << sdcSchedTime[J] << "): " << *J << "\n";
             //}
         }
 
-        if (SDCdebug)
-            File() << "Perturbation: " << numberOfChanges << " for: " << *I
-                   << "\n";
+        File() << "Perturbation: " << numberOfChanges << " for: " << *I << "\n";
         perturbation[I] = numberOfChanges;
     }
 
@@ -1405,8 +1301,7 @@ bool SDCModuloScheduler::SDCGreedy() {
         // Instruction *I = *i;
         //++i;
 
-        if (SDCdebug)
-            File() << "Control Step: " << cstep << "\n";
+        File() << "Control Step: " << cstep << "\n";
 
         if (unscheduledInsts.find(I) == unscheduledInsts.end()) {
             // the instruction may have already been scheduled
@@ -1414,9 +1309,8 @@ bool SDCModuloScheduler::SDCGreedy() {
             continue;
         }
 
-        if (SDCdebug)
-            File() << "Attempting to schedule (at cstep = " << cstep
-                   << "): " << *I << "\n";
+        File() << "Attempting to schedule (at cstep = " << cstep << "): " << *I
+               << "\n";
 
         // try scheduling I in the current time step (cstep) or earlier
         bool feasible = false;
@@ -1452,9 +1346,8 @@ bool SDCModuloScheduler::SDCGreedy() {
         bool success = scheduleSDC();
 
         if (!success) {
-            if (SDCdebug)
-                File() << "FAILURE!\nCan't schedule at II = "
-                       << moduloScheduler.II << "\n";
+            File() << "FAILURE!\nCan't schedule at II = " << moduloScheduler.II
+                   << "\n";
             return false;
         }
 
@@ -1473,8 +1366,7 @@ bool SDCModuloScheduler::SDCGreedy() {
     // scheduleSDC();
     assignUnconstrainedOperations();
 
-    if (SDCdebug)
-        File() << "SDC-based IMS successful\n";
+    File() << "SDC-based IMS successful\n";
     return true;
 }
 
@@ -1486,9 +1378,7 @@ void SDCModuloScheduler::assignUnconstrainedOperations() {
         if (moduloScheduler.schedTime.find(I) ==
             moduloScheduler.schedTime.end()) {
             int time = sdcSchedTime[I];
-            if (SDCdebug)
-                File() << "Assigning timeslot: " << time << " to " << *I
-                       << "\n";
+            File() << "Assigning timeslot: " << time << " to " << *I << "\n";
             assert(!moduloScheduler.isResourceConstrained(I) &&
                    "Instruction should have already been scheduled");
             moduloScheduler.schedTime[I] = time;
@@ -1513,13 +1403,11 @@ bool SDCModuloScheduler::iterativeSchedule(int budget) {
             unscheduledInstsConstrainedQueue.push(instr);
             unscheduledInstPriorityQueue.push_back(instr);
         }
-        if (SDCdebug)
-            File() << "Height: " << height[instr] << ": " << *instr << "\n";
+        File() << "Height: " << height[instr] << ": " << *instr << "\n";
     }
 
     std::string schedulerType = LEGUP_CONFIG->getParameter("MODULO_SCHEDULER");
-    if (SDCdebug)
-        File() << "Modulo Scheduler Type: " << schedulerType << "\n";
+    File() << "Modulo Scheduler Type: " << schedulerType << "\n";
     if (schedulerType == "SDC_BACKTRACKING") {
         return SDCWithBacktracking(budget);
     } else if (schedulerType == "SDC_GREEDY") {
@@ -1576,8 +1464,7 @@ void SDCModuloScheduler::printMinDistDot(int II) {
 
 int SDCModuloScheduler::recurrenceMII_SDC(int resourceMII) {
     printLineBreak();
-    if (SDCdebug)
-        File() << "Calculating recurrence MII using SDC scheduler\n";
+    File() << "Calculating recurrence MII using SDC scheduler\n";
     int recMII = resourceMII;
     // int recMII = 0;
 
@@ -1585,14 +1472,12 @@ int SDCModuloScheduler::recurrenceMII_SDC(int resourceMII) {
     bool success = false;
 
     do {
-        if (SDCdebug)
-            File() << "Trying recMII (SDC) = " << recMII << "\n";
+        File() << "Trying recMII (SDC) = " << recMII << "\n";
         moduloScheduler.II = recMII;
         initializeSDC(recMII);
         success = checkFeasible(); // scheduleSDC(); //
         if (!success) {
-            if (SDCdebug)
-                File() << "Scheduling failed. Incrementing recMII\n";
+            File() << "Scheduling failed. Incrementing recMII\n";
             recMII++;
             moduloScheduler.sanityCheckII(recMII);
         } else {
@@ -1600,28 +1485,24 @@ int SDCModuloScheduler::recurrenceMII_SDC(int resourceMII) {
         }
     } while (1);
 
-    if (SDCdebug)
-        File() << "recMII = " << recMII << " using SDC scheduler\n";
+    File() << "recMII = " << recMII << " using SDC scheduler\n";
     printLineBreak();
     return recMII;
 }
 
 int SDCModuloScheduler::recurrenceMII(int resourceMII) {
-    if (SDCdebug)
-        File() << "Calculating recurrence MII using IMS technique\n";
+    File() << "Calculating recurrence MII using IMS technique\n";
     int recMII = resourceMII;
     // find smallest II with no positive cycle
     bool positiveCycle;
     do {
-        if (SDCdebug)
-            File() << "Trying recMII = " << recMII << "\n";
+        File() << "Trying recMII = " << recMII << "\n";
         positiveCycle = computeMinDist(recMII);
         printMinDistDot(recMII);
         if (!positiveCycle) {
             break;
         } else {
-            if (SDCdebug)
-                File() << "Positive cycle detected. Incrementing recMII\n";
+            File() << "Positive cycle detected. Incrementing recMII\n";
             recMII++;
             moduloScheduler.sanityCheckII(recMII);
         }
@@ -1670,31 +1551,19 @@ bool SDCModuloScheduler::computeMinDist(int II) {
                     if ((i == j) && (dist > 0)) {
                         // i must be scheduled after itself - impossible
                         // positive cycle detected
-                        if (SDCdebug)
-                            File() << "Positive Cycle Detected:\n";
-                        if (SDCdebug)
-                            File() << "   i == j: " << *j << "\n";
-                        if (SDCdebug)
-                            File() << "   minDist[i][j] = min[i][k] + "
-                                      "minDist[k][j]\n";
-                        if (SDCdebug)
-                            File() << "   minDist[i][k]: " << minDist[i][k]
-                                   << "\n";
-                        if (SDCdebug)
-                            File() << "   minDist[k][j]: " << minDist[k][j]
-                                   << "\n";
-                        if (SDCdebug)
-                            File() << "   i/j: " << *i << "\n";
-                        if (SDCdebug)
-                            File() << "   k: " << *k << "\n";
-                        if (SDCdebug)
-                            File() << "   dist: " << dist << "\n";
-                        if (SDCdebug)
-                            File() << "   Instruction i must be scheduled "
-                                   << "after itself. Impossible!\n";
-                        if (SDCdebug)
-                            File() << "   Check the mindist." << utostr(II)
-                                   << ".dot graph for the red connection\n";
+                        File() << "Positive Cycle Detected:\n";
+                        File() << "   i == j: " << *j << "\n";
+                        File() << "   minDist[i][j] = min[i][k] + "
+                                  "minDist[k][j]\n";
+                        File() << "   minDist[i][k]: " << minDist[i][k] << "\n";
+                        File() << "   minDist[k][j]: " << minDist[k][j] << "\n";
+                        File() << "   i/j: " << *i << "\n";
+                        File() << "   k: " << *k << "\n";
+                        File() << "   dist: " << dist << "\n";
+                        File() << "   Instruction i must be scheduled "
+                               << "after itself. Impossible!\n";
+                        File() << "   Check the mindist." << utostr(II)
+                               << ".dot graph for the red connection\n";
                         return true;
                     }
                 }
@@ -1737,20 +1606,17 @@ void SDCModuloScheduler::restructureLoopRecurrences(int resMII) {
 
     moduloScheduler.forceNoChain = true;
 
-    if (SDCdebug)
-        File() << "Calculating minDis with no chaining\n";
+    File() << "Calculating minDis with no chaining\n";
     int MII = recurrenceMII(resMII);
     moduloScheduler.findLoopRecurrences();
-    if (SDCdebug)
-        File() << "recMII (mindist): " << MII << "\n";
+    File() << "recMII (mindist): " << MII << "\n";
     saveMinDistForDetectingRecurrences(MII);
 
     moduloScheduler.restructureDFG();
 
     resetMinDistForDetectingRecurrences();
 
-    if (SDCdebug)
-        File() << "Regenerating dependency DAG\n";
+    File() << "Regenerating dependency DAG\n";
     dag->runOnFunction(*F, moduloScheduler.alloc);
 
     moduloScheduler.localMemDistances.clear();
@@ -1771,8 +1637,7 @@ void SDCModuloScheduler::saveMinDistForDetectingRecurrences(int recMII) {
 
 int SDCModuloScheduler::resourceMII() {
     printLineBreak();
-    if (SDCdebug)
-        File() << "\nCalculating resource MII using IMS technique\n";
+    File() << "\nCalculating resource MII using IMS technique\n";
 
     int resMII = 1;
     for (std::set<std::string>::iterator
@@ -1781,9 +1646,8 @@ int SDCModuloScheduler::resourceMII() {
          i != e; ++i) {
         std::string FuName = *i;
         int issueSlots = numIssueSlots(FuName);
-        if (SDCdebug)
-            File() << "Constraints from FuName: " << FuName
-                   << " Issue Slots: " << issueSlots << "\n";
+        File() << "Constraints from FuName: " << FuName
+               << " Issue Slots: " << issueSlots << "\n";
         int opMII = 1;
         int numOps = 0;
         for (BasicBlock::iterator instr = BB->begin(), ie = BB->end();
@@ -1791,24 +1655,20 @@ int SDCModuloScheduler::resourceMII() {
             std::string opName =
                 LEGUP_CONFIG->getOpNameFromInst(instr, moduloScheduler.alloc);
             if (opName == FuName) {
-                if (SDCdebug)
-                    File() << "-" << *instr << "\n";
+                File() << "-" << *instr << "\n";
                 numOps++;
             }
         }
         assert(issueSlots);
         opMII = std::max(opMII, (int)ceil((float)numOps / (float)issueSlots));
-        if (SDCdebug)
-            File() << "resMII (due to " << FuName << "): " << opMII << "\n";
+        File() << "resMII (due to " << FuName << "): " << opMII << "\n";
         resMII = std::max(resMII, opMII);
     }
-    if (SDCdebug)
-        File() << "Overall resMII: " << resMII << "\n";
+    File() << "Overall resMII: " << resMII << "\n";
 
     moduloScheduler.sanityCheckII(resMII);
 
-    if (SDCdebug)
-        File() << "resMII: " << resMII << "\n";
+    File() << "resMII: " << resMII << "\n";
     printLineBreak();
     return resMII;
 }
@@ -1832,9 +1692,8 @@ void SDCModuloScheduler::RemapInstruction(Instruction *I,
 void SDCModuloScheduler::printMap(map<int, ValueToValueMapTy> &valueMapIter,
                                   Value *v, int iter) {
     for (int j = 0; j <= iter; j++) {
-        if (SDCdebug)
-            File() << "i=" << j << ": " << *v << " -> " << *valueMapIter[j][v]
-                   << "\n";
+        File() << "i=" << j << ": " << *v << " -> " << *valueMapIter[j][v]
+               << "\n";
     }
 }
 
@@ -1877,17 +1736,14 @@ void SDCModuloScheduler::initLoop() {
     Scheduler::alloc = moduloScheduler.alloc;
 
     if (!moduloScheduler.ranAlready) {
-        if (SDCdebug)
-            File() << getFileHeader();
+        File() << getFileHeader();
 
         moduloScheduler.verify_can_find_all_loop_labels();
     }
     moduloScheduler.ranAlready = true;
 
-    if (SDCdebug)
-        File() << "Found Loop: " << *moduloScheduler.loop << "\n";
-    if (SDCdebug)
-        File() << "Label: " << moduloScheduler.loopLabel << "\n";
+    File() << "Found Loop: " << *moduloScheduler.loop << "\n";
+    File() << "Label: " << moduloScheduler.loopLabel << "\n";
     // moduloScheduler.tripCount = L->getSmallConstantTripCount();
     // TODO: this may be wrong, just needed to do something to make it compile
     moduloScheduler.tripCount = SE->getSmallConstantTripCount(
@@ -1895,8 +1751,7 @@ void SDCModuloScheduler::initLoop() {
 
     // trip count might not be constant -> in which case the trip count is 0
     // assert(moduloScheduler.tripCount);
-    if (SDCdebug)
-        File() << "Trip count: " << moduloScheduler.tripCount << "\n";
+    File() << "Trip count: " << moduloScheduler.tripCount << "\n";
 
     /*
     BasicBlock *LatchBlock = L->getLoopLatch();
@@ -1905,17 +1760,15 @@ void SDCModuloScheduler::initLoop() {
         unsigned TripCount = SE->getSmallConstantTripCount(L, LatchBlock);
         unsigned TripMultiple = SE->getSmallConstantTripMultiple(L,
     LatchBlock);
-        if(SDCdebug) File() << "Trip count: " << TripCount << "\n";
-        if(SDCdebug) File() << "Trip multiple: " << TripMultiple << "\n";
+        File() << "Trip count: " << TripCount << "\n";
+        File() << "Trip multiple: " << TripMultiple << "\n";
     }
     */
 
     PHINode *induction = moduloScheduler.loop->getCanonicalInductionVariable();
     if (!induction) {
-        if (SDCdebug)
-            File()
-                << "Error: Couldn't canonicalize induction variable! Skipping "
-                   "pipelining\n";
+        File() << "Error: Couldn't canonicalize induction variable! Skipping "
+                  "pipelining\n";
         return;
     }
 
@@ -1923,8 +1776,7 @@ void SDCModuloScheduler::initLoop() {
 
     //  canonical induction variable: an integer recurrence that starts at 0
     //  and increments by one each time through the loop.
-    if (SDCdebug)
-        File() << "Induction variable: " << *induction << "\n";
+    File() << "Induction variable: " << *induction << "\n";
     setMetadataInt(induction, "legup.canonical_induction", 1);
 
     // the loop body should only have a single predecessor
@@ -1944,9 +1796,8 @@ void SDCModuloScheduler::initLoop() {
         moduloScheduler.loop->getCanonicalInductionVariable();
     assert(moduloScheduler.inductionVar);
 
-    if (SDCdebug)
-        File() << "Loop preheader: " << moduloScheduler.loopPreheader->getName()
-               << "\n";
+    File() << "Loop preheader: " << moduloScheduler.loopPreheader->getName()
+           << "\n";
 
     moduloScheduler.II = 1;
     moduloScheduler.initReservationTable();

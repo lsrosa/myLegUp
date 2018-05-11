@@ -182,16 +182,10 @@ GenerateRTL *Allocation::createGenerateRTL(Function *F) {
     GenerateRTL *HW = new GenerateRTL(this, F);
 
     mapFctModule[F] = HW;
-
-    //reversed map leandro
-    mapModuleFct[HW] = F;
-
     hwList.push_back(HW);
 
     return HW;
 }
-
-
 
 // get ram tag number, needed for initializing constant pointers
 int Allocation::getRamTagNum(const Value * op) {
@@ -260,17 +254,17 @@ RAM* Allocation::allocateRAM(const Value *I) {
         unsigned numInstances;
         // if not found previously
         if (functionNumInstances.find(F) == functionNumInstances.end()) {
-            std::set<const Function*> visited;
+            std::set<const Function*> visited;            
             // get the number of instances
             numInstances = getNumInstancesforFunction(1, F, visited);
             // store into map
             functionNumInstances[F] = numInstances;
         } else {
-            numInstances = functionNumInstances[F];
+            numInstances = functionNumInstances[F]; 
         }
-        DEBUG(errs() << "Allocating " << numInstances <<
+        DEBUG(errs() << "Allocating " << numInstances << 
                 " of RAM for instruction " << ins->getName() <<
-                "in function " << F->getName() << "\n");
+                "in function " << F->getName() << "\n");               
         r->setNumInstances(numInstances);
     }
 
@@ -310,13 +304,13 @@ void Allocation::addGlobalDefines() {
             for (unsigned i = 0; i < numInstances; ++i) {
 
                 std::string tagName = R->getTag();
-                if (numInstances != 1)
-                    tagName += "_inst" + utostr(i);
+                if (numInstances != 1)            
+                    tagName += "_inst" + utostr(i);            
 
                 defineList[tagName] = "`MEMORY_CONTROLLER_TAG_SIZE'd" + utostr(tagIndex);
                 tagIndex++;
             }
-
+               
             dataSize = std::max(dataSize, R->getDataWidth());
             defineList[R->getTagAddrName()] = R->getTagAddr();
 		}
@@ -678,11 +672,6 @@ GenerateRTL *Allocation::getGenerateRTL(Function *F) {
     return mapFctModule[F];
 }
 
-//reversed map leandro
-Function *Allocation::getFunctionFromHW(GenerateRTL *HW){
-  return mapModuleFct[HW];
-}
-
 int Allocation::getRegCount(GenerateRTL *hw) {
     int RegCount = 0;
     Function *F = hw->getFunction();
@@ -744,7 +733,8 @@ void Allocation::calculateMinMaxFUs (
             }
         }
 
-        for (std::map<std::string, int>::iterator i = ops.begin(), ie = ops.end(); i != ie; ++i) {
+        for (std::map<std::string, int>::iterator i = ops.begin(), ie =
+                ops.end(); i != ie; ++i) {
             std::string opName = i->first;
             int num = i->second;
 
@@ -778,8 +768,9 @@ void Allocation::calculateRequiredFunctionalUnits() {
         assert(fsm);
 
         // Fill the minFUs/maxFUs map
-        calculateMinMaxFUs(fsm, minFUs, maxFUs);
-        //mapFunctionMinFUs[F], mapFunctionMaxFUs[F]);
+        calculateMinMaxFUs(fsm,
+                minFUs, maxFUs);
+               //mapFunctionMinFUs[F], mapFunctionMaxFUs[F]);
 
         Function *F = HW->getFunction();
         mapFunctionMinFUs[F] = minFUs;
@@ -796,15 +787,19 @@ void Allocation::calculateRequiredFunctionalUnits() {
 
     std::string s;
     std::stringstream ss;
-    for (std::map <Function *, std::map <std::string, int> >::iterator i = mapFunctionNumFUs.begin(), ie = mapFunctionNumFUs.end(); i != ie; ++i) {
+    for (std::map <Function *, std::map <std::string, int> >::iterator i =
+            mapFunctionNumFUs.begin(), ie = mapFunctionNumFUs.end(); i != ie;
+            ++i) {
         Function *F = i->first;
 
         ss << "--------------------------------------------------------------------------------\n";
         ss << "Function: " << F->getName().str() << "\n";
         ss << "--------------------------------------------------------------------------------\n";
-        ss << left << setw(30) << "Function unit type:" << setw(30) <<
+        ss << left << setw(30) << "Function unit type:" << setw(30) << 
             "Number Required" << "\n";
-        for (std::map <std::string, int> ::iterator j = mapFunctionNumFUs[F].begin(), je = mapFunctionNumFUs[F].end(); j != je; ++j) {
+        for (std::map <std::string, int> ::iterator j =
+                mapFunctionNumFUs[F].begin(), je = mapFunctionNumFUs[F].end();
+                j != je; ++j) {
             std::string fu = j->first;
             int num = j->second;
             ss << left << setw(30) << fu << setw(30) << num << "\n";
@@ -941,7 +936,7 @@ void Allocation::getSynchronizationUsage (std::map<std::string, std::set<std::st
                         std::string mutexName = getMetadataStr(CI, "mutexName");
                         syncMap["lock"].insert(mutexName);
                     } else if (calledFunction->getName().str() == "legup_barrier_wait") {
-                        // for now only support one barrier
+                        // for now only support one barrier 
                         syncMap["barrier"].insert("barrier");
                     }
                 }
@@ -978,7 +973,7 @@ void Allocation::getSynchronizationUsage (std::map<std::string, int > &syncMap) 
                             syncMap["lock"] = constant->getZExtValue() + 1;
                         }
                     } else if (calledFunction->getName().str() == "legup_barrier_wait") {
-                        // for now only support one barrier
+                        // for now only support one barrier 
                         syncMap["barrier"] = 1;
                     }
                 }
@@ -988,14 +983,14 @@ void Allocation::getSynchronizationUsage (std::map<std::string, int > &syncMap) 
 }
 
 /* TODO: commented out for LLVM 3.4 update
-// Add a ProfileInfo object to Allocation, which contains data about an
-// execution of the program. Also calculate and cache some basic statistics
+// Add a ProfileInfo object to Allocation, which contains data about an 
+// execution of the program. Also calculate and cache some basic statistics 
 // about the software profile information.
 void Allocation::addPI(ProfileInfo *P)
 {
     assert(P);
     PI = P;
-
+    
     // Calculate total basic block executions
     profile_total_bb_executions = 0;
     for (Module::iterator FI = module->begin(), FE = module->end(); FI != FE; ++FI) {
@@ -1008,7 +1003,7 @@ void Allocation::addPI(ProfileInfo *P)
         }
     }
     //errs() << "Total Basic Block executions: " << profile_total_bb_executions;
-
+    
     // Add other statistics of interest here
 }
 */
@@ -1017,7 +1012,7 @@ void Allocation::addPI(ProfileInfo *P)
 // overall BB executions
 float Allocation::get_percentage_execution_for_BB(BasicBlock *BB)
 {
-	// The ProfileInfo object contains data for each Basic Block.
+	// The ProfileInfo object contains data for each Basic Block. 
 	// Find the execution count of this BB
 	if (!LEGUP_CONFIG->getParameterInt("LLVM_PROFILE")) return 0;
 
@@ -1031,7 +1026,7 @@ float Allocation::get_percentage_execution_for_BB(BasicBlock *BB)
 	//if (execution_count == ProfileInfo::MissingValue) {
 		//return 0;
 	//}
-
+	
 	return float(execution_count) / getTotalBasicBlockExecutions() * 100;
 }
 
@@ -1044,34 +1039,34 @@ bool Allocation::is_BB_executed_infrequently(BasicBlock *BB)
 	return (freq <= LEGUP_CONFIG->getParameterInt("LLVM_PROFILE_MAX_BB_FREQ_TO_ALTER"));
 }
 
-// This function is used in compilations where LLVM profiling is enabled.
-// Infrequently executed basic blocks have registers removed and replaced with
+// This function is used in compilations where LLVM profiling is enabled. 
+// Infrequently executed basic blocks have registers removed and replaced with 
 // multi-cycle constraints. However, some instruction (e.g. loads/stores) need
 // registers. Given one of these registered instructions, return its state number
 // within its basic block.
-int Allocation::get_registered_instruction_state(Instruction *i) {
+int Allocation::get_registered_instruction_state(Instruction *i) { 
 	std::map<Instruction*, int>::const_iterator inst_it = registered_instruction_to_state.find(i);
 	assert(inst_it != registered_instruction_to_state.end()); // Assert found
 	return inst_it->second;
 }
-std::string Allocation::get_register_type(Instruction *i) {
+std::string Allocation::get_register_type(Instruction *i) { 
 	std::map<Instruction*, std::string>::const_iterator inst_it = registered_instruction_to_type.find(i);
 	assert(inst_it != registered_instruction_to_type.end());  // Assert found
 	return inst_it->second;
 }
-int Allocation::get_num_states_in_BB(BasicBlock *BB) {
+int Allocation::get_num_states_in_BB(BasicBlock *BB) { 
 	std::map<BasicBlock*, int>::const_iterator it = BB_to_num_states.find(BB);
 	assert(it != BB_to_num_states.end()); // Assert found
 	return it->second;
 }
 bool Allocation::is_registered_instruction(Instruction *i)
 {
-    if (registered_instruction_to_state.find(i) ==
+    if (registered_instruction_to_state.find(i) == 
         registered_instruction_to_state.end())
     {
         return false;
     }
-    if (get_register_type(i) == "unregistered")
+    if (get_register_type(i) == "unregistered") 
     {
         return false;
     }
@@ -1108,7 +1103,7 @@ void Allocation::addLocalRam(Function *F, RAM *r) {
 
 // return the number of instances for this Function
 // there is one instance per thread
-unsigned Allocation::getNumInstancesforFunction(unsigned currNumInstance, const Function *F,
+unsigned Allocation::getNumInstancesforFunction(unsigned currNumInstance, const Function *F, 
         std::set<const Function*> &visited) {
 
     if (visited.count(F))
@@ -1119,10 +1114,10 @@ unsigned Allocation::getNumInstancesforFunction(unsigned currNumInstance, const 
     // only if it's not the top-level function
     if (F->hasFnAttribute("totalNumThreads") && F->hasNUsesOrMore(1)) {
         currNumInstance *= strToInt(F->getFnAttribute("totalNumThreads").getValueAsString());
-    }
+    } 
 
     unsigned maxNumInstance=1;
-    for (const User *UI : F->users()) {
+    for (const User *UI : F->users()) {   
 		if (const CallInst *CI = dyn_cast<CallInst>(UI)) {
 
             const Function *callerF = CI->getParent()->getParent();
@@ -1131,7 +1126,7 @@ unsigned Allocation::getNumInstancesforFunction(unsigned currNumInstance, const 
                 maxNumInstance = numInstance;
 		}
     }
-
+   
     if (maxNumInstance > currNumInstance)
         return maxNumInstance;
     return currNumInstance;
@@ -1142,7 +1137,7 @@ std::string PropagatingSignal::getName() {
 	std::string name = _signal->getName();
 	size_t arbiter = name.find("_arbiter");
 	if (arbiter != std::string::npos) {
-		return name.substr(0, arbiter) + name.substr(arbiter+strlen("_arbiter"), std::string::npos);
+		return name.substr(0, arbiter) + name.substr(arbiter+strlen("_arbiter"), std::string::npos); 
 	}
 	return name;
 }
@@ -1155,7 +1150,7 @@ std::string PropagatingSignal::getPthreadsMemSignalName() {
 	"_arbiter" + standardName.substr(lastUnderscore, std::string::npos);
     return pthreadsName;
 }
-
+    
 bool PropagatingSignals::functionUsesMemory(std::string name) {
     std::vector<PropagatingSignal *> signals = getPropagatingSignalsForFunctionNamed(name);
     for (std::vector<PropagatingSignal *>::iterator it = signals.begin(); it != signals.end(); ++it) {
@@ -1181,7 +1176,7 @@ std::vector<FunctionWithSignals *>::iterator PropagatingSignals::functionWithSig
 }
 
 void PropagatingSignals::addPropagatingSignalToFunctionNamed(std::string name, PropagatingSignal &signal) {
-
+    
     // Create a FunctionWithSignals object to compare with
     // items in the functionsAndSignals set (matches by name).
     //
@@ -1212,7 +1207,7 @@ void PropagatingSignals::addPropagatingSignalsToFunctionNamed(std::string name, 
     for (std::vector<PropagatingSignal>::iterator sit = signals.begin(); sit != signals.end(); ++sit) {
 
 	addPropagatingSignalToFunctionNamed(name, *sit);
-
+	
     }
 }
 
@@ -1237,7 +1232,7 @@ std::vector<PropagatingSignal *> PropagatingSignals::getPropagatingSignalsForFun
 	FunctionWithSignals *function = *it;
 	return referenceVectorForSignalVector(function->signals);
     }
-
+    
     std::vector<PropagatingSignal *> emptyVector;
     return emptyVector;
 }
@@ -1249,15 +1244,15 @@ mergePropagatingSignalsWithExistingSignalsInVector(std::vector<PropagatingSignal
     for (std::vector<PropagatingSignal>::iterator sit = signals.begin(); sit != signals.end(); ++sit) {
 
 	PropagatingSignal &propSig = *sit;
-
+	
 	std::vector<PropagatingSignal *>::iterator vit = vector.begin();
 	while (vit != vector.end()) {
-
+	    
 	    PropagatingSignal &vectorSig = **vit;
-
+	    
 	    if (vectorSig.getName() == propSig.getName()) {
 
-		std::string vectorSigHiStr = vectorSig.getWidth().getHi(),
+		std::string vectorSigHiStr = vectorSig.getWidth().getHi(), 
 		            vectorSigLoStr = vectorSig.getWidth().getLo(),
 		            propSigHiStr   = propSig.getWidth().getHi(),
 		            propSigLoStr   = propSig.getWidth().getLo();
@@ -1271,40 +1266,40 @@ mergePropagatingSignalsWithExistingSignalsInVector(std::vector<PropagatingSignal
 		    int vectorSigLo = strToInt(vectorSigLoStr);
 		    int propSigHi   = strToInt(propSigHiStr);
 		    int propSigLo   = strToInt(propSigLoStr);
-
+		    
 		    int vectorMax = std::max(vectorSigHi, vectorSigLo);
 		    int propMax   = std::max(propSigHi, propSigLo);
 		    int max       = std::max(vectorMax, propMax);
-
+		    
 		    int vectorMin = std::min(vectorSigHi, vectorSigLo);
 		    int propMin   = std::min(propSigHi, propSigLo);
 		    int min       = std::min(vectorMin, propMin);
-
+		    
 		    RTLWidth width(max, min);
-
+		    
 		    vectorSig.overrideWidth(width);
 		    vectorSig.setMerged(true);
-
+				
 		}
 		break;
 	    }
 	    ++vit;
-
+	    
 	}
-
+	
 	if (vit == vector.end()) {
 	    vector.push_back(&propSig);
 	}
-
+	
     }
 }
 
 std::vector<PropagatingSignal *> PropagatingSignals::getPropagatingSignalsForFunctionsWithNames(std::vector<std::string> names) {
     std::vector<PropagatingSignal *> signals;
     for (std::vector<std::string>::iterator it = names.begin(); it != names.end(); ++it) {
-
+	
 	std::string &functionName = *it;
-
+	
 	std::vector<FunctionWithSignals *>::iterator fsit = functionWithSignalsInVector(functionName);
 	if (fsit != functionsAndSignals.end()) {
 	    FunctionWithSignals *function = *fsit;
@@ -1315,3 +1310,4 @@ std::vector<PropagatingSignal *> PropagatingSignals::getPropagatingSignalsForFun
 }
 
 } // End legup namespace
+
