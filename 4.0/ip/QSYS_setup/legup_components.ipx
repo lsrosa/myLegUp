@@ -1,6 +1,0 @@
-<library>
-  <!-- Add new ips to standard components for LegUp -->
-	<path path="/home/legup/legup-3.0/ip/**/*" >
-    	<tag2 key="COMPONENT_IN_PROJECT" value="true" />
-  	</path>
-</library>

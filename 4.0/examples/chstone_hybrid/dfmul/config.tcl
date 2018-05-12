@@ -1,1 +1,0 @@
-set_accelerator_function "extractFloat64Sign"

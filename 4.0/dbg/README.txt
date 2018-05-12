@@ -1,1 +1,0 @@
-For debugger instructions, see the LegUp documentation.
