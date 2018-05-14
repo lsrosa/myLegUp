@@ -33,14 +33,14 @@ all: llvm/tools/polly/Makefile.config llvm/Makefile.config llvm-2.9_mips/Makefil
 	# $(MAKE) -C mips-binutils
 	$(MAKE) -C llvm
 	$(MAKE) -C llvm-2.9_mips tools-only ONLY_TOOLS=llc
-	#$(MAKE) -C dragonegg GCC=$(DRAGONEGG_GCC_VERSION) LLVM_CONFIG=../llvm/$(LLVM_BUILD)/bin/llvm-config
+#	$(MAKE) -C dragonegg GCC=$(DRAGONEGG_GCC_VERSION) LLVM_CONFIG=../llvm/$(LLVM_BUILD)/bin/llvm-config
 	$(MAKE) -C examples/lib/llvm
 	$(MAKE) all -C swtools/lib-source
 	$(MAKE) -C tiger/processor
 	$(MAKE) -C tiger/linux_tools
 	$(MAKE) -C tiger/tool_source/profiling_tools
 	$(MAKE) -C pcie
-	#$(MAKE) -C gui
+#	$(MAKE) -C gui
 	$(MAKE) -C ip
 	if [ -d .git ]; then \
 		cd ./.git/hooks/ ; ln -sf ../../hooks/* ./ ; \
