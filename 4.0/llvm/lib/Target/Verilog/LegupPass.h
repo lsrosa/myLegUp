@@ -80,6 +80,19 @@ private:
     Allocation *allocation;
     LiveVariableAnalysis *LVA;
     MinimizeBitwidth *MBW;
+
+    struct Schedstats{
+      double time, mappingtime, solvetime, fsmtime;
+      int instcount;
+      std::string name;
+
+      Schedstats(double t, double mt, double st, double ft, int ic, std::string n)
+      : time(t), mappingtime(mt), solvetime(st), fsmtime(ft), instcount(ic), name(n)
+      {}
+    };
+
+    std::vector<Schedstats> schedstats_vector;
+    double alloctime,  bindtime;
 };
 
 } // End legup namespace

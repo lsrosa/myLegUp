@@ -18,7 +18,8 @@ add_llvm_target(Verilog
   Verilog.cpp
   VerilogWriter.cpp
   SDCScheduler.cpp
+  LegupConfig.cpp
+  LeguoConfig.h
 )
 
 add_subdirectory(TargetInfo)
-

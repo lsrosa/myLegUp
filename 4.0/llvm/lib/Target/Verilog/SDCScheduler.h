@@ -87,6 +87,14 @@ class SchedulerMapping;
      */
     lprec *lp;
 
+    /** leandro -
+     * this is for trying to transform the LP in several smaller LPs
+    */
+    std::map<BasicBlock *, lprec *> lpvec;
+    std::map<InstructionNode *, unsigned> pw_startVariableIndex;
+    std::map<InstructionNode *, unsigned> pw_endVariableIndex;
+    std::map<BasicBlock *, unsigned> numInstVec;
+    std::map<BasicBlock *, unsigned> numVarsVec;
     /**
      * The number of variables in the LP formulation.
      */
@@ -97,10 +105,10 @@ class SchedulerMapping;
      */
     int numInst;
 
-    /** 
+    /**
      * Mapping between instructions and variable indicies in the LP formulation.
      * This map holds the starting variable indices for instructions.
-     * 
+     *
      * Instructions that are not multi-cycle have only a single
      * variable in the LP.  Instructions that take N cycles to
      * complete (N > 1) have N variables in the LP.
@@ -129,7 +137,7 @@ class SchedulerMapping;
     /**
      * Add constraints so the LP variables of a multi-cycle
      * instruction are assigned to contiguous clock cycles.
-     * See Section 3.1 of Cong's article.  
+     * See Section 3.1 of Cong's article.
      */
     void addMulticycleConstraints(Function *F);
     /**
@@ -165,9 +173,9 @@ class SchedulerMapping;
      * with its dependant nodes.  The partial path delay is the
      * cumulative combinational delay between the Root node and the
      * Curr node.
-     * 
-     * @param Root A node in the DFG.  
-     * @param Curr A node in the DFG in the transitive fanin of the Root.  
+     *
+     * @param Root A node in the DFG.
+     * @param Curr A node in the DFG in the transitive fanin of the Root.
      * @param PartialPathDelay The total combinational path delay from Curr to Root.
      */
     void addTimingConstraints(InstructionNode* Root, InstructionNode* Curr, float PartialPathDelay);
@@ -183,15 +191,18 @@ class SchedulerMapping;
      * @param constraint is the number of functional units available
      *
      * These constraints are semi-OPTIONAL.  Meaning, there may
-     * be a limited amount of resources on the device that 
+     * be a limited amount of resources on the device that
      * make these constraints mandatory.
      */
-    void addResourceConstraint(Function *F, std::string
-            constrainedFuName, unsigned constraint);
+    void addResourceConstraint(Function *F, std::string constrainedFuName,
+                               unsigned constraint);
+    void pw_addResourceConstraint(Function *F, std::string constrainedFuName,
+                                  unsigned constraint);
     /**
      * Perform ASAP OR ALAP scheduling.  The workhorse function.
-     * 
-     * @param ASAP should be set to TRUE if ASAP scheduling is desired; otherwise, ALAP scheduling will be invoked.
+     *
+     * @param ASAP should be set to TRUE if ASAP scheduling is desired;
+     *otherwise, ALAP scheduling will be invoked.
      */
     void scheduleAXAP(bool ASAP = true);
     void scheduleASAP();
@@ -204,6 +215,8 @@ class SchedulerMapping;
      * give an UNBOUNDED solution.
      */
     void addALAPConstraints(Function *F);
+    // leandro - pw version
+    void pw_addALAPConstraints(Function *F);
     /**
      * Perform slack-driven scheduling.  Maximimize the amount
      * of slack in the final schedule.  This idea is presented
@@ -223,7 +236,7 @@ class SchedulerMapping;
      * Print the schedule to the screen.
      */
     void depositSchedule(Function *F);
-
+    void pw_depositSchedule(Function *F);
 
     /**
      * The functions below are used to perform a second scheduling phase
@@ -233,22 +246,24 @@ class SchedulerMapping;
     void save_instruction_states(Function *F);
     void find_instructions_to_delay(Function *F,
             std::map<Instruction*, int> & Instruction_to_state);
-    void find_instructions_to_delay_in_BB(BasicBlock *b, 
+    void find_instructions_to_delay_in_BB(BasicBlock *b,
             std::map<Instruction*, int> & Instruction_to_state);
     void do_post_scheduling_steps(Function *F);
     bool should_scheduling_be_repeated_to_add_latency();
 
-
     /**
      * Holds the schedule, i.e., the instruction->cycle# assignment.
      * Also responsible for FSM generation.
-     * ??? janders: unclear whether will use this, since it is 
+     * ??? janders: unclear whether will use this, since it is
      * tied to basic block scheduling
      */
     SchedulerMapping *map;
+    // leandro -- pw version
+    SchedulerMapping *pw_map;
 
     // print out debugging information
     bool SDCdebug;
+    bool PWSDCdebug;
 
     void addMultipumpConstraints(Function *F);
     bool isDependent(InstructionNode *source, InstructionNode *dest);

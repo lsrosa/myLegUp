@@ -175,9 +175,10 @@ public:
     unsigned getNumStates(BasicBlock *bb) { return stateNum[bb]; }
     void setNumStates(BasicBlock *bb, unsigned u) { stateNum[bb] = u; }
     FiniteStateMachine *createFSM(Function *, SchedulerDAG *);
+    bool compare(SchedulerMapping *m2);
 
-private:
-    DenseMap<InstructionNode*, unsigned> map;
+  private:
+    DenseMap<InstructionNode *, unsigned> map;
     DenseMap<BasicBlock *, unsigned> stateNum;
 };
 

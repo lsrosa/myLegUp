@@ -23,8 +23,19 @@ static LegupConfig LegupConfigObj;
 
 LegupConfig *LEGUP_CONFIG = &LegupConfigObj;
 
-#define NUM_PARAMETERS 126
+#define NUM_PARAMETERS 140
 const std::string validParameters[NUM_PARAMETERS] = {
+    "DEBUG_LOOP_SELECT",
+    //lp_solve or gurobi solver
+    "SOLVER",
+    //leandro - NI parameters
+    "NI_DEBUG", "NI_ORDER",
+    //leandro - new parameters
+    "ILP_DEBUG", "PIECEWISE_SDC", "DEBUG_PIECEWISE_SDC",
+    //leandro - GA parameters
+    "GA_DEBUG", "GA_POPULATION_SIZE", "GA_MAXIMUM_GENERATIONS", "GA_MUTATION_PROB", "GA_OFFSPRING_SIZE",
+    "GA_LAMBDA", "GA_THRESHOLD",
+    //legup native parameters
     "ALIAS_ANALYSIS", "CLOCK_PERIOD", "DEBUG_MODULO_DEPENDENT",
     "DEBUG_MODULO_TABLE", "DEBUG_PERTURBATION", "DEBUG_VERIFY_INCR_SDC",
     "DFG_SHOW_DUMMY_CALLS", "DISABLE_REG_SHARING", "DONT_CHAIN_GET_ELEM_PTR",
@@ -106,8 +117,8 @@ const std::string validParameters[NUM_PARAMETERS] = {
 };
 
 void LegupConfig::checkValidParameter(const std::string name) {
-    static std::set<std::string> validParametersSet(
-        validParameters, validParameters + NUM_PARAMETERS);
+    static std::set<std::string> validParametersSet(validParameters, validParameters + NUM_PARAMETERS);
+
     if (validParametersSet.find(name) == validParametersSet.end()) {
         errs() << "Parameter: " << name << "\n";
         assert(0 && "Unknown or unsupported parameter. "

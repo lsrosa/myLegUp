@@ -19,6 +19,7 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/StringExtras.h"
 
+#include <iostream>
 #include <string>
 #include <set>
 #include <map>

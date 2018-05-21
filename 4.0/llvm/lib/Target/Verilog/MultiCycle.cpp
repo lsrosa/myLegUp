@@ -51,10 +51,9 @@ namespace legup {
 // Functions in the SDCScheduler class
 // -----------------------------------------------------------------------------
 
-bool has_uses_in_other_BB(Instruction *I)
 // Local helper function to check whether this instruction
 // has uses in other basic blocks
-{
+bool has_uses_in_other_BB(Instruction *I) {
     BasicBlock *b = I->getParent();
     for (Value::user_iterator u = I->user_begin(); u != I->user_end(); ++u) {
         Instruction *s = dyn_cast<Instruction>(*u);
@@ -222,8 +221,6 @@ bool mc_push_inst_to_later_state(Instruction *i) {
     return can_push_to_later_state;
 }
 
-void SDCScheduler::find_instructions_to_delay(
-    Function *F, std::map<Instruction *, int> &mc_dest_instructions_to_state)
 // This function is used when removing registers from data paths. It iterates
 // over all the instructions in the function to find those instructions which:
 //  (1) are destinations of MC paths, and
@@ -234,7 +231,8 @@ void SDCScheduler::find_instructions_to_delay(
 // which they terminate extended, and this function finds those instructions
 // which we should delay and maps them to their new intended state (with
 // respect to their BB).
-{
+void SDCScheduler::find_instructions_to_delay(
+    Function *F, std::map<Instruction *, int> &mc_dest_instructions_to_state) {
     // for all BBs in F
     for (Function::iterator b = F->begin(), be = F->end(); b != be; ++b) {
         // Call a helper to find the instructions requiring registers
@@ -244,9 +242,8 @@ void SDCScheduler::find_instructions_to_delay(
     }
 }
 
-void SDCScheduler::save_instruction_states(Function *F)
 // Stores the state # for each instruction (with respect to its own BB)
-{
+void SDCScheduler::save_instruction_states(Function *F) {
     REAL *variables = new REAL[numVars];
     get_variables(lp, variables);
 
@@ -283,14 +280,14 @@ void SDCScheduler::save_instruction_states(Function *F)
     delete[] variables;
 }
 
-void SDCScheduler::find_instructions_to_delay_in_BB(
-    BasicBlock *b, std::map<Instruction *, int> &mc_dest_instructions_to_state)
 // Helper to find_instructions_to_delay
 // It iterates over all the instructions in the function to find
 // those instructions which are destinations of MC paths and should
 // be delayed. It then  maps each of these instructions to the state
 // (within their BB) that they should be re-scheduled.
-{
+void SDCScheduler::find_instructions_to_delay_in_BB(
+    BasicBlock *b,
+    std::map<Instruction *, int> &mc_dest_instructions_to_state) {
     mc_debug() << "\n\nInfrequent Basic Block:";
 
     REAL *variables = new REAL[numVars];
@@ -389,7 +386,6 @@ bool SDCScheduler::should_scheduling_be_repeated_to_add_latency() {
     return repeat;
 }
 
-void SDCScheduler::multicycle_and_modify_schedule(Function *F)
 // Check whether registers should be removed from paths, and if so remove the
 // registers here. This is done by re-scheduling all instructions, with
 // dependency constraints but without timing constraints, forcing all
@@ -398,13 +394,17 @@ void SDCScheduler::multicycle_and_modify_schedule(Function *F)
 // Also, if software profiling was performed for this compilation,
 // extend infrequent BB by a certain number of cycles by performing
 // a second scheduling phase.
-{
+void SDCScheduler::multicycle_and_modify_schedule(Function *F){
+    //std::cout << "multi-cycle and modify schedule attemptive" << '\n';
     // MULTICYCLE_TODO: For now disable multi-cycle paths in cases where
     // resources are pipelined (includes loop pipelining). Also only
     // enable for the pure-HW flow
     if (!LEGUP_CONFIG->does_flow_support_multicycle_paths()) {
+        // std::cout << "but she said no-no-no" << '\n';
         return;
     }
+
+    // std::cout << "multi-cycle and modify schedule" << '\n';
 
     // Extend the latency of paths in infrequently executed BB
     bool re_schedule_to_add_latency =
@@ -420,6 +420,17 @@ void SDCScheduler::multicycle_and_modify_schedule(Function *F)
         delete_lp(lp);
         numVars = 0;
         numInst = 0;
+        // leandro -- pw version
+        /*
+        if (LEGUP_CONFIG->getParameterInt("PIECEWISE_SDC")) {
+          for(auto lpit : lpvec){
+            numVarsVec[lpit.first] = 0;
+            numInstVec[lpit.first] = 0;
+            delete_lp(lpit.second);
+          }
+        }
+        */
+
         createLPVariables(F);
         addMulticycleConstraints(F);
         addDependencyConstraints(F);
