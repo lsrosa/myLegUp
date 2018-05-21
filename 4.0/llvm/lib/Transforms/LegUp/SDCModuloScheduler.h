@@ -25,11 +25,14 @@
 
 #ifndef ITERATIVEMODULOSCHEDULING_H
 #define ITERATIVEMODULOSCHEDULING_H
-
+#define leandrodebug 1
 struct isl_set;
 
 #include "ModuloScheduler.h"
 #include "SDCSolver.h"
+// leandro
+#include <time.h>
+#include <fstream>
 
 using namespace llvm;
 
@@ -48,6 +51,11 @@ class SDCModuloScheduler {
     ModuloScheduler moduloScheduler;
     SDCSolver sdcSolver;
     SchedulerDAG *dag;
+
+    // leandro measunring time
+  private:
+    double totaltime = 0, solvetime = 0;
+    long int nsdcs = 0;
 
   public:
     bool runOnLoop(Loop *L, LPPassManager &LPM);
@@ -72,8 +80,10 @@ class SDCModuloScheduler {
     int origRecMII;
 
     void printLineBreak() {
-        File() << "------------------------------------------------------------"
-                  "--------------------\n";
+        if (SDCdebug)
+            File() << "--------------------------------------------------------"
+                      "----"
+                      "--------------------\n";
     }
 
     typedef std::map<unsigned, std::list<Instruction *>> IntToInstMapTy;
@@ -262,8 +272,7 @@ class SDCModuloScheduler {
         endVariableIndex.clear();
 
         // iterate over the instructions in a BB
-        for (BasicBlock::iterator i = BB->begin(), ie = BB->end(); i != ie;
-             i++) {
+        for (BasicBlock::iterator i = BB->begin(), ie = BB->end(); i != ie; i++) {
             numInst++;
             InstructionNode *iNode = dag->getInstructionNode(i);
             startVariableIndex[iNode] = numVars;
@@ -275,16 +284,18 @@ class SDCModuloScheduler {
             endVariableIndex[iNode] = numVars + delay;
 
             if (SDCdebug)
-                File() << "Start Index: " << startVariableIndex[iNode]
-                       << " End Index: " << endVariableIndex[iNode]
-                       << " I: " << *i << "\n";
+                if (SDCdebug)
+                    File() << "Start Index: " << startVariableIndex[iNode]
+                           << " End Index: " << endVariableIndex[iNode]
+                           << " I: " << *i << "\n";
 
             numVars += (1 + Scheduler::getNumInstructionCycles(i));
         }
 
         if (SDCdebug)
-            File() << "SDC: # of variables: " << numVars
-                   << " # of instructions: " << numInst << "\n";
+            if (SDCdebug)
+                File() << "SDC: # of variables: " << numVars
+                       << " # of instructions: " << numInst << "\n";
 
         // build an empty LP instance with the right # of variables
         sdcSolver.lp = make_lp(0, numVars);
@@ -324,7 +335,8 @@ class SDCModuloScheduler {
             if (startIndex == endIndex)
                 continue; // not a multicycle instruction
 
-            // File() << "Multi-cycle operation startIndex: " << startIndex <<
+            // if(SDCdebug) File() << "Multi-cycle operation startIndex: " <<
+            // startIndex <<
             //    " endIndex: " << endIndex << " I: " << *I << "\n";
 
             // add constraints so that the variable corresponding to each
@@ -337,8 +349,9 @@ class SDCModuloScheduler {
                 val[1] = -1.0;
 
                 if (SDCdebug) {
-                    File() << "Adding constraint: s(" << col[0] - 1 << ") == s("
-                           << col[1] - 1 << ") + 1 cycle\n";
+                    if (SDCdebug)
+                        File() << "Adding constraint: s(" << col[0] - 1
+                               << ") == s(" << col[1] - 1 << ") + 1 cycle\n";
                 }
 
                 // there must be EXACTLY 1 cycle delay between variable j and
@@ -427,13 +440,19 @@ class SDCModuloScheduler {
                 // equivalent to:
                 //      start of 'j' >= end of 'i' + chaining - II*distance(i,
                 //      j)
-                File() << "Cross-iteration constraint: start of 'j' >= end of "
-                          "'i' + chaining "
-                       << "- II*distance(i, j)\n";
-                File() << "\tchaining: " << chainingLatency << " II: " << II
-                       << " distance: " << dist << "\n";
-                File() << "\ti: " << *i << "\n";
-                File() << "\tj: " << *j << "\n";
+                if (SDCdebug)
+                    File()
+                        << "Cross-iteration constraint: start of 'j' >= end of "
+                           "'i' + chaining "
+                        << "- II*distance(i, j)\n";
+                if (SDCdebug)
+                    File() << "\tchaining: " << chainingLatency << " II: " << II
+                           << " distance: " << dist << "\n";
+                if (SDCdebug)
+                    File() << "\ti: " << *i << "\n";
+                if (SDCdebug)
+                    File() << "\tj: " << *j << "\n";
+
                 sdcSolver.addConstraintIncremental(
                     sdcSolver.lp, 2, val, col, GE, chainingLatency - II * dist);
             }
@@ -540,7 +559,8 @@ class SDCModuloScheduler {
             // TODO: refactor cross-iteration constraints to be handled here
             assert(moduloScheduler.dependent(I1, I2));
             if (moduloScheduler.distance(I1, I2)) {
-                // File() << "Skipping due to distance = " << dist << "\n";
+                // if(SDCdebug) File() << "Skipping due to distance = " << dist
+                // << "\n";
                 continue;
             }
 
@@ -604,9 +624,10 @@ class SDCModuloScheduler {
                 // timing constraints...
                 if (moduloScheduler.onCriticalPath(I1) &&
                     moduloScheduler.onCriticalPath(I2)) {
-                    File()
-                        << "Skipping timing constraint due to loop recurrence "
-                        << "on this path\n";
+                    if (SDCdebug)
+                        File() << "Skipping timing constraint due to loop "
+                                  "recurrence "
+                               << "on this path\n";
                     continue;
                 }
 
@@ -663,7 +684,8 @@ class SDCModuloScheduler {
             int idx = startVariableIndex[dag->getInstructionNode(i)];
             assert(idx < numVars);
 
-            // File() << "Before rounding: " << variables[idx] << "\n";
+            // if(SDCdebug) File() << "Before rounding: " << variables[idx] <<
+            // "\n";
             unsigned cstep;
             if (lpSolve) {
                 cstep = (unsigned)variables[idx];
@@ -673,10 +695,11 @@ class SDCModuloScheduler {
                 assert(cstep_incr >= 0);
                 cstep = cstep_incr;
             }
-            // File() << "After rounding: " << cstep << "\n";
+            // if(SDCdebug) File() << "After rounding: " << cstep << "\n";
             // int cstep_incr = sdcSolver.getD(sdcSolver.FeasibleSoln, idx + 1);
 
-            // File() << "cstep for var(" << idx << ") sdc: " << cstep << "
+            // if(SDCdebug) File() << "cstep for var(" << idx << ") sdc: " <<
+            // cstep << "
             // incr:
             // "
             //    << cstep_incr << "\n";
@@ -701,8 +724,9 @@ class SDCModuloScheduler {
         }
 
         if (lpSolve && LEGUP_CONFIG->getParameterInt("INCREMENTAL_SDC")) {
-            File()
-                << "Resetting incremental feasible solution to LP solution\n";
+            if (SDCdebug)
+                File() << "Resetting incremental feasible solution to LP "
+                          "solution\n";
             assert((int)sdcSolver.FeasibleSoln.size() == numVars);
             for (int i = 0; i < numVars; i++) {
                 // reset feasible soln:
@@ -712,7 +736,8 @@ class SDCModuloScheduler {
 
                 if (old != val) {
                     // changing
-                    // File() << "changing Feasible soln idx: " << i+1 << " " <<
+                    // if(SDCdebug) File() << "changing Feasible soln idx: " <<
+                    // i+1 << " " <<
                     // old <<
                     //    " -> " << val << "\n";
                 }
@@ -762,7 +787,13 @@ class SDCModuloScheduler {
         if (!SDCdebug)
             set_verbose(sdcSolver.lp, 1);
 
+        // leandro - measuring num solvers and solving time
+        clock_t ticsv = clock();
         int ret = solve(sdcSolver.lp);
+        clock_t tocsv = clock();
+        solvetime += (double)(tocsv - ticsv) / CLOCKS_PER_SEC;
+        // printf("%f\n", solvetime);
+        nsdcs++;
 
         if (SDCdebug) {
             File() << "SDC solver status: " << ret << "\n";
@@ -772,8 +803,10 @@ class SDCModuloScheduler {
         delete[] variableIndices;
 
         if (ret != 0) {
-            File() << "  LP solver returned: " << ret << "\n";
-            File() << "  LP solver could not find an optimal solution\n";
+            if (SDCdebug)
+                File() << "  LP solver returned: " << ret << "\n";
+            if (SDCdebug)
+                File() << "  LP solver could not find an optimal solution\n";
             // report_fatal_error("LP solver could not find an optimal
             // solution");
             return false;
@@ -784,7 +817,8 @@ class SDCModuloScheduler {
 
     void initializeSDC(int II) {
         printLineBreak();
-        File() << "initializing SDC constraints for II = " << II << "\n";
+        if (SDCdebug)
+            File() << "initializing SDC constraints for II = " << II << "\n";
 
         chaining = false; // default is no chaining -- maximally pipelined
         clockPeriodConstraint = -1.0; // default is no clock period constraint
@@ -821,19 +855,22 @@ class SDCModuloScheduler {
 
     // tries to schedule the SDC
     bool scheduleSDC() {
-        File()
-            << "  Solving SDC LP problem (modulo resource constraints are not "
-               "modeled in the formulation)\n";
+        if (SDCdebug)
+            File() << "  Solving SDC LP problem (modulo resource constraints "
+                      "are not "
+                      "modeled in the formulation)\n";
 
         assert(sdcSolver.lp && "Must initialize SDC");
 
         // if (LEGUP_CONFIG->getParameterInt("INCREMENTAL_SDC")) {
         //    bool isFeasible = sdcSolver.unprocessed.empty();
         //    if (!isFeasible) {
-        //        File() << "Incremental SDC constraints are infeasible\n";
+        //        if(SDCdebug) File() << "Incremental SDC constraints are
+        //        infeasible\n";
         //        return false;
         //    }
-        //    File() << "  Found incremental solution to SDC LP problem\n";
+        //    if(SDCdebug) File() << "  Found incremental solution to SDC LP
+        //    problem\n";
         //    saveSchedule();
         //    return true;
         //}
@@ -842,14 +879,17 @@ class SDCModuloScheduler {
         bool success = runLPSolver();
 
         if (success) {
-            File() << "  Found solution to SDC LP problem\n";
+            if (SDCdebug)
+                File() << "  Found solution to SDC LP problem\n";
             saveSchedule(/*lpSolve=*/true);
         }
 
         if (LEGUP_CONFIG->getParameterInt("INCREMENTAL_SDC")) {
             bool isFeasible = sdcSolver.unprocessed.empty();
-            File() << "Incremental: " << isFeasible << "\n";
-            File() << "Actual: " << success << "\n";
+            if (SDCdebug)
+                File() << "Incremental: " << isFeasible << "\n";
+            if (SDCdebug)
+                File() << "Actual: " << success << "\n";
             if (isFeasible != success) {
                 // if (isFeasible != success) {
                 errs()

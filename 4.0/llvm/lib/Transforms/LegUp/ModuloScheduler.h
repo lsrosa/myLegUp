@@ -25,6 +25,7 @@ namespace legup {
 class Allocation;
 
 class ModuloScheduler {
+    bool SDCdebug = LEGUP_CONFIG->getParameterInt("SDC_DEBUG");
 
   public:
     Function *F;

@@ -7,7 +7,6 @@ add_llvm_loadable_module( LLVMLegUp
   SwOnly.cpp
   utils.cpp
   WatchVariables.cpp
-  )
+)
 
 target_link_libraries(LLVMLegUp LLVMCodeGen)
-  
