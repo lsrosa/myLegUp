@@ -1,3 +1,4 @@
+extern void __legup_label(char* label);
 // matrix multiply
 // Author: Andrew Canis
 // Date: June 13, 2012

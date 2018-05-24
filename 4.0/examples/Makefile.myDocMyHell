@@ -193,6 +193,9 @@ endif # DEBUG_KEEP_VARS_IN_MEM
 	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).1.bc
 	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).2.bc
 
+	#-------------------------------------------------------------------
+	#_---------- here we start compiling all loops ---------------------
+
 	# produces verilog: $(NAME).v
 	#$(LLVM_HOME)llc $(LLC_FLAGS) -march=v ir_out/$(NAME).bc -o $(VFILE)
 

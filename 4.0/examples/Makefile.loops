@@ -1,0 +1,141 @@
+ifeq ($(CUSTOM_MODULE_SCHEDULING),1)
+	PIPELINE_OPT_FLAGS = -load=$(LIB_DIR)LLVMLeandro.so $(LEGUP_TCL_FILES)
+	LOOPSELECT_OPT_FLAGS = -load=$(LIB_DIR)LLVMLeandro.so $(LEGUP_TCL_FILES)
+ifeq ($(NO_INLINE),1)
+	PIPELINE_OPT_FLAGS += -disable-inlining
+	LOOPSELECT_OPT_FLAGS += -disable-inlining
+	OPT_FLAGS += -disable-inlining
+endif
+ifeq ($(NO_OPT),1)
+	PIPELINE_OPT_FLAGS += -disable-opt
+	LOOPSELECT_OPT_FLAGS += -disable-opt
+	OPT_FLAGS += -disable-opt
+endif
+else # ILP_MODULE_SCHEDULING
+	PIPELINE_OPT_FLAGS = $(OPT_FLAGS)
+endif #if CUSTOM_MODULE_SCHEDULING
+
+# make sure all is the default target, and not something from Makefile.aux
+default: $(OVERRIDE)all
+
+include $(LEVEL)/Makefile.config
+include $(LEVEL)/Makefile.ancillary
+include $(LEVEL)/Makefile.aux
+include $(LEVEL)/Makefile.private
+
+################################################################################
+# Begin targets
+################################################################################
+
+# set $OVERRIDE if you'd like to change the 'all' target.
+# see phi/Makefile
+NAME=module
+TARGET_DIRS=$(patsubst %,out.%,$(CONFIGS))
+TARGETS=$(patsubst %,%/$(VFILE),$(TARGET_DIRS))
+
+$(OVERRIDE)all: $(OBJS) $(TARGETS)
+	@echo ready "=)"
+
+
+out.%/$(VFILE):%
+	@echo $< $@
+	$(eval OUTDIR:=out.$<)
+	mkdir -p $(OUTDIR)
+	$(LLVM_HOME)opt -mem2reg -loops -loop-simplify < $(NAME).bc > $(OUTDIR)/$(NAME).prelto.linked.bc
+	$(LLVM_HOME)opt $(OPT_FLAGS) -std-link-opts <  $(OUTDIR)/$(NAME).prelto.linked.bc -o  $(OUTDIR)/$(NAME).prelto.linked.1.bc
+	$(LLVM_HOME)opt $(OPT_FLAGS) -legup-prelto <  $(OUTDIR)/$(NAME).prelto.linked.1.bc >  $(OUTDIR)/$(NAME).prelto.6.bc
+	$(LLVM_HOME)opt $(OPT_FLAGS) -std-link-opts <  $(OUTDIR)/$(NAME).prelto.6.bc -o  $(OUTDIR)/$(NAME).prelto.bc
+	$(LLVM_HOME)llvm-link $(LDFLAG)  $(OUTDIR)/$(NAME).prelto.bc $(LEVEL)/lib/llvm/liblegup.bc $(LEVEL)/lib/llvm/libm.bc -o  $(OUTDIR)/$(NAME).postlto.6.bc
+	$(LLVM_HOME)opt -internalize-public-api-list=main -internalize -globaldce  $(OUTDIR)/$(NAME).postlto.6.bc -o  $(OUTDIR)/$(NAME).postlto.8.bc
+	$(LLVM_HOME)opt $(OPT_FLAGS) -instcombine -std-link-opts <  $(OUTDIR)/$(NAME).postlto.8.bc -o  $(OUTDIR)/$(NAME).postlto.bc
+	$(LLVM_HOME)opt $(PIPELINE_OPT_FLAGS) -basicaa -loop-simplify -indvars2 $(COMBINE_BB_PASS) -loop-pipeline  $(OUTDIR)/$(NAME).postlto.bc -o  $(OUTDIR)/$(NAME).1.bc
+	$(LLVM_HOME)opt $(OPT_FLAGS) -instcombine $(OUTDIR)/$(NAME).1.bc -o  $(OUTDIR)/$(NAME).bc
+	$(LLVM_HOME)llc $(LLC_FLAGS) -march=v $(OUTDIR)/$(NAME).bc -o  $(OUTDIR)/$(VFILE)
+	mv *.dot $(OUTDIR)
+	mv *.rpt $(OUTDIR)
+	mv *.mif $(OUTDIR)
+	mv *.qsf $(OUTDIR)
+	mv *.sdc $(OUTDIR)
+	mv *.txt $(OUTDIR)
+	mv DetailedLegUPTiming $(OUTDIR)
+	mv DetailedModuleSDCSchedulingTime $(OUTDIR)
+	mv gantt* $(OUTDIR)
+	@echo $(MAKE)
+################################################################################
+# Cleaning targets
+################################################################################
+
+cleannew:
+	rm -rf $(OUTPUT_PATH)
+
+cleantiger:
+	rm -rf a.out *.bc *.dat *.dump *.elf *.o *.s *.src *.hash *.flist *.flist_lab *.emul.*
+	rm -rf $(PROC_DIR)/work
+	rm -rf $(PROC_DIR)/verilog_libs
+
+cleanpcie:
+	echo $(PROCESSOR)
+	rm -rf pcie_tutorial legup_pcie_wrappers_generated.c legup_qsys_pcie_generated.tcl $(NAME)_sw $(NAME)_sw_memtest simulation_tb tb_master.v lib$(NAME).a legup_riffa.tar legup_riffa
+
+cleanarm:
+	rm -rf *.bin *.srec $(NAME)_jtag_uart.output
+
+# "make clean" is run by the test suite -- do not delete Quartus or Modelsim files (use "make cleanall" instead)
+clean: cleantiger cleanpcie cleanarm cleannew cleanprivate
+	rm -rf *.ll *.mif $(VFILE) *.smsg *.ver lli.txt sim.txt *_hw.tcl legup_sopc.tcl legup_qsys.tcl legup_wrappers.c work *.log functions.list wave.do *.legup.rpt tiger *.dot *.csv *.tex parallelaccels.tcl $(NAME)_labeled.c genRAM.pl *.wlf *.qsf *.sdc *.txt *profile* *llvmprof* compile.tcl sim.tcl ModelsimListener.tcl Inspect.config init.tcl *.vstf board_programmed.txt *.native
+
+# be careful: removes Quartus and Modelsim files
+cleanall: clean
+	rm -rf out.config*.tcl
+	rm -rf ir_out loops_out
+	rm -rf DetailedLegUPTiming DetailedModuleSDCSchedulingTime DegradedModuleSchedulerTimes
+	rm -rf *.lp *.mps
+	rm -rf db *.done incremental_db *.pin *.pof *.qpf *.qsf *.rpt *.smsg *.sof *.summary *.jdi transcript *.wlf work *.bc *.list *.txt *.trace hc_output *top_assignment_defaults.qdf
+# Xilinx ISE files
+	rm -rf *.ucf *.gise *.xise _xmsgs *.bgn *.bit *.xwbt *.bld *.cmd_log *.drc *.ncd *.lso *.map *.mrp *.ngm *.xrpt *.ngc *.ngd *.ngr *.pad *.par *.pcf *.prj *.ptwx *.stx *.xml *.syr *.twr *.twx *.unroutes *.ut *.xpi _ngo *.xst usage_statistics_webtalk.html webtalk_pn.xml xlnx_auto_0_xdb xst
+	rm -rf $(PROC_DIR)/work
+	rm -rf $(PROC_DIR)/verilog_libs
+	rm -rf on_board
+
+# end cleaning targets
+
+
+################################################################################
+# dependency targets
+################################################################################
+function:
+	#hybridHwOnlyPass \
+	$(LLVM_HOME)opt -legup-config=config.tcl $(OPT_FLAGS) -legup-hw-only < $(NAME).prelto.bc > $(NAME).prelto.hw.bc
+	$(LLVM_HOME)llvm-dis $(NAME).prelto.hw.bc \
+	hybridHWloweringLinking \
+	HWVerilogbackend
+
+################################################################################
+# dependency targets
+################################################################################
+
+$(VFILE):
+	make all
+
+.PHONY: $(FULLNAME).$(PROC_ARCH).o
+$(FULLNAME).$(PROC_ARCH).o: \
+	create_output_directory \
+	partition_code_for_sw_only \
+	$(FULLNAME).elf
+
+$(FULLNAME).o: $(FULLNAME).$(PROC_ARCH).o
+	cp $< $@
+
+
+# end dependency targets
+
+
+
+###############################################################################
+# Phony targets
+###############################################################################
+
+.PHONY : $(OVERRIDE)all watch v p q f tiger tiger_prof tigersim tigersim_prof gprof emul emulwatch emultest emultrace cleanarm cleantiger clean cleanall hierarchy hybrid functionslist hybridwatch hybridwatch_hw benchmarkfiles copyTigerforHybrid hybridOmpFrontend hybridMIPSbackend profile_tiger_on_board profile_hybrid_on_board detail_instr_profile arm arm_sim
+.PHONY: cleanprivate
+
+# end phony targets

@@ -84,7 +84,7 @@ class LoopSelect : public ModulePass {
     void addPipelineConstraint(LoopData *ld);
     std::vector<Constraint*> parseConstraints(LoopData *ld);
     void createTCLConfigs(llvm::Loop *loop);
-
+    void createMakefile(llvm::Loop *loop);
     void saveLoopAsFunction(llvm::Loop *loop);
     void printLoopsData();
     void printLoopData(LoopData* loop);
