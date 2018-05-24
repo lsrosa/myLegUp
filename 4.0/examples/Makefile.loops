@@ -39,28 +39,29 @@ $(OVERRIDE)all: $(OBJS) $(TARGETS)
 
 out.%/$(VFILE):%
 	@echo $< $@
-	$(eval OUTDIR:=out.$<)
-	mkdir -p $(OUTDIR)
-	$(LLVM_HOME)opt -mem2reg -loops -loop-simplify < $(NAME).bc > $(OUTDIR)/$(NAME).prelto.linked.bc
-	$(LLVM_HOME)opt $(OPT_FLAGS) -std-link-opts <  $(OUTDIR)/$(NAME).prelto.linked.bc -o  $(OUTDIR)/$(NAME).prelto.linked.1.bc
-	$(LLVM_HOME)opt $(OPT_FLAGS) -legup-prelto <  $(OUTDIR)/$(NAME).prelto.linked.1.bc >  $(OUTDIR)/$(NAME).prelto.6.bc
-	$(LLVM_HOME)opt $(OPT_FLAGS) -std-link-opts <  $(OUTDIR)/$(NAME).prelto.6.bc -o  $(OUTDIR)/$(NAME).prelto.bc
-	$(LLVM_HOME)llvm-link $(LDFLAG)  $(OUTDIR)/$(NAME).prelto.bc $(LEVEL)/lib/llvm/liblegup.bc $(LEVEL)/lib/llvm/libm.bc -o  $(OUTDIR)/$(NAME).postlto.6.bc
-	$(LLVM_HOME)opt -internalize-public-api-list=main -internalize -globaldce  $(OUTDIR)/$(NAME).postlto.6.bc -o  $(OUTDIR)/$(NAME).postlto.8.bc
-	$(LLVM_HOME)opt $(OPT_FLAGS) -instcombine -std-link-opts <  $(OUTDIR)/$(NAME).postlto.8.bc -o  $(OUTDIR)/$(NAME).postlto.bc
-	$(LLVM_HOME)opt $(PIPELINE_OPT_FLAGS) -basicaa -loop-simplify -indvars2 $(COMBINE_BB_PASS) -loop-pipeline  $(OUTDIR)/$(NAME).postlto.bc -o  $(OUTDIR)/$(NAME).1.bc
-	$(LLVM_HOME)opt $(OPT_FLAGS) -instcombine $(OUTDIR)/$(NAME).1.bc -o  $(OUTDIR)/$(NAME).bc
-	$(LLVM_HOME)llc $(LLC_FLAGS) -march=v $(OUTDIR)/$(NAME).bc -o  $(OUTDIR)/$(VFILE)
-	mv *.dot $(OUTDIR)
-	mv *.rpt $(OUTDIR)
-	mv *.mif $(OUTDIR)
-	mv *.qsf $(OUTDIR)
-	mv *.sdc $(OUTDIR)
-	mv *.txt $(OUTDIR)
-	mv DetailedLegUPTiming $(OUTDIR)
-	mv DetailedModuleSDCSchedulingTime $(OUTDIR)
-	mv gantt* $(OUTDIR)
-	@echo $(MAKE)
+	$(eval LOOPS_OUTDIR:=out.$<)
+	export LOOPS_OUTDIR=$(LOOPS_OUTDIR)
+	mkdir -p $(LOOPS_OUTDIR)
+	$(LLVM_HOME)opt -mem2reg -loops -loop-simplify < $(NAME).bc > $(LOOPS_OUTDIR)/$(NAME).prelto.linked.bc
+	$(LLVM_HOME)opt $(OPT_FLAGS) -std-link-opts <  $(LOOPS_OUTDIR)/$(NAME).prelto.linked.bc -o  $(LOOPS_OUTDIR)/$(NAME).prelto.linked.1.bc
+	$(LLVM_HOME)opt $(OPT_FLAGS) -legup-prelto <  $(LOOPS_OUTDIR)/$(NAME).prelto.linked.1.bc >  $(LOOPS_OUTDIR)/$(NAME).prelto.6.bc
+	$(LLVM_HOME)opt $(OPT_FLAGS) -std-link-opts <  $(LOOPS_OUTDIR)/$(NAME).prelto.6.bc -o  $(LOOPS_OUTDIR)/$(NAME).prelto.bc
+	$(LLVM_HOME)llvm-link $(LDFLAG)  $(LOOPS_OUTDIR)/$(NAME).prelto.bc $(LEVEL)/lib/llvm/liblegup.bc $(LEVEL)/lib/llvm/libm.bc -o  $(LOOPS_OUTDIR)/$(NAME).postlto.6.bc
+	$(LLVM_HOME)opt -internalize-public-api-list=main -internalize -globaldce  $(LOOPS_OUTDIR)/$(NAME).postlto.6.bc -o  $(LOOPS_OUTDIR)/$(NAME).postlto.8.bc
+	$(LLVM_HOME)opt $(OPT_FLAGS) -instcombine -std-link-opts <  $(LOOPS_OUTDIR)/$(NAME).postlto.8.bc -o  $(LOOPS_OUTDIR)/$(NAME).postlto.bc
+	$(LLVM_HOME)opt $(PIPELINE_OPT_FLAGS) -basicaa -loop-simplify -indvars2 $(COMBINE_BB_PASS) -loop-pipeline  $(LOOPS_OUTDIR)/$(NAME).postlto.bc -o  $(LOOPS_OUTDIR)/$(NAME).1.bc
+	$(LLVM_HOME)opt $(OPT_FLAGS) -instcombine $(LOOPS_OUTDIR)/$(NAME).1.bc -o  $(LOOPS_OUTDIR)/$(NAME).bc
+	$(LLVM_HOME)llc $(LLC_FLAGS) -march=v $(LOOPS_OUTDIR)/$(NAME).bc -o  $(LOOPS_OUTDIR)/$(VFILE)
+	mv *.dot $(LOOPS_OUTDIR)
+	mv *.rpt $(LOOPS_OUTDIR)
+	mv *.mif $(LOOPS_OUTDIR)
+	mv *.qsf $(LOOPS_OUTDIR)
+	mv *.sdc $(LOOPS_OUTDIR)
+	mv *.txt $(LOOPS_OUTDIR)
+	mv DetailedLegUPTiming $(LOOPS_OUTDIR)
+	mv DetailedModuleSDCSchedulingTime $(LOOPS_OUTDIR)
+	mv gantt* $(LOOPS_OUTDIR)
+
 ################################################################################
 # Cleaning targets
 ################################################################################

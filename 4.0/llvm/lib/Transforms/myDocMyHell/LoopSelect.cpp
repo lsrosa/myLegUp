@@ -328,7 +328,7 @@ void LoopSelect::createMakefile(llvm::Loop *loop){
   file << "LEVEL = ../../..\n";
   file << "#LOCAL_CONFIG = -legup-config=config1.tcl\n";
   file << "CONFIGS=$(shell ls config*.tcl)\n";
-  file << "include $(LEVEL)/Makefile.loops\n";
+  file << "include /home/leandro/myLegUp/4.0/examples/Makefile.loops\n";
   file.close();
   return;
 }
