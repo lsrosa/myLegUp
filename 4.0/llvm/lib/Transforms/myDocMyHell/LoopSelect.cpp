@@ -89,11 +89,11 @@ void LoopSelect::analyzeLoops(){
     createTCLConfigs(loop);
     //create Makefile
     createMakefile(loop);
+    //The execution of the designs with the several config.tcl files is automated in $(LEGUPHOME)/examples/Makefile.myDocMyHell and $(LEGUPHOME)/examples/Makefile.loops
+
   }
 
   bbMap.clear();
-  //TODO this
-  //automate a make run with each different config.
 }
 
 LoopData * LoopSelect::getLoopBasicMetrics(llvm::Loop * loop){
@@ -325,10 +325,10 @@ void LoopSelect::createMakefile(llvm::Loop *loop){
   file << "CUSTOM_MODULE_SCHEDULING = 1\n";
   file << "NO_OPT=0\n";
   file << "NO_INLINE=0\n";
-  file << "LEVEL = ../../..\n";
+  file << "LEVEL = $(LEGUPHOME)/examples\n";
   file << "#LOCAL_CONFIG = -legup-config=config1.tcl\n";
   file << "CONFIGS=$(shell ls config*.tcl)\n";
-  file << "include /home/leandro/myLegUp/4.0/examples/Makefile.loops\n";
+  file << "include $(LEGUPHOME)/examples/Makefile.loops\n";
   file.close();
   return;
 }

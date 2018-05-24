@@ -198,12 +198,14 @@ endif # DEBUG_KEEP_VARS_IN_MEM
 
 	# produces verilog: $(NAME).v
 	#$(LLVM_HOME)llc $(LLC_FLAGS) -march=v ir_out/$(NAME).bc -o $(VFILE)
-	$(eval LOOP_MAKEFILES:=./loops_out/*/Makefile)
+ifndef LEGUPHOME
+	$(error LegUP home is missing! Please add "export LEGUPHOME=<LegUP dir>" in your bashrc)
+endif
+	$(eval LOOP_MAKEFILES:=./loops_out/*)
 	@echo $(LOOP_MAKEFILES)
 	for mkfile in  $(LOOP_MAKEFILES) ; do \
-			$(MAKE) -f $$mkfile ; \
+			$(MAKE) -C $$mkfile ; \
 	done
-
 ################################################################################
 # Cleaning targets
 ################################################################################
