@@ -5,4 +5,3 @@ set_resource_constraint divide 1
 
 set_accelerator_function "mt"
 set_accelerator_function "mt2"
-set_project StratixV
