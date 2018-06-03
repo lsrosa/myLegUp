@@ -11,4 +11,3 @@ if { [file exists $characterization_file] == 0 } {
     puts stderr "Can't find family's characterization file (StratixV.tcl)!\n";
 }
 source $characterization_file
-

@@ -3,6 +3,7 @@
 
 
 set_global_assignment -name TIMEQUEST_DO_REPORT_TIMING On
+set_global_assignment -name SEARCH_PATH "/home/leandro/myLegUp/4.0/ip/libs/altera"
 
 # fix to make relative
 #set_global_assignment -name SEARCH_PATH "/home/acanis/git/legup/tiger/processor/altera_libs"
@@ -57,5 +58,3 @@ set_global_assignment -name TIMEQUEST_DO_REPORT_TIMING On
 #set_global_assignment -name AUTO_PACKED_REGISTERS NORMAL
 #set_global_assignment -name AUTO_PACKED_REGISTERS_STRATIX NORMAL
 #set_global_assignment -name PRE_MAPPING_RESYNTHESIS ON
-
-
