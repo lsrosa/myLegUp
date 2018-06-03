@@ -133,7 +133,7 @@ bool ILPModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
       if (LEGUP_CONFIG->getParameterInt("GA_POPULATION_SIZE")) {
           nPop = (unsigned)size*(unsigned)LEGUP_CONFIG->getParameterInt("GA_POPULATION_SIZE");
       }
-      nPop = ceil(0.20*nPop);
+      nPop = ceil(0.25*nPop);
       // yes, I like even numbers
       //Offspring creation does not require this, but it will generate an even number of individuals.
       if(nPop%2 != 0){
@@ -144,10 +144,10 @@ bool ILPModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
       if (LEGUP_CONFIG->getParameterInt("GA_MAXIMUM_GENERATIONS")) {
           maxGen = (unsigned)size*(unsigned)LEGUP_CONFIG->getParameterInt("GA_MAXIMUM_GENERATIONS");
       }
-      maxGen = ceil(0.05*maxGen);
-      if(maxGen>10) {
-        maxGen=10;
-      }
+      maxGen = ceil(0.1*maxGen);
+      //if(maxGen>10) {
+      //  maxGen=10;
+      //}
 
       mutationProb = 1;
       if (LEGUP_CONFIG->getParameterInt("GA_MUTATION_PROB")) {
