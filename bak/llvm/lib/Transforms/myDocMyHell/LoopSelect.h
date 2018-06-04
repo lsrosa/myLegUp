@@ -12,6 +12,8 @@
 
 #include <llvm/Pass.h>
 #include <llvm/Support/raw_ostream.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Bitcode/ReaderWriter.h>
 #include <llvm/Transforms/IPO/PassManagerBuilder.h>
 
 #include <sstream>
@@ -20,6 +22,8 @@
 #include <utility>
 #include <math.h>
 #include <algorithm>
+
+#include <sys/fcntl.h>
 
 #include "Allocation.h"
 
@@ -57,6 +61,7 @@ class LoopSelect : public ModulePass {
   DataLayout *TD;
 
   private:
+    llvm::Module *module;
     bool debug = LEGUP_CONFIG->getParameterInt("DEBUG_LOOP_SELECT");
 
     legup::Allocation *alloc;
@@ -79,7 +84,7 @@ class LoopSelect : public ModulePass {
     void addPipelineConstraint(LoopData *ld);
     std::vector<Constraint*> parseConstraints(LoopData *ld);
     void createTCLConfigs(llvm::Loop *loop);
-
+    void createMakefile(llvm::Loop *loop);
     void saveLoopAsFunction(llvm::Loop *loop);
     void printLoopsData();
     void printLoopData(LoopData* loop);

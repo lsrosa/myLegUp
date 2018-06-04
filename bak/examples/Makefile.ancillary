@@ -25,7 +25,7 @@
 
 ################################################################################
 # Create the output directory
-create_output_directory:
+create_output_directory: 
 	mkdir -p $(OUTPUT_PATH)
 	mkdir -p $(OUTPUT_PATH)/ip
 
@@ -104,20 +104,20 @@ $(FULLNAME).sw.bc:
 
 # produce the assembly code for the MIPS32 architecture
 $(FULLNAME).MIPS32.s: $(FULLNAME).sw.bc
-	$(LLVM_HOME)llc $(FULLNAME).sw.bc -march=mipsel -relocation-model=static -mips-ssection-threshold=0 -mcpu=mips32 -o $(FULLNAME).MIPS32.s -mno-ldc1-sdc1 -soft-float -disable-mips-delay-filler
+	$(LLVM_HOME)llc $(FULLNAME).sw.bc -march=mipsel -relocation-model=static -mips-ssection-threshold=0 -mcpu=mips32 -o $(FULLNAME).MIPS32.s -mno-ldc1-sdc1 -soft-float -disable-mips-delay-filler 
 
 # produce the ELF for the MIPS I architecture
 $(FULLNAME).MIPSI.elf: $(FULLNAME).sw.bc
 	$(LLVM_HOME)llvm-dis $(FULLNAME).sw.bc
 	$(LEVEL)/remove_attributes.sh $(FULLNAME).sw.ll
-	$(MIPS_LLC_DIR)/llc $(FULLNAME).sw.ll -march=mipsel -relocation-model=static -mips-ssection-threshold=0 -mcpu=mips1 -o $(FULLNAME).MIPSI.s
+	$(MIPS_LLC_DIR)/llc $(FULLNAME).sw.ll -march=mipsel -relocation-model=static -mips-ssection-threshold=0 -mcpu=mips1 -o $(FULLNAME).MIPSI.s	
 	$(MIPS_PREFIX)as $(FULLNAME).MIPSI.s -mips1 -mabi=32 -o $(FULLNAME).MIPSI.o -EL
 	$(MIPS_PREFIX)ld -T $(LEVEL)/../swtools/mips/prog_link.ld --defsym mem_start_addr=$(MEMORY_BASE_ADDRESS) --defsym mem_size=$(MEMORY_SIZE) $(LEVEL)/../swtools/mips/lib/mips_startup.o $(FULLNAME).MIPSI.o $(LEVEL)/../tiger/tool_source/lib/$(PERF_COUNTER) -o $(FULLNAME).MIPSI.elf -EL -L $(MIPS_LIB) -lgcc -lfloat -luart -lmem
 	$(MIPS_PREFIX)objdump -D $(FULLNAME).MIPSI.elf > $(FULLNAME).MIPSI.src
 	cp $(FULLNAME).MIPSI.src $(NAME).src
 
 # produce the ELF for the processor architecture in the selected project
-$(FULLNAME).elf: $(FULLNAME).$(PROC_ARCH).elf
+$(FULLNAME).elf : $(FULLNAME).$(PROC_ARCH).elf
 	cp $(FULLNAME).$(PROC_ARCH).elf $(FULLNAME).elf
 
 #produce MIPS ELF and $(SIMFILE) for simulation
@@ -262,8 +262,8 @@ $(OUTPUT_PATH)/legup_system.qsys: \
     $(LEVEL)/$(PROJECT_SOURCE_DIR)/legup_system.qsys
 	cp $? $@
 
-# Setting the .qsys file as phony so that it is copied every time. The
-# addHWToSystem target has errors if it is run a second time on the same .qsys
+# Setting the .qsys file as phony so that it is copied every time. The 
+# addHWToSystem target has errors if it is run a second time on the same .qsys 
 # file.
 .PHONY: $(OUTPUT_PATH)/legup_system.qsys
 
@@ -509,3 +509,4 @@ run_on_board: run_on_board.$(PROC_ARCH)
 
 
 .PHONY : create_output_directory
+

@@ -193,8 +193,95 @@ endif # DEBUG_KEEP_VARS_IN_MEM
 	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).1.bc
 	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).2.bc
 
+	#-------------------------------------------------------------------
+	#_---------- here we start compiling all loops ---------------------
+
 	# produces verilog: $(NAME).v
 	#$(LLVM_HOME)llc $(LLC_FLAGS) -march=v ir_out/$(NAME).bc -o $(VFILE)
+ifndef LEGUPHOME
+	$(error LegUP home is missing! Please add "export LEGUPHOME=<LegUP dir>" in your bashrc)
+endif
+	$(eval LOOP_MAKEFILES:=./loops_out/*)
+	@echo $(LOOP_MAKEFILES)
+	for mkfile in  $(LOOP_MAKEFILES) ; do \
+			$(MAKE) -C $$mkfile ; \
+	done
+
+################################################################################
+# Quartus stuff
+################################################################################
+# create a Quartus II project
+p: $(VFILE)
+ifeq ($(XILINX),1)
+	xtclsh $(LEVEL)/setup_proj_xilinx.tcl $(FAMILY) $(FPGA_BOARD) $(NAME) $(TOP_LEVEL_MODULE) $(DEBUGGER)
+else
+ifeq ($(MULTICYCLE_CONSTRAINTS),1)
+	# create an sdc file with a 2ns clock period
+	echo "create_clock -period 2 -name clk [get_ports clk]" > $(NAME).sdc
+	echo "create_clock -period 1 -name clk2x [get_ports clk2x]" >> $(NAME).sdc
+	echo "create_clock -period 2 -name OSC_50_BANK2 [get_ports OSC_50_BANK2]" >> $(NAME).sdc
+	echo "derive_pll_clocks" >> $(NAME).sdc
+	echo "derive_clock_uncertainty" >> $(NAME).sdc
+	# create an sdc file with a 1ns clock period and multi-cycle constraints
+	@cp llvm_prof_multicycle_constraints.sdc llvm_prof_multicycle_constraints_no_through_constraints.sdc 2>/dev/null ||:
+	python $(LEVEL)/multi_cycle_remove_through_constraints.py llvm_prof_multicycle_constraints.sdc llvm_prof_multicycle_constraints_no_through_constraints.sdc src_dst_pairs_with_through_constraints.txt pairs_whose_through_constraints_must_be_removed.txt
+	echo '# From llvm_prof_multicycle_constraints.sdc:' >> $(NAME).sdc
+	# If a llvm_prof_multicycle_constraints.sdc file exists, concatenate
+	# its contents to the .sdc file as well
+	@cat llvm_prof_multicycle_constraints_no_through_constraints.sdc >> $(NAME).sdc 2>/dev/null ||:
+	# Finally, run a script to fix incorrect signal names
+else
+	# create an sdc file with a 1ns clock period
+	echo "create_clock -period 2 -name clk [get_ports clk]" > $(NAME).sdc
+	echo "create_clock -period 1 -name clk2x [get_ports clk2x]" >> $(NAME).sdc
+	echo "create_clock -period 2 -name OSC_50_BANK2 [get_ports OSC_50_BANK2]" >> $(NAME).sdc
+	echo "derive_pll_clocks" >> $(NAME).sdc
+	echo "derive_clock_uncertainty" >> $(NAME).sdc
+endif
+
+ifeq ($(TIMING_ANALYSIS_DATAPATH_ONLY),1)
+	# Add false path constraints to non-data paths
+	echo "" >> $(NAME).sdc
+	echo "# Adding False Path Constraints" >> $(NAME).sdc
+	echo "set_false_path -from [get_registers {*memory_controller*}] -to [get_registers {*}]" >> $(NAME).sdc
+	echo "set_false_path -from [get_registers {*}] -to [get_registers {*memory_controller*}]" >> $(NAME).sdc
+	echo "set_false_path -from [get_registers {*cur_state*}] -to [get_registers {*}]" >> $(NAME).sdc
+	echo "set_false_path -from [get_registers {*}] -to [get_registers {*cur_state*}]" >> $(NAME).sdc
+	echo "set_false_path -from [get_registers {*ram*}] -to [get_registers {*}]" >> $(NAME).sdc
+	echo "set_false_path -from [get_registers {*}] -to [get_registers {*ram*}]" >> $(NAME).sdc
+	echo "set_false_path -from [get_registers {*DFF*}] -to [get_registers {*}]" >> $(NAME).sdc
+	echo "set_false_path -from [get_registers {*}] -to [get_registers {*DFF*}]" >> $(NAME).sdc
+	echo "set_false_path -from [get_registers {*_phi_temp*}] -to [get_registers {*}]" >> $(NAME).sdc
+endif
+
+ifeq ($(DEBUGGER),1)
+#	quartus_sh -t $(LEVEL)/setup_proj.tcl $(FAMILY) $(NAME) $(TOP_LEVEL_MODULE) $(DBG_DIR)
+	quartus_sh -t $(LEVEL)/setup_proj.tcl $(FAMILY) $(FPGA_BOARD) $(NAME) $(TOP_LEVEL_MODULE) $(DBG_DIR)
+else
+#	quartus_sh -t $(LEVEL)/setup_proj.tcl $(FAMILY) $(NAME) $(TOP_LEVEL_MODULE)
+	quartus_sh -t $(LEVEL)/setup_proj.tcl $(FAMILY) $(FPGA_BOARD) $(NAME) $(TOP_LEVEL_MODULE)
+endif
+endif
+
+ifeq ($(MULTICYCLE_CONSTRAINTS),1)
+	@cat llvm_prof_multicycle_constraints.qsf >> top.qsf 2>/dev/null ||:
+endif
+
+# Run FPGA mapper
+q: $(VFILE)
+ifeq ($(XILINX),1)
+	xtclsh <<< "project open top; process run \"Synthesize - XST\" -force rerun_all; if {[lsearch [list \"out_of_date\" \"errors\" \"never_run\" \"aborted\"] [string tolower [process get \"Synthesize - XST\" status]]] >= 0} {exit 1} "
+else
+	quartus_map $(LEGUP_QUARTUS_64BIT) top -l $(VERILOG_LIB_DIR) --source=$(VFILE) --family=$(FAMILY)
+endif
+
+# Run full FPGA compilation flow
+f: $(VFILE)
+ifeq ($(XILINX),1)
+	xtclsh <<< "project open top; process run \"Generate Programming File\" -force rerun_all; if {[lsearch [list \"out_of_date\" \"errors\" \"never_run\" \"aborted\"] [string tolower [process get \"Generate Programming File\" status]]] >= 0} {exit 1} "
+else
+	quartus_sh $(LEGUP_QUARTUS_64BIT) --flow compile top
+endif
 
 
 ################################################################################
@@ -271,7 +358,7 @@ $(FULLNAME).o: $(FULLNAME).$(PROC_ARCH).o
 # Phony targets
 ###############################################################################
 
-.PHONY : $(OVERRIDE)all watch v p q f tiger tiger_prof tigersim tigersim_prof gprof emul emulwatch emultest emultrace cleanarm cleantiger clean cleanall hierarchy hybrid functionslist hybridwatch hybridwatch_hw benchmarkfiles copyTigerforHybrid hybridOmpFrontend hybridMIPSbackend profile_tiger_on_board profile_hybrid_on_board detail_instr_profile arm arm_sim
+.PHONY : watch v p q f tiger tiger_prof tigersim tigersim_prof gprof emul emulwatch emultest emultrace cleanarm cleantiger clean cleanall hierarchy hybrid functionslist hybridwatch hybridwatch_hw benchmarkfiles copyTigerforHybrid hybridOmpFrontend hybridMIPSbackend profile_tiger_on_board profile_hybrid_on_board detail_instr_profile arm arm_sim
 .PHONY: cleanprivate
 
 # end phony targets

@@ -67,7 +67,7 @@ struct isl_set;
 #include <time.h>
 #include <fstream>
 #include <lp_lib.h>
-#include "gurobi/gurobi_c++.h"
+#include <gurobi_c++.h>
 //#include <ilcplex/ilocplex.h>
 
 using namespace llvm;

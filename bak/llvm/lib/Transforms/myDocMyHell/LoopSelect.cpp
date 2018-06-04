@@ -87,11 +87,13 @@ void LoopSelect::analyzeLoops(){
     saveLoopAsFunction(loop);
     //create config.tcl
     createTCLConfigs(loop);
+    //create Makefile
+    createMakefile(loop);
+    //The execution of the designs with the several config.tcl files is automated in $(LEGUPHOME)/examples/Makefile.myDocMyHell and $(LEGUPHOME)/examples/Makefile.loops
+
   }
 
   bbMap.clear();
-  //TODO this
-  //automate a make run with each different config.
 }
 
 LoopData * LoopSelect::getLoopBasicMetrics(llvm::Loop * loop){
@@ -135,7 +137,6 @@ LoopData * LoopSelect::getLoopBasicMetrics(llvm::Loop * loop){
   return ld;
 }
 
-
 void LoopSelect::addRAMConstraints(LoopData *ld){
   Constraint *constraint = new Constraint("set_parameter LOCAL_RAMS", 0, 1);
   ld->TCLConstraints.push_back(constraint);
@@ -150,7 +151,7 @@ void LoopSelect::addRAMConstraints(LoopData *ld){
 void LoopSelect::addResourcesConstraints(LoopData *ld){
   Constraint *constraint = NULL;
   for(auto entry : ld->nFUs){
-    std::string constrName = std::string("set_parameter ");
+    std::string constrName = std::string("set_resource_constraint ");
     constrName.append(entry.first);
 
     constraint = new Constraint(constrName, 1, entry.second);
@@ -164,7 +165,6 @@ void LoopSelect::addResourcesConstraints(LoopData *ld){
   return;
 }
 
-
 void LoopSelect::addPipelineConstraint(LoopData *ld){
   //if this loop has no sub-loops
   if(ld->subLoopsData.size() == 0){
@@ -173,6 +173,10 @@ void LoopSelect::addPipelineConstraint(LoopData *ld){
     constrName.append(ld->label);
     constrName.append("\"");
     constraint = new Constraint(constrName, 0, 0);
+    ld->TCLConstraints.push_back(constraint);
+
+    //just to set the modulo scheduler
+    constraint = new Constraint(std::string("set_parameter MODULO_SCHEDULER \"NI\""), 0, 0);
     ld->TCLConstraints.push_back(constraint);
     return;
   }
@@ -273,7 +277,7 @@ void LoopSelect::createTCLConfigs(llvm::Loop *loop){
   for(i=0; i < nconfigs; i++){
     m = m0;
     filename = std::string(basename);
-    filename.append(std::string("/tcl")+std::to_string(i)+std::string(".config"));
+    filename.append(std::string("/config")+std::to_string(i)+std::string(".tcl"));
     file.open(filename.c_str());
 
     for(j=0; j != nconstraints; j++){
@@ -295,6 +299,7 @@ void LoopSelect::createTCLConfigs(llvm::Loop *loop){
     file.close();
   }
 
+  /*
   if(debug){
     std::cout << "\nConstranint matrix:";
     for(j=0; j < constraintsVec.size(); j++){
@@ -305,7 +310,26 @@ void LoopSelect::createTCLConfigs(llvm::Loop *loop){
     }
     std::cout << "\n";
   }
+  */
 
+  return;
+}
+
+void LoopSelect::createMakefile(llvm::Loop *loop){
+  ofstream file;
+  std::string basename = std::string("loops_out/");
+  basename.append(loopDataMap[loop]->label);
+  std::string filename = basename+std::string("/Makefile");
+  file.open(filename.c_str());
+  file << "NAME=module\n";
+  file << "CUSTOM_MODULE_SCHEDULING = 1\n";
+  file << "NO_OPT=0\n";
+  file << "NO_INLINE=0\n";
+  file << "LEVEL = $(LEGUPHOME)/examples\n";
+  file << "#LOCAL_CONFIG = -legup-config=config1.tcl\n";
+  file << "CONFIGS=$(shell ls config*.tcl)\n";
+  file << "include $(LEGUPHOME)/examples/Makefile.loops\n";
+  file.close();
   return;
 }
 
@@ -328,11 +352,24 @@ void LoopSelect::saveLoopAsFunction(llvm::Loop *loop){
   }
 
   //TODO save as function
+  //for now we will just copy the source file
+  std::error_code EC;
+  std::string outfilename = std::string(outdir);
+  outfilename.append("/module.bc");
 
+  //create the file
+  FILE *f = fopen(outfilename.c_str(), "w");
+  fclose(f);
+
+  int fd = open(outfilename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+  llvm::raw_fd_ostream OS(fd, true);
+  llvm::WriteBitcodeToFile(module, OS);
+  OS.flush();
   return;
 }
 
 bool LoopSelect::runOnModule(Module &M){
+    module = &M;
     alloc = new Allocation(&M);
     //IMS.LI = &getAnalysis<LoopInfo>();
     //IMS.AA = &getAnalysis<AliasAnalysis>();
