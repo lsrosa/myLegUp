@@ -13,7 +13,7 @@
 #
 
 # set_project <family> <board> <project>
-# Set the FPGA family, the board and the project. This includes the operation
+# Set the FPGA family, the board and the project. This includes the operation 
 # characterization tcl file for the specified FPGA family, the board specific
 # settings and the system parameters tcl file for the specified project
 set CURRENT_PATH    [file dirname [info script]]
@@ -21,7 +21,7 @@ set BOARDS_PATH     $::CURRENT_PATH/../boards
 proc set_project { family board project } {
 
     # Get characterization settings
-    # Among other settings, the characterization file sets the
+    # Among other settings, the characterization file sets the 
     # parameter CLOCK_PERIOD, such as the following
     # set_parameter CLOCK_PERIOD 13
     # the clock period constraint in ns.
@@ -51,13 +51,13 @@ proc set_project { family board project } {
 #       source ../legup.tcl
 #       set_project CycloneV DE1-SoC Tiger_SDRAM
 # Changing the project also updates all associated family and board parameters
-#set_project CycloneV DE1-SoC Tiger_SDRAM
+set_project CycloneV DE1-SoC Tiger_SDRAM
 #set_project CycloneV DE1-SoC ARM_Simple_Hybrid_System
 #set_project CycloneV SoCKit ARM_Simple_Hybrid_System
 #set_project CycloneIV DE2-115 Tiger_SDRAM
 #set_project CycloneII DE2 Tiger_SDRAM
 #set_project CycloneII CycloneIIAuto Tiger_SDRAM
-set_project StratixV DE5-Net Tiger_DDR3
+#set_project StratixV DE5-Net Tiger_DDR3
 #set_project StratixIV DE4-230 Tiger_DDR2
 #set_project StratixIV DE4-530 Tiger_DDR2
 
@@ -88,7 +88,7 @@ set_parameter MULT_BY_CONST_INFER_DSP 0
 # when GROUP_RAMS is on, this option simplifies the address offset calculation.
 # Calculate the offset for each array into the shared RAM to minimize addition.
 # The offset must be a multiple of the size of the array in bytes (to allow an OR
-# instead of an ADD):
+# instead of an ADD): 
 #       before: addr = baseaddr + offset
 #       after:  addr = baseaddr OR offset
 # the idea is that none of the lower bits of baseaddr should overlap with any
@@ -114,27 +114,27 @@ set_parameter INFERRED_RAMS 1
 # BEGIN PATTERN SHARING PARAMETERS
 ################################################################################
 
-# Pattern sharing is an optimization which reduces circuit area by sharing
-# functional units and registers. Specifically it improves the logic density of
-# the design by combining many, under-utilized LUTs (e.g. 3-4 LUTs) into fewer,
-# larger LUTs (5-6 LUTs) and in the process reducing the total number of
+# Pattern sharing is an optimization which reduces circuit area by sharing 
+# functional units and registers. Specifically it improves the logic density of 
+# the design by combining many, under-utilized LUTs (e.g. 3-4 LUTs) into fewer, 
+# larger LUTs (5-6 LUTs) and in the process reducing the total number of 
 # registers.
 #
 # While pattern sharing reduces circuit area, experiments have shown that it
-# can impact fmax positively but also (more commonly) negatively. While some
-# of this may be attributed to seed noise, the algorithm combines functional
-# units by adding logic (multiplexers) to the design so depending on the
-# circuit the critical path can become longer. On the other hand, improving
-# logic density and reducing the circuit size allows the design to be packed
-# more closely and this can reduce routing delays.
-
+# can impact fmax positively but also (more commonly) negatively. While some 
+# of this may be attributed to seed noise, the algorithm combines functional 
+# units by adding logic (multiplexers) to the design so depending on the 
+# circuit the critical path can become longer. On the other hand, improving 
+# logic density and reducing the circuit size allows the design to be packed 
+# more closely and this can reduce routing delays. 
+ 
 
 # SET TO 0 TO DISABLE PATTERN SHARING
 # (setting to 0 shares only dividers and remainders, as in LegUp 1.0)
 # set_parameter ENABLE_PATTERN_SHARING 1
 
 
-# The values of the remaining pattern sharing parameters below are ignored if
+# The values of the remaining pattern sharing parameters below are ignored if 
 # ENABLE_PATTERN_SHARING above is 0.
 
 
@@ -143,8 +143,8 @@ set_parameter PS_MAX_SIZE 10
 
 # Minimum pattern size to share. This is used because sharing is more beneficial
 # for larger patterns (larger patterns have a smaller mux:instruction ratio) and
-# sometimes sharing is only beneficial for patterns of a certain size or
-# greater. For example, in Cyclone II sharing small patterns (e.g. 2 adds) does
+# sometimes sharing is only beneficial for patterns of a certain size or 
+# greater. For example, in Cyclone II sharing small patterns (e.g. 2 adds) does 
 # not reduce area.
 set_parameter PS_MIN_SIZE 1
 
@@ -155,9 +155,9 @@ set_parameter PS_MIN_SIZE 1
 #  -  Shifts (logical shift Left/Right and arithmetic shift Right)
 #
 # If set, these instructions will be included in patterns and shared with 2-1
-# muxing. Note that multipliers, dividers and remainders are not shared in
-# patterns because they should be shared with more than 2-1 muxing (if at all).
-# The bipartite binding algorithm is used for those instructions while pattern
+# muxing. Note that multipliers, dividers and remainders are not shared in 
+# patterns because they should be shared with more than 2-1 muxing (if at all). 
+# The bipartite binding algorithm is used for those instructions while pattern 
 # sharing is used for the smaller instructions above.
 set_parameter PATTERN_SHARE_SHIFT 1
 if { [get_device_family] == "StratixIV" } {
@@ -168,7 +168,7 @@ if { [get_device_family] == "StratixIV" } {
 }
 
 # Two operations will only be shared if the difference of their true bit widths
-# is below this threshold: e.g. an 8-bit adder will not be shared with
+# is below this threshold: e.g. an 8-bit adder will not be shared with 
 # a 32-bit adder unless BIT_DIFF_THRESHOLD >= 24
 set_parameter PS_BIT_DIFF_THRESHOLD 10
 set_parameter PS_BIT_DIFF_THRESHOLD_PREDS 30
@@ -195,7 +195,7 @@ set_parameter PS_MIN_WIDTH 2
 #set_parameter MB_RANGE_FILE "range.profile"
 #max number of backward passes to execute (-1 for infinite)
 set_parameter MB_MAX_BACK_PASSES -1
-set_parameter MB_MINIMIZE_HW 0
+set_parameter MB_MINIMIZE_HW 0 
 
 
 # Minimum pattern frequency written to dot/v file
@@ -210,7 +210,7 @@ set_parameter MB_MINIMIZE_HW 0
 
 
 # Disable chaining of operations in a clock cycle. This will achieve the
-# maximum amount of pipelining.
+# maximum amount of pipelining. 
 # Note: this overrides CLOCK_PERIOD
 #set_parameter SDC_NO_CHAINING 1
 
@@ -311,7 +311,7 @@ set_resource_constraint altfp 1
 
 # specify the operation latency
 # name should match the device family operation database file:
-# boards/StratixIV/StratixIV.tcl or boards/CycloneII/CycloneII.tcl
+# boards/StratixIV/StratixIV.tcl or boards/CycloneII/CycloneII.tcl 
 set_operation_latency altfp_add 14
 set_operation_latency altfp_subtract 14
 set_operation_latency altfp_multiply 11
@@ -334,12 +334,12 @@ set_operation_latency multiply 1
 # operations that are cheaper than multiplexing
 # by default operation sharing is ON
 # first argument is either -off or -on
-# there is a special case for multipliers, see: RESTRICT_TO_MAXDSP
+# there is a special case for multipliers, see: RESTRICT_TO_MAXDSP 
 # but set_operation_sharing overrides that parameter
-# note: a constraint on "signed_add" will apply to:
+# note: a constraint on "signed_add" will apply to: 
 #   signed_add_8, signed_add_16, signed_add_32, signed_add_64,
 #   unsigned_add_8, unsigned_add_16, unsigned_add_32, unsigned_add_64
-set_operation_sharing -off signed_add
+set_operation_sharing -off signed_add 
 set_operation_sharing -off signed_subtract
 set_operation_sharing -off bitwise
 set_operation_sharing -off shift
@@ -377,20 +377,20 @@ set_parameter MULTI_CYCLE_REMOVE_CMP_REG 1
 set_parameter MULTI_CYCLE_ADD_THROUGH_CONSTRAINTS 0
 
 # Also since .sdc constraints will be printed for certain registers, use the
-# option below to additionally print .qsf constraints that will disable
-# merging for these registers. This seems like a bug in Quartus though,
+# option below to additionally print .qsf constraints that will disable 
+# merging for these registers. This seems like a bug in Quartus though, 
 # because registers with timing constraints shouldn't be merged.
 set_parameter MULTI_CYCLE_DISABLE_REG_MERGING 1
 
 
-# Set LLVM_PROFILE to 1 in order to use profiling information in the scheduler.
+# Set LLVM_PROFILE to 1 in order to use profiling information in the scheduler. 
 # Make sure to also set LLVM_PROFILE=1 in Makefile.config, which is required
 # to gather the profiling data
 set_parameter LLVM_PROFILE 0
 
-# If LLVM_PROFILE is set, then schedules will be modified for all Basic Blocks
-# executed at or below the frequency threshold LLVM_PROFILE_MAX_BB_FREQ_TO_ALTER
-# Note that scheduling changes may also be affected by basic block length
+# If LLVM_PROFILE is set, then schedules will be modified for all Basic Blocks 
+# executed at or below the frequency threshold LLVM_PROFILE_MAX_BB_FREQ_TO_ALTER 
+# Note that scheduling changes may also be affected by basic block length 
 # (total #states) in addition to frequency.
 set_parameter LLVM_PROFILE_MAX_BB_FREQ_TO_ALTER 100
 
@@ -428,7 +428,7 @@ set_parameter LLVM_PROFILE_PERIOD_SIV 6
 #loop_pipeline "loop3" -ignore-mem-deps
 
 # getelementptr and store instructions take an entire clock cycle
-# turn off ignoring getelementptr and store instructions in timing report
+# turn off ignoring getelementptr and store instructions in timing report 
 # set_parameter 	TIMING_NO_IGNORE_GETELEMENTPTR_AND_STORE 1
 
 # number of paths to be printed in the timing report
@@ -509,9 +509,9 @@ set_parameter PIPELINE_SAVE_REG 1
 #set_parameter DEBUG_SDC_CONSTRAINTS 1
 
 # Parameters to control the Verilog generation for the FSM.  The first,
-# CASE_FSM controls whether a case statement is used
-# instead of if statements.
-# The second parameter indicates whether casex(..) should be
+# CASE_FSM controls whether a case statement is used 
+# instead of if statements.  
+# The second parameter indicates whether casex(..) should be 
 # used instead of case(...) This parameter is meaningless unless
 # first parameter is 1.
 set_parameter CASE_FSM 1

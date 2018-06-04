@@ -5,15 +5,15 @@ VERSION = 4.0
 # if your libraries are installed locally (scinet)
 ifdef USE_SCINET
 	CLOOG_LIBS = --with-gmp-prefix=/home/j/janders/jchoi/libgmp
-	LLVM_LIBS = --with-lpsolve-include=/home/j/janders/jchoi/legup_binaries --with-lpsolve-lib=/home/j/janders/jchoi/legup_binaries --with-gmp=/home/j/janders/jchoi/libgmp
+	LLVM_LIBS = --with-lpsolve-include=/home/j/janders/jchoi/legup_binaries --with-lpsolve-lib=/home/j/janders/jchoi/legup_binaries --with-gmp=/home/j/janders/jchoi/libgmp	
 endif
 
 export CC = gcc
 export CXX = g++
 
 # Dragonegg should work with gcc-4.5 to gcc-4.8
-DRAGONEGG_GCC_VERSION = gcc-4.7
-#DRAGONEGG_GCC_VERSION = gcc-4.8
+#DRAGONEGG_GCC_VERSION = gcc-4.7
+DRAGONEGG_GCC_VERSION = gcc-4.8
 # NOTE: if you change the GCC version here, you will also need to change the
 # DRAGONEGG variable in examples/Makefile.config. The gcc version used there
 # needs to match the version passed to dragonegg here.
@@ -33,14 +33,14 @@ all: llvm/tools/polly/Makefile.config llvm/Makefile.config llvm-2.9_mips/Makefil
 	# $(MAKE) -C mips-binutils
 	$(MAKE) -C llvm
 	$(MAKE) -C llvm-2.9_mips tools-only ONLY_TOOLS=llc
-#	$(MAKE) -C dragonegg GCC=$(DRAGONEGG_GCC_VERSION) LLVM_CONFIG=../llvm/$(LLVM_BUILD)/bin/llvm-config
+	$(MAKE) -C dragonegg GCC=$(DRAGONEGG_GCC_VERSION) LLVM_CONFIG=../llvm/$(LLVM_BUILD)/bin/llvm-config
 	$(MAKE) -C examples/lib/llvm
 	$(MAKE) all -C swtools/lib-source
-#	$(MAKE) -C tiger/processor
-#	$(MAKE) -C tiger/linux_tools
-#	$(MAKE) -C tiger/tool_source/profiling_tools
-#	$(MAKE) -C pcie
-#	$(MAKE) -C gui
+	$(MAKE) -C tiger/processor
+	$(MAKE) -C tiger/linux_tools
+	$(MAKE) -C tiger/tool_source/profiling_tools
+	$(MAKE) -C pcie
+	$(MAKE) -C gui
 	$(MAKE) -C ip
 	if [ -d .git ]; then \
 		cd ./.git/hooks/ ; ln -sf ../../hooks/* ./ ; \
@@ -86,3 +86,4 @@ release:
 	git archive --format=tar --prefix=legup-$(VERSION)/ HEAD | gzip > legup-$(VERSION).tar.gz
 
 .PHONY = all
+
