@@ -433,6 +433,10 @@ CycleVec * ILPModuloScheduler::getCycleAndSlacks(int II, InstructionNode* inode,
   CycleVec * retCycles = new CycleVec;
   int inodeSlack = -1;
 
+  if(inode->getInst()->isTerminator()){
+    return retCycles;
+  }
+
   for (InstructionNode::iterator i = inode->use_begin(), e = inode->use_end(); i != e; ++i) {
     InstructionNode * use = *i;
     if(NIdebug){
@@ -454,6 +458,7 @@ CycleVec * ILPModuloScheduler::getCycleAndSlacks(int II, InstructionNode* inode,
       cycle->first.push_front(inode);
       cycle->second = inodeSlack;
       retCycles->push_back(cycle);
+      break;
     }else{
       CycleVec * tempCycles = getCycleAndSlacks(II, use, backEdgeNode, prevDist+latencyInstMap[inode], backEdgeLength);
 
@@ -462,7 +467,7 @@ CycleVec * ILPModuloScheduler::getCycleAndSlacks(int II, InstructionNode* inode,
       }
 
       retCycles->insert(retCycles->end(), tempCycles->begin(), tempCycles->end());
-
+      delete tempCycles;
       if(NIdebug){
         if(tempCycles->size() != 0){
           File() << "there are paths between inst:" << startVariableIndex[inode] << " and the back edge node - prevDist: " << prevDist+latencyInstMap[inode] << "\n sclaks: ";
@@ -497,6 +502,7 @@ CycleVec * ILPModuloScheduler::getCycleAndSlacks(int II, InstructionNode* inode,
       cycle->first.push_front(inode);
       cycle->second = inodeSlack;
       retCycles->push_back(cycle);
+      break;
     }else{
       CycleVec * tempCycles = getCycleAndSlacks(II, use, backEdgeNode, prevDist+latencyInstMap[inode], backEdgeLength);
 
@@ -505,7 +511,7 @@ CycleVec * ILPModuloScheduler::getCycleAndSlacks(int II, InstructionNode* inode,
       }
 
       retCycles->insert(retCycles->end(), tempCycles->begin(), tempCycles->end());
-
+      delete tempCycles;
       if(NIdebug){
         if(tempCycles->size() != 0){
           File() << "there are paths between inst:" << startVariableIndex[inode] << " and the back edge node - prevDist: " << prevDist+latencyInstMap[inode] << "\n sclaks: ";
