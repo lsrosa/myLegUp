@@ -145,13 +145,28 @@ void ILPModuloScheduler::conflictIncreaseCongruence(InstructionNode *in, int inc
       File() << "new delay: " << inc << " to instr: " << getLabel(in->getInst()) << '\n';
     }
     conflictDelay[in] = inc;
+  }else{
+    return;
   }
 
   int howLateIam = conflictDelay[in];// - lateMinusSoonTimes[in];
   //add instructions that use this inst
+
+  //this eliminates double entries
+  std::vector<InstructionNode*> usesvec = std::vector<InstructionNode*>();
   for (InstructionNode::iterator i = in->use_begin(), e = in->use_end(); i != e; ++i) {
+    usesvec.push_back(*i);
+  }
+  for (InstructionNode::iterator i = in->mem_use_begin(), e = in->mem_use_end(); i != e; ++i) {
+    usesvec.push_back(*i);
+  }
+  //std::cout << "size: " << usesvec.size() << '\n';
+  auto endit = std::unique(usesvec.begin(), usesvec.end());
+  usesvec.resize(std::distance(usesvec.begin(), endit));
+
+  for (auto i : usesvec) {
     if(NIdebug){
-      File() << "C" << startVariableIndex[in] << " passing delay: " << inc << " to instr: C" << startVariableIndex[*i] << '\n';
+      File() << "C" << startVariableIndex[in] << " passing delay: " << inc << " to instr: C" << startVariableIndex[i] << '\n';
     }
 
     //check if this inst has some slop between the ASAP and ALAP schecules
@@ -159,22 +174,7 @@ void ILPModuloScheduler::conflictIncreaseCongruence(InstructionNode *in, int inc
       if(NIdebug){
         File() << "dep how late = conflictDelay - lateMinusSoonTimes  ---  " << howLateIam << " = " << conflictDelay[in] << " - " << lateMinusSoonTimes[in]<< '\n';
       }
-      conflictIncreaseCongruence(*i,howLateIam);
-    }
-  }
-
-  for (InstructionNode::iterator i = in->mem_use_begin(), e = in->mem_use_end(); i != e; ++i) {
-    if(NIdebug){
-      File() << "C" << startVariableIndex[in] << " passing delay: " << inc << " to instr: C" << startVariableIndex[*i] << '\n';
-    }
-
-    //check if this inst has some slop between the ASAP and ALAP schecules
-    //int howLateIam = conflictDelay[in] - lateMinusSoonTimes[(*i)];
-    if(howLateIam > 0){
-      if(NIdebug){
-        File() << "mem how late = conflictDelay - lateMinusSoonTimes  ---  " << howLateIam << " = " << conflictDelay[in] << " - " << lateMinusSoonTimes[in]<< '\n';
-      }
-      conflictIncreaseCongruence(*i,howLateIam);
+      conflictIncreaseCongruence(i,howLateIam);
     }
   }
 
@@ -371,8 +371,8 @@ void ILPModuloScheduler::CPFaddInstToMRT(InstructionNode *in, int II){
 
   //skip non constraint instructions
   if(!constrained_insts[in]){
+    //std::cout << "non resource constrained inst: C" << startVariableIndex[in] << " (m, -) = (" << (nonConstrainedASAP[in]+conflictDelay[in])%II << ", " << "-)" << '\n';
     if(NIdebug){
-      File() << "non resource constrained inst: C" << startVariableIndex[in] << " (m, -) = (" << (nonConstrainedASAP[in]+conflictDelay[in])%II << ", " << "-)" << '\n';
     }
     conflictSolvedCongruenceClass[in] = (nonConstrainedASAP[in]+conflictDelay[in])%II;
     mappedInstDelay[in] = true;
@@ -387,8 +387,8 @@ void ILPModuloScheduler::CPFaddInstToMRT(InstructionNode *in, int II){
 
   //std::cout << "/* message */" << '\n';
   while(!allocated){
+    //std::cout << "tryinf new row" << '\n';
     for(int rcnt=0; rcnt < ninstances; rcnt++){
-      //std::cout << "\navailableSlot: " << availableSlots[ninstances*currM+rcnt] << '\n';
       if(availableSlots[ninstances*currM+rcnt]){
 
         if(NIdebug){
@@ -410,6 +410,7 @@ void ILPModuloScheduler::CPFaddInstToMRT(InstructionNode *in, int II){
     //if could not allcate it in ninstances, increase the congruence class
     if(!allocated){
       inc++;
+      assert(inc < II && "oh boy seems like this MRT is full ");
       currM = (currM+1)%II;
     }
 
@@ -418,10 +419,12 @@ void ILPModuloScheduler::CPFaddInstToMRT(InstructionNode *in, int II){
     }
   }
 
+  std::cout << "incrementing conflicts" << '\n';
   if(inc > 0){
     //File() << "in: " << getLabel(in->getInst()) << " - delay: " << conflictDelay[in] << '\n';
     conflictIncreaseCongruence(in, inc);
   }
+  std::cout << "incremented" << '\n';
 
   return;
 }
@@ -647,7 +650,11 @@ int ILPModuloScheduler::getCycleSlacks(int II, InstructionNode* inode, Instructi
 int ILPModuloScheduler::getPathLenghts(InstructionNode *in, int prevDist){
   bool hasNoUse = (in->use_begin() == in->use_end()) && (in->mem_use_begin() == in->mem_use_end());
 
-  //this is a last noe
+  if(pathLengths.find(in) != pathLengths.end()){
+    return pathLengths[in];
+  }
+
+  //this is a last node
   if(hasNoUse || in->getInst()->isTerminator()){
     //save the length for this node.
     if(pathLengths.find(in) != pathLengths.end()){
@@ -657,8 +664,8 @@ int ILPModuloScheduler::getPathLenghts(InstructionNode *in, int prevDist){
     }else{
       pathLengths[in] = prevDist;
     }
+    //std::cout << "final var C" << startVariableIndex[in] << " associanted with path lenght: " << pathLengths[in] << '\n';
     if(NIdebug){
-      File() << "var C" << startVariableIndex[in] << " associanted with path lenght: " << pathLengths[in] << '\n';
     }
     return prevDist;
   }
@@ -687,8 +694,8 @@ int ILPModuloScheduler::getPathLenghts(InstructionNode *in, int prevDist){
   }else{
     pathLengths[in] = max;
   }
+  //std::cout << "var C" << startVariableIndex[in] << " associanted with path lenght: " << pathLengths[in] << '\n';
   if(NIdebug){
-    File() << "var C" << startVariableIndex[in] << " associanted with path lenght: " << pathLengths[in] << '\n';
   }
   return pathLengths[in];
 }
@@ -864,7 +871,7 @@ void ILPModuloScheduler::initializeNIMRT(int II, std::string order){
       int dist = std::get<1>(back_edge_row_rh_map[row]);
       int latency = std::get<2>(back_edge_row_rh_map[row]);
       loopheads[j] = true;
-      std::cout << "getting paths between C" << startVariableIndex[i] << " -> C" << startVariableIndex[j] << '\n';
+      //std::cout << "getting paths between C" << startVariableIndex[i] << " -> C" << startVariableIndex[j] << '\n';
       if(NIdebug){
         File() << "loop head C" << startVariableIndex[j] << "\n";
         File().flush();
@@ -889,7 +896,7 @@ void ILPModuloScheduler::initializeNIMRT(int II, std::string order){
       File().flush();
     }
 
-    //std::cout << "slacks calculated" << std::endl;
+    std::cout << "slacks calculated" << std::endl;
     //File().flush();
     //cin.get();
 
@@ -902,6 +909,8 @@ void ILPModuloScheduler::initializeNIMRT(int II, std::string order){
     }
     NIdebug = temp;
 
+
+    std::cout << "widths calculated" << '\n';
     /*
     for(auto entry: slacks){
       orderedLoopSlacks.push_back(std::pair<InstructionNode*, std::pair<int,int>>(entry.first, std::pair<int,int>(entry.second, instWidth[entry.first])));
@@ -933,6 +942,8 @@ void ILPModuloScheduler::initializeNIMRT(int II, std::string order){
       //orderedSlacks.push_back(entry.first);
       fillOrderedSlacks(entry.first);
     }
+
+    std::cout << "odered slacks filled" << '\n';
 
     NIdebug = temp;
 
@@ -970,12 +981,15 @@ void ILPModuloScheduler::initializeNIMRT(int II, std::string order){
       InstructionNode * i = entry.first;
       bool hasNoDep = (i->dep_begin() == i->dep_end()) && (i->mem_dep_begin() == i->mem_dep_end());
 
-      //File() << "starting in instruction C" << startVariableIndex[i] << '\n';
+      //std::cout << "starting in instruction C" << startVariableIndex[i] << '\n';
       if(hasNoDep){
         getPathLenghts(i, 0);
       }
+      //std::cout << "finished" << '\n';
     }
     NIdebug = temp;
+
+    std::cout << "lenghts gotten" << '\n';
 
     if(NIdebug){
       File() << "-------- lenghts -------\n";
@@ -999,6 +1013,8 @@ void ILPModuloScheduler::initializeNIMRT(int II, std::string order){
 
     NIdebug = false;
     getOrderedDataFlow();
+
+    std::cout << "ordered data-flow calculated" << '\n';
 
     for(auto entry : orderedPathLengths){
       fillOrderedInsts(entry.first);
@@ -1029,6 +1045,8 @@ void ILPModuloScheduler::initializeNIMRT(int II, std::string order){
       LCaddInstToMRT(inst, II);
     }
 
+    std::cout << "loop insts added to the MRT" << '\n';
+
     if(NIdebug){
       File() << " -----  filling mrt with insts ------ \n";
     }
@@ -1036,6 +1054,8 @@ void ILPModuloScheduler::initializeNIMRT(int II, std::string order){
     for(auto inst : orderedInsts){
       CPFaddInstToMRT(inst, II);
     }
+
+    std::cout << "other insts added to the MRT" << '\n';
 
   }else if(order.compare("widthFirst")==0){
     if(NIdebug){
@@ -1895,6 +1915,9 @@ bool ILPModuloScheduler::NI(int II){
   File().flush();
   initializeNIMRT(II);
   //NIdebug = !NIdebug;
+
+  std::cout << "MRT created" << '\n';
+
   if(NIdebug){
     File() << "\n\n----- banana ---- \n\n";
     printMRT(NIindividual.first);
