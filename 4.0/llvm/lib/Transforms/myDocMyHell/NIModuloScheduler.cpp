@@ -431,14 +431,30 @@ using CycleVec = std::vector<Cycle*>;
 
 CycleVec * ILPModuloScheduler::getCycleAndSlacks(int II, InstructionNode* inode, InstructionNode *backEdgeNode, int prevDist, int backEdgeLength){
   CycleVec * retCycles = new CycleVec;
-  int inodeSlack = -1;
 
-  if(inode->getInst()->isTerminator()){
+  if(nullPath[inode] == true){
     return retCycles;
   }
 
+  int inodeSlack = -1;
+  //std::cout << "inode: " << startVariableIndex[inode] << " - backedge: " << startVariableIndex[backEdgeNode] << '\n';
+
+  std::vector<InstructionNode*> usesvec = std::vector<InstructionNode*>();
+
+  //this eliminates double entries
   for (InstructionNode::iterator i = inode->use_begin(), e = inode->use_end(); i != e; ++i) {
-    InstructionNode * use = *i;
+    usesvec.push_back(*i);
+  }
+  for (InstructionNode::iterator i = inode->mem_use_begin(), e = inode->mem_use_end(); i != e; ++i) {
+    usesvec.push_back(*i);
+  }
+  //std::cout << "size: " << usesvec.size() << '\n';
+  auto endit = std::unique(usesvec.begin(), usesvec.end());
+  usesvec.resize(std::distance(usesvec.begin(), endit));
+  //std::cout << "size: " << usesvec.size() << "\n\n";
+
+  for (auto i : usesvec) {
+    InstructionNode * use = i;
     if(NIdebug){
       File() << "inst:" << startVariableIndex[inode] << " is used by inst:" << startVariableIndex[use]<< "\n";
       File().flush();
@@ -458,7 +474,6 @@ CycleVec * ILPModuloScheduler::getCycleAndSlacks(int II, InstructionNode* inode,
       cycle->first.push_front(inode);
       cycle->second = inodeSlack;
       retCycles->push_back(cycle);
-      break;
     }else{
       CycleVec * tempCycles = getCycleAndSlacks(II, use, backEdgeNode, prevDist+latencyInstMap[inode], backEdgeLength);
 
@@ -467,7 +482,7 @@ CycleVec * ILPModuloScheduler::getCycleAndSlacks(int II, InstructionNode* inode,
       }
 
       retCycles->insert(retCycles->end(), tempCycles->begin(), tempCycles->end());
-      delete tempCycles;
+
       if(NIdebug){
         if(tempCycles->size() != 0){
           File() << "there are paths between inst:" << startVariableIndex[inode] << " and the back edge node - prevDist: " << prevDist+latencyInstMap[inode] << "\n sclaks: ";
@@ -479,52 +494,14 @@ CycleVec * ILPModuloScheduler::getCycleAndSlacks(int II, InstructionNode* inode,
         }
         File().flush();
       }
-    }
-  }//for (InstructionNode::iterator i = inode->use_begin(), e = inode->use_end(); i != e; ++i)
-
-  for (InstructionNode::iterator i = inode->mem_use_begin(), e = inode->mem_use_end(); i != e; ++i) {
-    InstructionNode * use = *i;
-    if(NIdebug){
-      File() << "inst:" << startVariableIndex[inode] << " is used by inst:" << startVariableIndex[use]<< "\n";
-    }
-
-    if(use == backEdgeNode){
-      Cycle * cycle = new Cycle;
-      inodeSlack = backEdgeLength - (prevDist+latencyInstMap[inode]);
-
-      assert(inodeSlack > -1 && "slack should be >= 0 when find back edge node");
-      if(NIdebug){
-        File() << "inst:" << startVariableIndex[inode] << " leads to back edge node - slack: " << inodeSlack << "\n";
-        File().flush();
-      }
-
-      cycle->first.push_front(use);
-      cycle->first.push_front(inode);
-      cycle->second = inodeSlack;
-      retCycles->push_back(cycle);
-      break;
-    }else{
-      CycleVec * tempCycles = getCycleAndSlacks(II, use, backEdgeNode, prevDist+latencyInstMap[inode], backEdgeLength);
-
-      for(auto entry : *tempCycles){
-        entry->first.push_front(inode);
-      }
-
-      retCycles->insert(retCycles->end(), tempCycles->begin(), tempCycles->end());
       delete tempCycles;
-      if(NIdebug){
-        if(tempCycles->size() != 0){
-          File() << "there are paths between inst:" << startVariableIndex[inode] << " and the back edge node - prevDist: " << prevDist+latencyInstMap[inode] << "\n sclaks: ";
-          for(auto entry : *tempCycles){
-            File() << entry->second << ", " << "\n";
-          }
-        }else{
-          File() << "there is NOT a path between inst:" << startVariableIndex[inode] << " and the back edge node\n";
-        }
-        File().flush();
-      }
     }
-  }//for (InstructionNode::iterator i = inode->mem_use_begin(), e = inode->mem_use_end(); i != e; ++i)
+  }//for (auto i : usesvec)
+  //cin.get();
+
+  if(retCycles->size() == 0){
+    nullPath[inode] = true;
+  }
 
   return retCycles;
 }
@@ -887,14 +864,17 @@ void ILPModuloScheduler::initializeNIMRT(int II, std::string order){
       int dist = std::get<1>(back_edge_row_rh_map[row]);
       int latency = std::get<2>(back_edge_row_rh_map[row]);
       loopheads[j] = true;
+      std::cout << "getting paths between C" << startVariableIndex[i] << " -> C" << startVariableIndex[j] << '\n';
       if(NIdebug){
         File() << "loop head C" << startVariableIndex[j] << "\n";
-        File() << "getting paths between C" << startVariableIndex[i] << " -> C" << startVariableIndex[j] << '\n';
         File().flush();
       }
       //getCycleSlacks(II, j, i, 0, II*dist-latency);
+      nullPath.clear();
       CycleVec * tempVec = getCycleAndSlacks(II, j, i, 0, II*dist-latency);
       cycleSlacks.insert(cycleSlacks.end(), tempVec->begin(), tempVec->end());
+      delete tempVec;
+      //cin.get();
     }
     NIdebug = temp;
 
