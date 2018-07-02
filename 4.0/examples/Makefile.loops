@@ -87,6 +87,7 @@ clean: cleantiger cleanpcie cleanarm cleannew cleanprivate
 
 # be careful: removes Quartus and Modelsim files
 cleanall: clean
+	rm -rf loops_out
 	rm -rf out.config*.tcl
 	rm -rf ir_out loops_out
 	rm -rf DetailedLegUPTiming DetailedModuleSDCSchedulingTime DegradedModuleSchedulerTimes

@@ -358,7 +358,8 @@ $(FULLNAME).o: $(FULLNAME).$(PROC_ARCH).o
 # Phony targets
 ###############################################################################
 
-.PHONY : watch v p q f tiger tiger_prof tigersim tigersim_prof gprof emul emulwatch emultest emultrace cleanarm cleantiger clean cleanall hierarchy hybrid functionslist hybridwatch hybridwatch_hw benchmarkfiles copyTigerforHybrid hybridOmpFrontend hybridMIPSbackend profile_tiger_on_board profile_hybrid_on_board detail_instr_profile arm arm_sim
+#.PHONY : $(OVERRIDE)all watch v p q f tiger tiger_prof tigersim tigersim_prof gprof emul emulwatch emultest emultrace cleanarm cleantiger clean cleanall hierarchy hybrid functionslist hybridwatch hybridwatch_hw benchmarkfiles copyTigerforHybrid hybridOmpFrontend hybridMIPSbackend profile_tiger_on_board profile_hybrid_on_board detail_instr_profile arm arm_sim
+
 .PHONY: cleanprivate
 
 # end phony targets
