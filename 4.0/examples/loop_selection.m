@@ -31,16 +31,29 @@ for i=2:nfiles
   vals(i,:) = values;
 end
 
+function [paretoPoints] =  findPareto(x, y)
+  paretoPoints = [];
+  for i=1:numel(x)
+    if( sum((x<x(i) & y<y(i))) == 0 )
+      paretoPoints = [paretoPoints; x(i) y(i)];
+    end
+  end
+  return;
+end
+
 %vals
 outFolder = strcat(strsplit(arg_list{i}, '/')(1), '/', 'plots')
 mkdir(outFolder)
 
 for i=1:numel(measures)-1
-  fighandle = figure(i);
+  fighandle = figure(i);hold on;
   plot(vals(:,1), vals(:, i+1), '.b');
   text(vals(:,1), vals(:, i+1), configNames);
   xlabel(measures(1));
   ylabel(measures(i+1));
+  ppoints = findPareto(vals(:,1), vals(:, i+1));
+  plot(ppoints(:,1), ppoints(:, 2), '*r');
+
   graphname = strcat(outFolder, '/', measures{i+1}, '.jpg')
   print(fighandle, char(graphname), '-djpg');
 end
