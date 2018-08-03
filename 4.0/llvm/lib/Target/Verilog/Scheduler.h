@@ -27,6 +27,7 @@ class Scheduler {
   public:
     double mappingtime=0, fsmtime=0, solvetime=0;
     double ticmt, tocmt, ticft, tocft, ticst, tocst;
+    int cycles=0;
 
     Scheduler() : mapping(0) {}
     virtual ~Scheduler() {
@@ -49,6 +50,27 @@ class Scheduler {
 
         //leandro - measurig time for creating a FSM
         assert(mapping);
+        //InstructionNode * maxInode = NULL;
+        int total = 0;
+        //remember that LegUP assing the starting time of each basic block as time 0
+        //what we are doing here is summing up all basic blocks.
+        //TODO consider loops, nested loops, and pipelines
+        for(auto bb=F->begin(); bb!=F->end(); bb++){
+          int max = 0;
+          for(auto i=bb->begin();i!=bb->end(); i++){
+            InstructionNode * iNode = dag->getInstructionNode(i);
+            int t = getNumInstructionCycles(i)+mapping->getState(iNode);
+            //cout << t << " ";
+            if( t > max){
+              max = t;
+              //maxInode = iNode;
+            }
+          }
+          total += max;
+        }
+        cycles = total;
+        cout << "\nt=" << total << "\n";
+
         ticft = clock();
         fsm[F] = mapping->createFSM(F, dag);
         tocft = clock();

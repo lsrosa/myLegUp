@@ -123,7 +123,7 @@ bool LegupPass::doInitialization(Module &M) {
     std::ifstream f(rptname);
     if(!f.good()){
       pFile = fopen (rptname.c_str(),"w");
-      fprintf(pFile, "Name\tInstCount\tAllocation\tScheduling\tBinding\tSchedMapping\tSchedSolve\tSchedFSM\toverhead\n");
+      fprintf(pFile, "Name\tInstCount\tAllocation\tScheduling\tBinding\tSchedMapping\tSchedSolve\tSchedFSM\toverhead\ttotalCycles\n");
       fclose(pFile);
     }
     /*
@@ -335,7 +335,8 @@ bool LegupPass::runOnModule(Module &M) {
     toc = clock();
     t = (double)(toc - tic)/CLOCKS_PER_SEC;
 
-    schedstats_vector.push_back(Schedstats(t, HW->getSchedMappingTime()-HW->getSchedSolveTime(), HW->getSchedSolveTime(), HW->getSchedFSMTime(), ic, n));
+    schedstats_vector.push_back(Schedstats(t, HW->getSchedMappingTime()-HW->getSchedSolveTime(), HW->getSchedSolveTime(), HW->getSchedFSMTime(), ic, HW->getTotalCycles(), n));
+    std::cout << "HW->getTotalCycles():" << HW->getTotalCycles() << '\n';
     //fprintf(pFile, "%f\t", (double)(toc - tic)/CLOCKS_PER_SEC);
   }
 
@@ -353,7 +354,7 @@ bool LegupPass::runOnModule(Module &M) {
   //fprintf(pFile, "%f\n", (double)(toc - tic)/CLOCKS_PER_SEC);
   //leandro
   for(std::vector<Schedstats>::iterator i=schedstats_vector.begin(), ie=schedstats_vector.end(); i != ie; ++i){
-    fprintf(pFile, "%s\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", i->name.c_str(), i->instcount, alloctime, i->time, bindtime, i->mappingtime, i->solvetime, i->fsmtime, i->time-(i->mappingtime+i->solvetime+i->fsmtime));
+    fprintf(pFile, "%s\t%d\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%d\n", i->name.c_str(), i->instcount, alloctime, i->time, bindtime, i->mappingtime, i->solvetime, i->fsmtime, i->time-(i->mappingtime+i->solvetime+i->fsmtime), i->cycles);
   }
 
   fclose(pFile);

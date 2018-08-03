@@ -115,7 +115,7 @@ unsigned Scheduler::getNumInstructionCycles(Instruction *instr) {
               }
           }
 //Floating point core latencies (fixed) chosen based on Jack's experiment.
-//Lower latency causes Fmax to drop.  
+//Lower latency causes Fmax to drop.
 //Latencies are specified through Quartus GUI when generating the cores
 //      case (Instruction::FAdd):
 //          return 14;
@@ -139,9 +139,9 @@ unsigned Scheduler::getNumInstructionCycles(Instruction *instr) {
  * Determine the initiation interval for a function.
  * This is used for shared resources and affects scheduling.
  * For example, one may want to have a divider functional unit
- * that takes, say 10 cycles to complete (latency), with 
+ * that takes, say 10 cycles to complete (latency), with
  * the unit capable of starting a new division every 2 cycles (initiation interval).
- * 
+ *
  * @param instr The instruction we wish to find the II for.
  */
 unsigned Scheduler::getInitiationInterval(Instruction *instr) {

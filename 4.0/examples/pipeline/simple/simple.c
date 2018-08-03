@@ -10,11 +10,11 @@ int main() {
     volatile int c[N] = {0};
 
     loop: for (i = 0; i < N; i++) {
-        printf("Loop body\n");
-        printf("a[%d] = %d\n", i, a[i]);
-        printf("b[%d] = %d\n", i, b[i]);
+        //printf("Loop body\n");
+        //printf("a[%d] = %d\n", i, a[i]);
+        //printf("b[%d] = %d\n", i, b[i]);
         c[i] = a[i] + b[i];
-        printf("c[%d] = %d\n", i, c[i]);
+        //printf("c[%d] = %d\n", i, c[i]);
     }
 
     int sum = 0;

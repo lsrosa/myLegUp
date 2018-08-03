@@ -14,9 +14,9 @@ ifndef FEOBJS
 endif
 
 # By default, name the output files by the directory name
-ifndef NAME
-	NAME := $(shell basename `pwd`)
-endif
+#ifndef NAME
+#	NAME := $(shell basename `pwd`)
+#endif
 
 # Each .c file will be compiled to its own .bc file
 ifdef LINK
@@ -64,6 +64,7 @@ ifndef DEVICE_FAMILY
 endif # DEVICE_FAMILY
 
 ifndef LINK
+	echo name is: $(NAME)
 	# annotate loop labels
 	$(LEVEL)/mark_labels.pl $(NAME).c > $(NAME)_labeled.c
 
@@ -151,11 +152,21 @@ ifndef DEVICE_FAMILY
 endif # DEVICE_FAMILY
 
 ifndef LINK
-	$(LEVEL)/mark_labels.pl $(NAME).c > $(NAME)_labeled.c
-	$(FRONT_END) $(NAME)_labeled.c -emit-llvm -c $(CFLAG) $(CLANG_FLAG) -o ir_out/$(NAME).prelto.1.bc
-	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).prelto.1.bc
-
-	$(LLVM_HOME)opt -mem2reg -loops -loop-simplify < ir_out/$(NAME).prelto.1.bc > ir_out/$(NAME).prelto.2.bc
+	$(LEVEL)/mark_labels.pl $(NAME).c > ir_out/$(NAME)_labeled.c
+ifeq ($(LLVM_PROFILE),1)
+	cp -f ir_out/$(NAME).c ir_out/$(NAME)_labeled.c
+endif # LLVM_PROFILE
+	$(FRONT_END) ir_out/$(NAME)_labeled.c -emit-llvm -c $(CFLAG) $(CLANG_FLAG) -o ir_out/$(NAME).prelto.1.bc
+	cp -f ir_out/$(NAME).prelto.1.bc ir_out/$(NAME).prelto.cv.bc
+ifdef UNROLL
+	$(LLVM_HOME)opt -mem2reg -loops -loop-simplify -loop-unroll $(UNROLL) < ir_out/$(NAME).prelto.cv.bc > ir_out/$(NAME).prelto.2.bc
+else # UNROLL
+ifeq ($(DEBUG_KEEP_VARS_IN_MEM),1)
+	$(LLVM_HOME)opt -loops -loop-simplify < ir_out/$(NAME).prelto.cv.bc > ir_out/$(NAME).prelto.2.bc
+else  # DEBUG_KEEP_VARS_IN_MEM
+	$(LLVM_HOME)opt -mem2reg -loops -loop-simplify < ir_out/$(NAME).prelto.cv.bc > ir_out/$(NAME).prelto.2.bc
+endif # DEBUG_KEEP_VARS_IN_MEM
+endif # UNROLL
 	cp ir_out/$(NAME).prelto.2.bc ir_out/$(NAME).prelto.linked.bc
 else  # LINK
 	$(LLVM_HOME)llvm-link $(LDFLAG) $(OBJS) -o ir_out/$(NAME).prelto.linked.bc
@@ -167,28 +178,15 @@ endif # LINK
 	$(LLVM_HOME)llvm-link $(LDFLAG) ir_out/$(NAME).prelto.bc $(LEVEL)/lib/llvm/liblegup.bc $(LEVEL)/lib/llvm/libm.bc -o ir_out/$(NAME).postlto.6.bc
 	$(LLVM_HOME)opt -internalize-public-api-list=main -internalize -globaldce ir_out/$(NAME).postlto.6.bc -o ir_out/$(NAME).postlto.8.bc
 
+	# perform link-time optimizations
 ifeq ($(DEBUG_KEEP_VARS_IN_MEM),1)
 	$(LLVM_HOME)opt $(OPT_FLAGS) -std-link-opts < ir_out/$(NAME).postlto.8.bc -o ir_out/$(NAME).postlto.bc
 else # DEBUG_KEEP_VARS_IN_MEM
 	$(LLVM_HOME)opt $(OPT_FLAGS) -instcombine -std-link-opts < ir_out/$(NAME).postlto.8.bc -o ir_out/$(NAME).postlto.bc
 endif # DEBUG_KEEP_VARS_IN_MEM
 
-	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).prelto.linked.bc
-	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).prelto.linked.1.bc
-	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).prelto.6.bc
-	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).prelto.bc
-	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).postlto.bc
-	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).postlto.6.bc
-	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).postlto.8.bc
-
-	#$(LLVM_HOME)opt $(LOOPSELECT_OPT_FLAGS) -basicaa -loop-simplify -indvars2 $(COMBINE_BB_PASS) -loop-pipeline ir_out/$(NAME).postlto.bc -o ir_out/$(NAME).1.bc
-	#disble loop pipeline, I will try to apply it inside the loop select pass
-	$(LLVM_HOME)opt $(OPT_FLAGS) -basicaa -loop-simplify -indvars2 $(COMBINE_BB_PASS) ir_out/$(NAME).postlto.bc -o ir_out/$(NAME).1.bc
-
-	$(LLVM_HOME)opt $(OPT_FLAGS) ir_out/$(NAME).1.bc -o ir_out/$(NAME).bc
-	$(LLVM_HOME)llvm-dis ir_out/$(NAME).bc
-
-	$(LLVM_HOME)opt $(LOOPSELECT_OPT_FLAGS) -loop-select < ir_out/$(NAME).bc
+	# iterative modulo scheduling
+	$(LLVM_HOME)opt $(LOOPSELECT_OPT_FLAGS) -basicaa -loop-simplify -indvars2 $(COMBINE_BB_PASS) -loop-select ir_out/$(NAME).postlto.bc -o ir_out/$(NAME).1.bc
 
 	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).1.bc
 	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).2.bc
@@ -201,11 +199,28 @@ endif # DEBUG_KEEP_VARS_IN_MEM
 ifndef LEGUPHOME
 	$(error LegUP home is missing! Please add "export LEGUPHOME=<LegUP dir>" in your bashrc)
 endif
+
+	#compiles each hardware according to the respective config
 	$(eval LOOP_MAKEFILES:=./loops_out/*)
 	@echo $(LOOP_MAKEFILES)
+
+	#TODO loop-select creates an module.bc file, which has already passed through all opt passes, this file is used to compile with each different config. This is generating errors in the modelsim.
+	#TODO we are hotfixing this, but the loop wrapper inplementation should solve this. I hope.
 	for mkfile in  $(LOOP_MAKEFILES) ; do \
-			$(MAKE) -C $$mkfile ; \
+		echo cp $(NAME).c $$mkfile/module.c; \
+		cp $(NAME).c $$mkfile/module.c;	 \
 	done
+
+	#read -p "Press any key to continue... " -n1 -s
+
+	#compile eacho config effectivly
+	for mkfile in  $(LOOP_MAKEFILES) ; do \
+		$(MAKE) --ignore-errors -C $$mkfile; \
+	done
+
+	#first, get only folders and configs that generated hardware
+	$(eval LOOP_BUILTS:=./loops_out/*/out.config*.tcl/hardware_estimation.mat	)
+	octave $(LEGUPHOME)/examples/loop_selection.m $(LOOP_BUILTS)
 
 ################################################################################
 # Quartus stuff
@@ -283,6 +298,13 @@ else
 	quartus_sh $(LEGUP_QUARTUS_64BIT) --flow compile top
 endif
 
+v: $(VFILE)
+	$(VLIB)
+	vlog $(addprefix -v ,${VERILOG_LIBS}) $(VFILE)
+	vlog $(addprefix -sv ,${SYSTEMVERILOG_LIBS})
+	vsim $(VSIMFLAG) -c -do "run 7000000000000000ns; exit;" work.$(TEST_BENCH)
+
+
 
 ################################################################################
 # Cleaning targets
@@ -309,7 +331,6 @@ clean: cleantiger cleanpcie cleanarm cleannew cleanprivate
 
 # be careful: removes Quartus and Modelsim files
 cleanall: clean
-
 	rm -rf ir_out loops_out
 	rm -rf DetailedLegUPTiming DetailedModuleSDCSchedulingTime DegradedModuleSchedulerTimes
 	rm -rf *.lp *.mps

@@ -1,0 +1,62 @@
+# Created by Octave 3.8.1, Fri Aug 03 15:40:26 2018 -03 <leandro@MuroDasLamentacoes>
+# name: measures
+# type: cell
+# rows: 1
+# columns: 6
+# name: <cell-element>
+# type: sq_string
+# elements: 1
+# length: 6
+Cycles
+
+
+
+# name: <cell-element>
+# type: sq_string
+# elements: 1
+# length: 4
+ALMs
+
+
+
+# name: <cell-element>
+# type: sq_string
+# elements: 1
+# length: 5
+ALUTs
+
+
+
+# name: <cell-element>
+# type: sq_string
+# elements: 1
+# length: 4
+REGs
+
+
+
+# name: <cell-element>
+# type: sq_string
+# elements: 1
+# length: 7
+MEMBITs
+
+
+
+# name: <cell-element>
+# type: sq_string
+# elements: 1
+# length: 4
+DSPs
+
+
+
+
+
+# name: values
+# type: matrix
+# rows: 1
+# columns: 6
+ 813 936 1012 1773 3200 4
+
+

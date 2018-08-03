@@ -140,6 +140,7 @@ void ILPModuloScheduler::getWidths(InstructionNode *in){
 
 void ILPModuloScheduler::conflictIncreaseCongruence(InstructionNode *in, int inc){
   //File() << "in: " << getLabel(in->getInst()) << " - delay: " << conflictDelay[in] << '\n';
+  //std::cout << "late-soon: " << lateMinusSoonTimes[in] << '\n';
   if(inc > conflictDelay[in]){
     if(NIdebug){
       File() << "new delay: " << inc << " to instr: " << getLabel(in->getInst()) << '\n';
@@ -149,7 +150,16 @@ void ILPModuloScheduler::conflictIncreaseCongruence(InstructionNode *in, int inc
     return;
   }
 
-  int howLateIam = conflictDelay[in];// - lateMinusSoonTimes[in];
+  int howLateIam;
+  if(conflictDelay[in] >= lateMinusSoonTimes[in]){
+    std::cout << "aaaaaaaaaaaaaaaaa!!" << '\n';
+    howLateIam = conflictDelay[in] - lateMinusSoonTimes[in];
+  }else{
+    howLateIam = conflictDelay[in];
+  }
+  if(NIdebug){
+    File() << "dep how late = conflictDelay - lateMinusSoonTimes  ---  " << howLateIam << " = " << conflictDelay[in] << " - " << lateMinusSoonTimes[in]<< '\n';
+  }
   //add instructions that use this inst
 
   //this eliminates double entries
@@ -168,14 +178,8 @@ void ILPModuloScheduler::conflictIncreaseCongruence(InstructionNode *in, int inc
     if(NIdebug){
       File() << "C" << startVariableIndex[in] << " passing delay: " << inc << " to instr: C" << startVariableIndex[i] << '\n';
     }
+    conflictIncreaseCongruence(i,howLateIam);
 
-    //check if this inst has some slop between the ASAP and ALAP schecules
-    if(howLateIam > 0){
-      if(NIdebug){
-        File() << "dep how late = conflictDelay - lateMinusSoonTimes  ---  " << howLateIam << " = " << conflictDelay[in] << " - " << lateMinusSoonTimes[in]<< '\n';
-      }
-      conflictIncreaseCongruence(i,howLateIam);
-    }
   }
 
   return;
@@ -230,6 +234,7 @@ void ILPModuloScheduler::WFSaddInstToMRT(InstructionNode *in, int II) {
     }
     //if could not allcate it in ninstances, increase the congruence class
     if(!allocated){
+      //std::cout << "inc conflict" << '\n';
       inc++;
       currM = (currM+1)%II;
     }
@@ -321,6 +326,7 @@ void ILPModuloScheduler::LCaddInstToMRT(InstructionNode *in, int II){
     }
     //if could not allcate it in ninstances, increase the congruence class
     if(!allocated){
+      //std::cout << "inc conflict" << '\n';
       inc++;
       currM = (currM+1)%II;
     }
@@ -374,7 +380,7 @@ void ILPModuloScheduler::CPFaddInstToMRT(InstructionNode *in, int II){
     //std::cout << "non resource constrained inst: C" << startVariableIndex[in] << " (m, -) = (" << (nonConstrainedASAP[in]+conflictDelay[in])%II << ", " << "-)" << '\n';
     if(NIdebug){
     }
-    conflictSolvedCongruenceClass[in] = (nonConstrainedASAP[in]+conflictDelay[in])%II;
+    conflictSolvedCongruenceClass[in] = baseM;
     mappedInstDelay[in] = true;
     isInstOnMRT[in] = true;
     (*mrt)[in] = std::pair<int, int>(currM, 0);
@@ -409,6 +415,7 @@ void ILPModuloScheduler::CPFaddInstToMRT(InstructionNode *in, int II){
     }
     //if could not allcate it in ninstances, increase the congruence class
     if(!allocated){
+      //std::cout << "inc conflict" << '\n';
       inc++;
       assert(inc < II && "oh boy seems like this MRT is full ");
       currM = (currM+1)%II;
@@ -419,12 +426,12 @@ void ILPModuloScheduler::CPFaddInstToMRT(InstructionNode *in, int II){
     }
   }
 
-  std::cout << "incrementing conflicts" << '\n';
+  //std::cout << "incrementing conflicts" << '\n';
   if(inc > 0){
     //File() << "in: " << getLabel(in->getInst()) << " - delay: " << conflictDelay[in] << '\n';
     conflictIncreaseCongruence(in, inc);
   }
-  std::cout << "incremented" << '\n';
+  //std::cout << "incremented" << '\n';
 
   return;
 }
@@ -1114,8 +1121,11 @@ void ILPModuloScheduler::createNIVariables() {
   numConstraints = 0;
 
   startVariableIndex.clear();
+  std::cout << "here1" << '\n';
   latencyInstMap.clear();
+  std::cout << "here2" << '\n';
   baseCongruenceClass.clear();
+  std::cout << "here3" << '\n';
   constrained_insts.clear();
   FUinstMap.clear();
   FUlimit.clear();
@@ -1885,8 +1895,8 @@ bool ILPModuloScheduler::NI(int II){
     return false;
   }
   assert(success && "something went wrong with non res. constrained ASAP");
-  //success = NonResourceConstrainedALAP(II);
-  //assert(success && "something went wrong with non res. constrained ALAP");
+  success = NonResourceConstrainedALAP(II);
+  assert(success && "something went wrong with non res. constrained ALAP");
 
   std::cout << "asap and alap ready" << std::endl;
   //cin.get();

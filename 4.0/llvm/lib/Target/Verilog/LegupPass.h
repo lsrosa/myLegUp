@@ -83,11 +83,11 @@ private:
 
     struct Schedstats{
       double time, mappingtime, solvetime, fsmtime;
-      int instcount;
+      int instcount, cycles;
       std::string name;
 
-      Schedstats(double t, double mt, double st, double ft, int ic, std::string n)
-      : time(t), mappingtime(mt), solvetime(st), fsmtime(ft), instcount(ic), name(n)
+      Schedstats(double t, double mt, double st, double ft, int ic, int c, std::string n)
+      : time(t), mappingtime(mt), solvetime(st), fsmtime(ft), instcount(ic), cycles(c), name(n)
       {}
     };
 

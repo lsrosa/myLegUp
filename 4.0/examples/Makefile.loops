@@ -36,35 +36,57 @@ TARGETS=$(patsubst %,%/$(VFILE),$(TARGET_DIRS))
 $(OVERRIDE)all: $(OBJS) $(TARGETS)
 	@echo ready "=)"
 
+export LEVEL:=$(LEGUPHOME)/examples
+export CUSTOM_MODULE_SCHEDULING:=1
 
 out.%/$(VFILE):%
 	@echo $< $@
 	$(eval LOOPS_OUTDIR:=out.$<)
-	export LOOPS_OUTDIR=$(LOOPS_OUTDIR)
+	#export LOOPS_OUTDIR=$(LOOPS_OUTDIR)
+	#$(eval OPT_FLAGS+= -legup-config=$<)
+	#$(eval PIPELINE_OPT_FLAGS+= -legup-config=$<)
+	#$(eval LLC_FLAGS+= -legup-config=$<)
 	mkdir -p $(LOOPS_OUTDIR)
-	$(LLVM_HOME)opt -mem2reg -loops -loop-simplify < $(NAME).bc > $(LOOPS_OUTDIR)/$(NAME).prelto.linked.bc
-	$(LLVM_HOME)opt $(OPT_FLAGS) -std-link-opts <  $(LOOPS_OUTDIR)/$(NAME).prelto.linked.bc -o  $(LOOPS_OUTDIR)/$(NAME).prelto.linked.1.bc
-	$(LLVM_HOME)opt $(OPT_FLAGS) -legup-prelto <  $(LOOPS_OUTDIR)/$(NAME).prelto.linked.1.bc >  $(LOOPS_OUTDIR)/$(NAME).prelto.6.bc
-	$(LLVM_HOME)opt $(OPT_FLAGS) -std-link-opts <  $(LOOPS_OUTDIR)/$(NAME).prelto.6.bc -o  $(LOOPS_OUTDIR)/$(NAME).prelto.bc
-	$(LLVM_HOME)llvm-link $(LDFLAG)  $(LOOPS_OUTDIR)/$(NAME).prelto.bc $(LEVEL)/lib/llvm/liblegup.bc $(LEVEL)/lib/llvm/libm.bc -o  $(LOOPS_OUTDIR)/$(NAME).postlto.6.bc
-	$(LLVM_HOME)opt -internalize-public-api-list=main -internalize -globaldce  $(LOOPS_OUTDIR)/$(NAME).postlto.6.bc -o  $(LOOPS_OUTDIR)/$(NAME).postlto.8.bc
-	$(LLVM_HOME)opt $(OPT_FLAGS) -instcombine -std-link-opts <  $(LOOPS_OUTDIR)/$(NAME).postlto.8.bc -o  $(LOOPS_OUTDIR)/$(NAME).postlto.bc
-	$(LLVM_HOME)opt $(PIPELINE_OPT_FLAGS) -basicaa -loop-simplify -indvars2 $(COMBINE_BB_PASS) -loop-pipeline  $(LOOPS_OUTDIR)/$(NAME).postlto.bc -o  $(LOOPS_OUTDIR)/$(NAME).1.bc
-	$(LLVM_HOME)opt $(OPT_FLAGS) -instcombine $(LOOPS_OUTDIR)/$(NAME).1.bc -o  $(LOOPS_OUTDIR)/$(NAME).bc
-	$(LLVM_HOME)llc $(LLC_FLAGS) -march=v $(LOOPS_OUTDIR)/$(NAME).bc -o  $(LOOPS_OUTDIR)/$(VFILE)
-	mv *.dot $(LOOPS_OUTDIR)
-	mv *.rpt $(LOOPS_OUTDIR)
-	mv *.mif $(LOOPS_OUTDIR)
-	mv *.qsf $(LOOPS_OUTDIR)
-	mv *.sdc $(LOOPS_OUTDIR)
-	mv *.txt $(LOOPS_OUTDIR)
-	mv DetailedLegUPTiming $(LOOPS_OUTDIR)
-	mv DetailedModuleSDCSchedulingTime $(LOOPS_OUTDIR)
-	mv gantt* $(LOOPS_OUTDIR)
+	cp $< $(LOOPS_OUTDIR)/$<
+	cp module.c $(LOOPS_OUTDIR)/module.c
+ifndef LEGUPHOME
+	$(error LegUP home is missing! Please add "export LEGUPHOME=<LegUP dir>" in your bashrc)
+endif
+	$(eval LC:=LOCAL_CONFIG=-legup-config=$<)
+	$(eval export $(LC))
+	$(eval NAME:=NAME=module)
+	$(eval export $(NAME))
+
+	-make -C $(LOOPS_OUTDIR) -f $(LEGUPHOME)/examples/Makefile.myDocMyHell
+
+	#read -p "Press any key to continue... " -n1 -s
+
+	-mv *.dot *.rpt *.mif *.qsf *.sdc *.txt $(LOOPS_OUTDIR)
+	-mv DetailedLegUPTiming $(LOOPS_OUTDIR)
+	-mv DetailedModuleSDCSchedulingTime $(LOOPS_OUTDIR)
+	-mv gantt* $(LOOPS_OUTDIR)
+	-cp Makefile $(LOOPS_OUTDIR)
+	-cp $< $(LOOPS_OUTDIR)
+
+	#we are using quartus map estimations as estimation for now
+	#this is a bit slow, fairly precise but has may metrics modify_system_to_enable_profiling
+	#TODO create better estimations
+	if [ -f ./$(LOOPS_OUTDIR)/$(VFILE) ]; then \
+		make -C $(LOOPS_OUTDIR) -f $(LEGUPHOME)/examples/Makefile.myDocMyHell p; \
+		make -C $(LOOPS_OUTDIR) -f $(LEGUPHOME)/examples/Makefile.myDocMyHell q; \
+		make -C $(LOOPS_OUTDIR) -f $(LEGUPHOME)/examples/Makefile.myDocMyHell v; \
+		octave $(LEGUPHOME)/examples/estimation.m $(LOOPS_OUTDIR)/top.map.rpt; \
+		else \
+		echo "C to V compilation failed"; \
+		exit 1; \
+	fi
+	#make -C $(LOOPS_OUTDIR) f; else
+	#read -p "Press any key to continue... " -n1 -s
 
 ################################################################################
 # Cleaning targets
 ################################################################################
+
 
 cleannew:
 	rm -rf $(OUTPUT_PATH)

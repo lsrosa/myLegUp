@@ -154,7 +154,14 @@ void LoopSelect::addResourcesConstraints(LoopData *ld){
     std::string constrName = std::string("set_resource_constraint ");
     constrName.append(entry.first);
 
-    constraint = new Constraint(constrName, 1, entry.second);
+
+    //int ub = entry.second;
+    //if(entry.first.compare("mem_dual_port") == 0 && ub > 2){
+    //  ub = 2;
+    //}
+
+
+    constraint = new Constraint(constrName, 1, ub);
     ld->TCLConstraints.push_back(constraint);
   }
 
@@ -374,7 +381,6 @@ bool LoopSelect::runOnModule(Module &M){
     //IMS.LI = &getAnalysis<LoopInfo>();
     //IMS.AA = &getAnalysis<AliasAnalysis>();
     //IMS.SE = &getAnalysis<ScalarEvolution>();
-    //L->dump();
 
     for(llvm::Module::iterator F = M.begin(); F!= M.end(); F++){
       //skip declrations

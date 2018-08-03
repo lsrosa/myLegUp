@@ -44,6 +44,7 @@ namespace legup {
 double GenerateRTL::getSchedMappingTime(){return sched->mappingtime;}
 double GenerateRTL::getSchedSolveTime(){return sched->solvetime;}
 double GenerateRTL::getSchedFSMTime(){return sched->fsmtime;}
+double GenerateRTL::getTotalCycles(){return sched->cycles;}
 
 void GenerateRTL::updateOperationUsage(
 		std::map<std::string, int> &_OperationUsage) {

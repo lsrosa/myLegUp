@@ -1,3 +1,0 @@
-Name	InstCount	Allocation	Scheduling	Binding	SchedMapping	SchedSolve	SchedFSM	overhead
-fct	27	0.000240	0.001679	0.000106	0.000450	0.000497	0.000075	0.000657
-main	53	0.000240	0.003548	0.000106	0.000824	0.001314	0.000189	0.001221

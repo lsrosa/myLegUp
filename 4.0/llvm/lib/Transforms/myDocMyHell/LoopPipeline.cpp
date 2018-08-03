@@ -90,7 +90,9 @@ class LoopPipeline : public LoopPass {
         IMS.AA = &getAnalysis<AliasAnalysis>();
         IMS.SE = &getAnalysis<ScalarEvolution>();
         //L->dump();
-        return IMS.runOnLoop(L, LPM);
+        bool ret = IMS.runOnLoop(L, LPM);
+        std::cout << "ret: " << ret << '\n';
+        return ret;
     }
 
     using llvm::Pass::doInitialization;

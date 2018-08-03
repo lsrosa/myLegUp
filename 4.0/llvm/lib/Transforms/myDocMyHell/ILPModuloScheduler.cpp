@@ -23,7 +23,7 @@ void ILPModuloScheduler::printModuleSchedulerHeader(){
   std::ifstream f(rptname);
   if (!f.good()) {
       pFile = fopen(rptname.c_str(), "w");
-      fprintf(pFile, "label\ttimeout\tn_IRlines\t#vars\t#constraints\tlatency\tII\tTripCnt\tn_solves\tTotal\tSolving\n");
+      fprintf(pFile, "label\ttimeout\tn_IRlines\t#vars\t#constraints\tlatency\tII\tTripCnt\tn_solves\tTotal\tSolving\ttotalcycles\n");
       fclose(pFile);
   }
   return;
@@ -32,7 +32,7 @@ void ILPModuloScheduler::printModuleSchedulerHeader(){
 void ILPModuloScheduler::printModuleSchedulerRow(){
   FILE * pFile = fopen("DetailedModuleSDCSchedulingTime", "a");
   sched_II = moduloScheduler.II;
-  fprintf(pFile, "%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%f\t%f\n", moduloScheduler.loopLabel.c_str(), timeout, nIRlines, lp_nvars, lp_nconst, sched_latency, sched_II, moduloScheduler.tripCount, nsdcs, totaltime, solvetime);
+  fprintf(pFile, "%s\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%f\t%f\t%d\n", moduloScheduler.loopLabel.c_str(), timeout, nIRlines, lp_nvars, lp_nconst, sched_latency, sched_II, moduloScheduler.tripCount, nsdcs, totaltime, solvetime, sched_latency+sched_II*( moduloScheduler.tripCount-1));
   fclose(pFile);
   return;
 }
@@ -199,6 +199,7 @@ bool ILPModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
         if(NIdebug){
             std::cout << "II: " << curII << '\n';
         }
+        std::cout << "calling SM" << '\n';
         success = SM(curII);
         if ( success ){
           File() << "Saporradeucerto  -- II: " << curII << '\n';
@@ -208,8 +209,8 @@ bool ILPModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
       }
       moduloScheduler.II = curII;
 
-
-      if(curII == maxII && !success){
+      std::cout << "currII: " << curII << " - maxII: " << maxII << '\n';
+      if(curII >= maxII && !success){
         std::cout << "FAIL: could not schedule loop "  << "in " << MII << " < II < " << maxII << " - curII: " << curII<< '\n';
         std::cout << "FAIL: could not schedule loop "  << "in " << MII << " < II < " << maxII << '\n';
         assert(false && "NI scheduler fails");//quit the hell out of here
@@ -293,14 +294,14 @@ bool ILPModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
     moduloScheduler.totalLoopsPipelined++;
     moduloScheduler.loopsPipelined.insert(moduloScheduler.loopLabel);
 
-    if(SDCdebug || ILPdebug || GAdebug || NIdebug){
-      File() << "results:" << '\n';
+    //if(SDCdebug || ILPdebug || GAdebug || NIdebug){
+      std::cout << "results:" << '\n';
       for(BasicBlock::iterator i = BB->begin(), ie = BB->end(); i!=ie; ++i){
         //i->dump();
-        File() << " - " <<getLabel(i) << "_" << startVariableIndex[dag->getInstructionNode(i)] <<"_t=" << moduloScheduler.schedTime[i] << "\n";
+        std::cout << " - " <<getLabel(i) << "_" << startVariableIndex[dag->getInstructionNode(i)] <<"_t=" << moduloScheduler.schedTime[i] << "\n";
       }
-      File() << "\n\n" << '\n';
-    }
+      std::cout << "\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n" << '\n';
+    //}
 
     return true;
 }

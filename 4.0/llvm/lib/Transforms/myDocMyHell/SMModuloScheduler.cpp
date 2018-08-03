@@ -10,8 +10,8 @@ using namespace legup;
 void ILPModuloScheduler::clearSM(){
   File().flush();
   std::cout << "here1" << std::endl;
-
   baseCongruenceClass.clear();
+  std::cout << "here2" << std::endl;
   instWidth.clear();
   widthInst.clear();
   mappedInstWidth.clear();
@@ -19,15 +19,13 @@ void ILPModuloScheduler::clearSM(){
   conflictDelay.clear();
   mappedInstDelay.clear();
   instLinkerIndex.clear();
-  startVariableIndex.clear();
   back_edge_rh_m_map.clear();
   back_edge_row_rh_map.clear();
   lateMinusSoonTimes.clear();
-  std::cout << "here2" << std::endl;
 
   std::cout << "here3" << std::endl;
-  constrained_insts.clear();
   std::cout << "here4" << std::endl;
+  constrained_insts.clear();
   conflictDelay.clear();
   mappedInstDelay.clear();
   instLinkerIndex.clear();
@@ -40,15 +38,12 @@ void ILPModuloScheduler::clearSM(){
   isInstOnMRT.clear();
   sortedCycleSlack.clear();
 
-  //for(auto entry:cycleSlacks){
-  //  delete entry;
-  //}
   cycleSlacks.clear();
 
   std::cout << "here5" << std::endl;
   if(NIindividual.first != NULL){
     NIindividual.first->clear();
-    delete NIindividual.first;
+    //delete NIindividual.first;
   }
   std::cout << "here6" << std::endl;
   if(solver.compare("gurobi")==0){
@@ -60,26 +55,23 @@ void ILPModuloScheduler::clearSM(){
   }
 
   std::cout << "here7" << std::endl;
-  //clean up
-  /*
-  if(!recMIISets.empty())
-  for(auto e:recMIISets){
-    for(auto i : e.second){
-      delete i;
-    }
-    e.second.clear();
-  }
-  */
-  recMIISets.clear();
 
   mappedRecMIISet.clear();
   std::cout << "here8" << std::endl;
-  std::cout << "size:" << SMnodeMap.size() << std::endl;
-  //SMnodeMap.clear();
+  std::cout << "size:" << SMnodeMap->size() << " - maxSize: " << SMnodeMap->max_size() << std::endl;
+  
+  for(auto entry:*SMnodeMap){
+    delete entry.second->second;
+    delete entry.second;
+  }
+  delete SMnodeMap;
+
   std::cout << "here9" << std::endl;
+  recMIISets.clear();
   O.clear();
   H.clear();
   D.clear();
+  startVariableIndex.clear();
 
   //delete_lp(sdcSolver.lp);
   File().flush();
@@ -206,11 +198,11 @@ std::vector<SMnode*> ILPModuloScheduler::pred(SMnode *in){
   std::vector<SMnode*> out;
 
   for(auto it = in->first->dep_begin(); it != in->first->dep_end(); it++){
-    out.push_back(SMnodeMap[*it]);
+    out.push_back((*SMnodeMap)[*it]);
   }
 
   for(auto it = in->first->mem_dep_begin(); it != in->first->mem_dep_end(); it++){
-    out.push_back(SMnodeMap[*it]);
+    out.push_back((*SMnodeMap)[*it]);
   }
 
   return out;
@@ -220,11 +212,11 @@ std::vector<SMnode*> ILPModuloScheduler::suc(SMnode *in){
   std::vector<SMnode*> out;
 
   for(auto it = in->first->use_begin(); it != in->first->use_end(); it++){
-    out.push_back(SMnodeMap[*it]);
+    out.push_back((*SMnodeMap)[*it]);
   }
 
   for(auto it = in->first->mem_use_begin(); it != in->first->mem_use_end(); it++){
-    out.push_back(SMnodeMap[*it]);
+    out.push_back((*SMnodeMap)[*it]);
   }
 
   return out;
@@ -248,7 +240,7 @@ std::vector<SMnode*> ILPModuloScheduler::predvec(){
       }
 
       if(found == false){
-        out.push_back(SMnodeMap[inst]);
+        out.push_back((*SMnodeMap)[inst]);
       }
     }
 
@@ -264,7 +256,7 @@ std::vector<SMnode*> ILPModuloScheduler::predvec(){
       }
 
       if(found == false){
-        out.push_back(SMnodeMap[inst]);
+        out.push_back((*SMnodeMap)[inst]);
       }
     }
   }
@@ -290,7 +282,7 @@ std::vector<SMnode*> ILPModuloScheduler::sucvec(){
       }
 
       if(found == false){
-        out.push_back(SMnodeMap[inst]);
+        out.push_back((*SMnodeMap)[inst]);
       }
     }
 
@@ -306,7 +298,7 @@ std::vector<SMnode*> ILPModuloScheduler::sucvec(){
       }
 
       if(found == false){
-        out.push_back(SMnodeMap[inst]);
+        out.push_back((*SMnodeMap)[inst]);
       }
     }
   }
@@ -558,7 +550,7 @@ void ILPModuloScheduler::initializeSMMRT(int II){
   mappedRecMIISet.clear();
 
   for(auto entry:cycleSlacks){
-    delete entry;
+    //  delete entry;
   }
   cycleSlacks.clear();
 
@@ -567,12 +559,16 @@ void ILPModuloScheduler::initializeSMMRT(int II){
   H.clear();
   D.clear();
   O.clear();
-  SMnodeMap.clear();
-  assert(SMnodeMap.size() == 0 && "SMnodeMap should be empty");
+
+  assert(SMnodeMap->size() == 0 && "SMnodeMap should be empty");
+
   conflictDelay.clear();
+  std::cout << "here" << '\n';
   conflictSolvedCongruenceClass.clear();
+  std::cout << "here2" << '\n';
   mappedInstDelay.clear();
   isInstOnMRT.clear();
+  std::cout << "here2" << '\n';
 
   //std::cout << "after clear" << std::endl;
   // dependency i-->j    - i is the back edge node source
@@ -646,7 +642,7 @@ void ILPModuloScheduler::initializeSMMRT(int II){
         SMnode * node = new SMnode(inst, new std::tuple<int, int, int>(D[inst],H[inst],lateMinusSoonTimes[inst]));
         recMIISets[entry->second].push_back(node);
         mappedRecMIISet[inst]=true;
-        SMnodeMap[inst] = node;
+        (*SMnodeMap)[inst] = node;
       }
     }
   }
@@ -656,7 +652,7 @@ void ILPModuloScheduler::initializeSMMRT(int II){
       SMnode * node = new SMnode(entry.first, new std::tuple<int, int, int>(D[entry.first],H[entry.first],lateMinusSoonTimes[entry.first]));
       recMIISets[-1].push_back(node);
       mappedRecMIISet[entry.first]=true;
-      SMnodeMap[entry.first] = node;
+      (*SMnodeMap)[entry.first] = node;
     }
   }
 
@@ -737,7 +733,7 @@ void ILPModuloScheduler::initializeSMMRT(int II){
             instMax = entry->first;
           }
         }
-        R.push_back(SMnodeMap[instMax]);
+        R.push_back((*SMnodeMap)[instMax]);
         if(NIdebug){
           File() << "fisrt part partial R:\n";
           printSet(R);
@@ -872,7 +868,7 @@ void ILPModuloScheduler::initializeSMMRT(int II){
   //MRT managment
   //clear available slots;
   for(auto slot : NIMRTvailableSlots){
-    delete [] slot.second;
+    //delete [] slot.second;
   }
   NIMRTvailableSlots.clear();
   //*/
@@ -914,7 +910,7 @@ bool ILPModuloScheduler::createSMschedule(int II){
     File().flush();
   }
 
-  NIMRTvailableSlots.clear();
+  //NIMRTvailableSlots.clear();
 
   //instanciate new available slots
   for(auto fulim : FUlimit){
@@ -1248,7 +1244,7 @@ bool ILPModuloScheduler::createSMschedule(int II){
 bool ILPModuloScheduler::SM(int II){
 
   bool tmp = NIdebug;
-
+  SMnodeMap = new std::map<InstructionNode*, SMnode*>;
   NIdebug = false;
   initiateNI(II);
   std::cout << "II: " << II << '\n';
@@ -1304,10 +1300,9 @@ bool ILPModuloScheduler::SM(int II){
   }
 
   std::cout << "creating schedule" << std::endl;
-  success = evaluateNIIndividual(II);
-  //*/
+  //success = evaluateNIIndividual(II);
 
-  //success = createSMschedule(II);
+  success = createSMschedule(II);
   //NIdebug=true;
 
   if(NIdebug){

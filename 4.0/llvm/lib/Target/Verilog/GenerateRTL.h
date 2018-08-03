@@ -70,6 +70,7 @@ public:
     double getSchedMappingTime();
     double getSchedSolveTime();
     double getSchedFSMTime();
+    double getTotalCycles();
 
     GenerateRTL(Allocation *alloc, Function* F) :
         sched(0), binding(0), fsm(0), bindingFSM(0),  alloc(alloc), Fp(F),

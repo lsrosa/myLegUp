@@ -19,7 +19,7 @@ int main() {
     int i;
 loop: for (i = 0; i < N; i++) {
     sum += a[i] + b[i] + c[i] + d[i] + 
-           e[i] + f[i] - g[i] + h[i] + 
+           e[i] + f[i] - g[i] + h[i] +
            ii[i] + j[i] - i;
 
     printf("sum %d = %d\n", i, sum);

@@ -204,6 +204,7 @@ class ILPModuloScheduler {
     std::map<InstructionNode*  , int> instWidth;
     std::multimap<int, InstructionNode*> widthInst;
     std::map<InstructionNode*  , bool> mappedInstWidth;
+    std::map<InstructionNode*  , bool> nullPath;
     std::map<std::string, bool *> NIMRTvailableSlots;
 
     std::map<InstructionNode*  , int> conflictSolvedCongruenceClass;
@@ -295,7 +296,7 @@ class ILPModuloScheduler {
 
 
     using SMnode = std::pair<InstructionNode*, std::tuple<int, int, int>*>;
-    std::map<InstructionNode*, SMnode*> SMnodeMap;
+    std::map<InstructionNode*, SMnode*> *SMnodeMap;
     std::map<int, std::vector<SMnode*>> recMIISets;
 
 
