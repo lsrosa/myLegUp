@@ -128,7 +128,11 @@ LoopData * LoopSelect::getLoopBasicMetrics(llvm::Loop * loop){
       //remove insts that are not assigned to any FU
       if(fuName.empty()) continue;
 
+      //if(fuName.compare("signed_divide_32") == 0){
+      //  ld->nFUs[fuName] += 2;
+      //}else{
       ld->nFUs[fuName]++;
+      //}
     }
 
     bbMap[bb] = true;
@@ -155,9 +159,9 @@ void LoopSelect::addResourcesConstraints(LoopData *ld){
     constrName.append(entry.first);
 
 
-    //int ub = entry.second;
-    //if(entry.first.compare("mem_dual_port") == 0 && ub > 2){
-    //  ub = 2;
+    int ub = entry.second;
+    //if(entry.first.compare("signed_divide_32") == 0){
+    //  ub *= 2;
     //}
 
 

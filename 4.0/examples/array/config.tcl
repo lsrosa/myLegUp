@@ -5,3 +5,4 @@ set_resource_constraint mem_dual_port 1
 set_resource_constraint signed_add_32 2
 set_resource_constraint signed_comp_eq_32 1
 set_resource_constraint signed_multiply_32 1
+set_resource_constraint signed_divide_32 1

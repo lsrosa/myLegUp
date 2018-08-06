@@ -16,7 +16,7 @@ for i=1:nfiles
   configNames(i) = strrep(configNames(i), '.tcl', '');
 end
 
-configNames
+%configNames
 
 %first iteration just to take the measures
 load(arg_list{1})
@@ -34,7 +34,8 @@ end
 function [paretoPoints] =  findPareto(x, y)
   paretoPoints = [];
   for i=1:numel(x)
-    if( sum((x<x(i) & y<y(i))) == 0 )
+    %cond = sum((x<=x(i) & y<=y(i)))
+    if( sum((x<=x(i) & y<=y(i))) == 1 )
       paretoPoints = [paretoPoints; x(i) y(i)];
     end
   end
@@ -42,16 +43,70 @@ function [paretoPoints] =  findPareto(x, y)
 end
 
 %vals
-outFolder = strcat(strsplit(arg_list{i}, '/')(1), '/', 'plots')
-mkdir(outFolder)
+outFolder = strcat(strsplit(arg_list{i}, '/')(1), '/', 'plots');
+mkdir(outFolder);
+
+%eliminate duplicates but concatenate the string names
+uniqueVals = [];
+uniqueConfigNames = [];
+rows = zeros(nfiles,1);
+
+for i=1:nfiles
+  if(rows(i) == 0)
+    indexes = sum(vals == vals(i,:), 2) == nmeasures;
+    uniqueVals = [uniqueVals; vals(i,:)]; %add only on instance
+
+    processNames = configNames(indexes);
+
+    %creates an array with unique names
+    pairs = zeros(numel(processNames), 2);
+    for j=1:numel(processNames)
+      pn = strrep(processNames{j}, 'l', '');
+      pn = strrep(pn, 'c', ' ');
+      pairs(j,:) = strread(pn, '%d');
+    end
+    %pairs
+
+    %pairs is a two integers array with loop and config number
+    [C,~,ic] = unique(pairs(:,1));
+    jointNames = cell();
+    for j=1:numel(C)
+      n = strrep(strcat(num2str(pairs(ic==1,2)')), '  ', ',');
+      jointNames(j) = strcat('l', num2str(C(j)), 'c', n);
+    end
+    %jointNames
+    %pause
+
+    %join all names in a big string
+    finalName = '';
+    for j=1:numel(jointNames);
+      finalName = strcat(finalName, jointNames{j});
+    end
+    %finalName
+
+    %add only on instance
+    uniqueConfigNames = [uniqueConfigNames; finalName];
+    rows = rows+indexes;
+  end
+end
+
+%verifications
+%vals
+%configNames
+%uniqueVals
+%uniqueConfigNames
+finalValues = uniqueVals;
+finalConfigNames = uniqueConfigNames;
+%finalValues = vals
+%finalConfigNames = configNames
 
 for i=1:numel(measures)-1
   fighandle = figure(i);hold on;
-  plot(vals(:,1), vals(:, i+1), '.b');
-  text(vals(:,1), vals(:, i+1), configNames);
+  plot(finalValues(:,1), finalValues(:, i+1), '.b');
+  text(finalValues(:,1), finalValues(:, i+1), finalConfigNames);
   xlabel(measures(1));
   ylabel(measures(i+1));
-  ppoints = findPareto(vals(:,1), vals(:, i+1));
+  ppoints = findPareto(finalValues(:,1), finalValues(:, i+1));
   plot(ppoints(:,1), ppoints(:, 2), '*r');
 
   graphname = strcat(outFolder, '/', measures{i+1}, '.jpg')

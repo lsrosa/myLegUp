@@ -6,5 +6,6 @@ endif
 ifeq ($(NO_INLINE),)
 	NO_INLINE=0
 endif
+LOCAL_CONFIG = -legup-config=config.tcl
 LEVEL = ..
 include $(LEVEL)/Makefile.myDocMyHell
