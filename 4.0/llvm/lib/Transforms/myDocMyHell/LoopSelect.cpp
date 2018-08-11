@@ -142,7 +142,8 @@ LoopData * LoopSelect::getLoopBasicMetrics(llvm::Loop * loop){
 }
 
 void LoopSelect::addRAMConstraints(LoopData *ld){
-  Constraint *constraint = new Constraint("set_parameter LOCAL_RAMS", 0, 1);
+  //local rams always improve performance
+  Constraint *constraint = new Constraint("set_parameter LOCAL_RAMS", 1, 1);
   ld->TCLConstraints.push_back(constraint);
 
   if(debug){
@@ -160,9 +161,10 @@ void LoopSelect::addResourcesConstraints(LoopData *ld){
 
 
     int ub = entry.second;
-    //if(entry.first.compare("signed_divide_32") == 0){
-    //  ub *= 2;
-    //}
+    //there is no need to try to generate many memories
+    if(entry.first.compare("mem_dual_port") == 0 && ub >=1){
+      ub = 1;
+    }
 
 
     constraint = new Constraint(constrName, 1, ub);

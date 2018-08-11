@@ -19,7 +19,7 @@ end
 %configNames
 
 %first iteration just to take the measures
-load(arg_list{1})
+load(arg_list{1});
 %measures;
 nmeasures = numel(measures);
 vals = zeros(nfiles, nmeasures);
@@ -33,12 +33,20 @@ end
 
 function [paretoPoints] =  findPareto(x, y)
   paretoPoints = [];
+  cond = zeros(numel(x), 1);
+
   for i=1:numel(x)
-    %cond = sum((x<=x(i) & y<=y(i)))
-    if( sum((x<=x(i) & y<=y(i))) == 1 )
+    cond(i) = sum((x<=x(i) & y<=y(i)));
+  end
+
+  for i=1:numel(x)
+    c = sum((x<=x(i) & y<=y(i)));
+    if( c == min(cond) )
       paretoPoints = [paretoPoints; x(i) y(i)];
     end
   end
+
+
   return;
 end
 
@@ -101,14 +109,16 @@ finalConfigNames = uniqueConfigNames;
 %finalConfigNames = configNames
 
 for i=1:numel(measures)-1
-  fighandle = figure(i);hold on;
+  fighandle = figure(i); hold on;
   plot(finalValues(:,1), finalValues(:, i+1), '.b');
   text(finalValues(:,1), finalValues(:, i+1), finalConfigNames);
   xlabel(measures(1));
   ylabel(measures(i+1));
   ppoints = findPareto(finalValues(:,1), finalValues(:, i+1));
-  plot(ppoints(:,1), ppoints(:, 2), '*r');
+  if(numel(ppoints) > 0)
+    plot(ppoints(:,1), ppoints(:, 2), '*r');
+  end
 
-  graphname = strcat(outFolder, '/', measures{i+1}, '.jpg')
+  graphname = strcat(outFolder, '/', measures{i+1}, '.jpg');
   print(fighandle, char(graphname), '-djpg');
 end

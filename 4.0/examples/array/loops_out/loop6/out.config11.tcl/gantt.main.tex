@@ -1,0 +1,22 @@
+\documentclass[landscape]{article}
+\usepackage{gantt}
+\pagestyle{empty}
+\begin{document}
+\begin{figure}
+\begin{gantt}[fontsize=\scriptsize]{2}{2}
+\begin{ganttitle}
+\numtitle{0}{1}{1}{1}
+\end{ganttitle}
+\ganttbar{  \%indvar = phi i32 [ \%indvar.next, \%1 ], [ 0, \%0 ], !legup.canonical\_induc...}{1}{1}
+\end{gantt}
+\end{figure}
+\begin{figure}
+\begin{gantt}[fontsize=\scriptsize]{3}{2}
+\begin{ganttitle}
+\numtitle{0}{1}{1}{1}
+\end{ganttitle}
+\ganttbar{  \%7 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([14 x i8]*...}{1}{1}
+\ganttbar{  ret i32 0}{1}{1}
+\end{gantt}
+\end{figure}
+\end{document}
