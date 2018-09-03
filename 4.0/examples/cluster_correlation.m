@@ -90,38 +90,137 @@ for i=1:nres
   end
 end
 variableNres = numel(variableResources);
+
 %variableConstraints
 %variableResources
 
 %create some clusters
-k = ceil(max(max(variableConstraints))*1.1);
-[h1 h2] = hist(metrics(:,1),k);
-startA = h2(h1!=0)';
-k = numel(startA);
+metrics = metrics(:, 1:2);
+nmeasures = 2;
 
-%[idx, centers, sumd, dist] = kmeans(metrics(:,1), k, 'Start', 'cluster', 'emptyaction', 'singleton', 'Replicates', k, 'MaxIter', 200, 'Distance', 'correlation');
-[idx, centers, sumd, dist] = kmeans(metrics(:,1), k, 'A', startA, 'emptyaction', 'singleton', 'MaxIter', 200, 'Distance', 'correlation');
-centers
-minDist = min(dist')';
+resourcesK = ceil(max(max(variableConstraints))*1.1);
+[h1 h2] = hist(metrics(:,1),resourcesK);
+startCycles = h2(h1!=0)';
+cyclesK = numel(startCycles);
 
-threshhold = 1;
-maxIterations=10;
-
-cnt = 0;
-min(centers)
-while( any(minDist > threshhold*min(centers)) )
-  ping = strcat("kmeans iteration", num2str(cnt))
-  [idx, centers, sumd, dist] = kmeans(metrics(:,1), k, 'Start', 'cluster', 'emptyaction', 'singleton', 'Replicates', k, 'MaxIter', 200, 'Distance', 'correlation');
-  %[idx, centers, sumd, dist] = kmeans(metrics(:,1), k, 'A', startA, 'emptyaction', 'singleton', 'MaxIter', 200, 'Distance', 'correlation');
-  centers
-  minDist = min(dist')';
-
-  %security exit
-  cnt = cnt+1;
-  if(cnt >= maxIterations)
-    break;
-  end
+[h1 h2] = hist(metrics(:,2:end),resourcesK);
+metricsK = ceil(mean(sum(h1!=0)));
+for i=2:nmeasures
+  [h1 h2] = hist(metrics(:,i),metricsK);
+  startMetrics(:,i-1) = h2(h1!=0);
 end
+[metricsK, ~] = size(startMetrics);
+%startCycles
+%startMetrics
+%cyclesK
+%metricsK
+
+k = cyclesK*metricsK
+startA = zeros(k, nmeasures);
+for i=1:metricsK
+  startA((i-1)*cyclesK+1:(i)*cyclesK, :) = [startCycles, repmat(startMetrics(i,:), cyclesK, 1)];
+end
+
+function  [assignments, centers] = myKmeans(X, k, centers = 0, maxiter = 200)
+	if (centers == 0)
+		centerRows = randperm(size(X)(1));
+		centers = X(centerRows(1:k), :);
+	endif
+	numOfRows = length(X(:,1));
+	numOfFeatures = length(X(1,:));
+	assignments = ones(1, numOfRows);
+
+	for iter = 1:maxiter
+		clusterTotals = zeros(k, numOfFeatures);
+		clusterSizes = zeros(k, 1);
+		for rowIx = 1:numOfRows
+			minDist = realmax;
+			assignTo = 0;
+			for centerIx = 1:k
+				% Euclidian distance is used.
+				dist = sqrt(sum((X(rowIx, : ) - centers(centerIx, :)).^2));
+				if dist < minDist
+					minDist = dist;
+					assignTo = centerIx;
+				endif
+			endfor
+			assignments(rowIx) = assignTo;
+
+			% Keep these information to calculate cluster centers.
+			clusterTotals(assignTo, :) += X(rowIx, :);
+			clusterSizes(assignTo)++;
+		endfor
+
+    % pushing close clusters far from each other
+    d = zeros(k);
+    %centers
+    %get distances between centers
+    for centerIx = 1:k
+      d(:, centerIx) = distancePoints(centers, centers(centerIx, :));
+    end
+
+    maxD = max(max(d))
+    %putting inf in distance to itself
+    d(d==0) = Inf;
+    %getting the smallest values
+    minD = min(min(d))
+
+    if (minD < 0.002*maxD)
+      [minRow, minCol] = find(d==minD);
+      %get just a pair os clusters that are close
+      c1 = minRow(1);
+      c2 = minCol(1);
+
+      % assing all points of c2 to c1
+      clusterTotals(c1, :) = clusterTotals(c1, :) + clusterTotals(c2, :);
+      clusterSizes(c1) = clusterSizes(c1) + clusterSizes(c2);
+      assignments(assignments==c2)=c1;
+      clusterSizes(c2) = 0; %to trigger singleton
+    end
+
+    % This process is called 'singleton' in terms of Matlab.
+		% If a cluster is empty choose a random data point as new
+		% cluster cener.
+    % modified to choose a point which is furthest from its center
+		for clusterIx = 1:k
+			if (clusterSizes(clusterIx) == 0)
+        disp('singleton cluster!')
+        distances = zeros(numOfRows, 1);
+        for rowIx=1:numOfRows
+          distances(rowIx) = distancePoints(X(rowIx), centers(assignments(rowIx)));
+        end
+        %distances
+        [~, farRowIx] = max(distances);
+
+				%randomRow = round(1 + rand() * (numOfRows - 1) );
+        randomRow = farRowIx;
+				clusterTotals(clusterIx, :) =  X(randomRow, :);
+				clusterSizes(clusterIx) = 1;
+        assignments(randomRow) = clusterIx;
+			endif
+		endfor
+
+		newCenters = zeros(k, numOfFeatures);
+		for centerIx = 1:k
+			newCenters(centerIx, :) = clusterTotals(centerIx, : ) / clusterSizes(centerIx);
+		endfor
+
+		diff = sum(sum(abs(newCenters - centers)));
+
+		if diff < eps
+			disp('Centers are same, which means we converged before maxiteration count. This is a good thing!')
+			break;
+		endif
+
+		centers = newCenters;
+	endfor
+	assignments = assignments';
+	%printf('iter: %d, diff: %f\n', iter, diff);
+endfunction
+
+%[idx, centers, sumd, dist] = kmeans(metrics, k, 'Replicates', 1000000000, 'MaxIter', 10000000, 'emptyaction', 'singleton');
+[idx, centers] = myKmeans(metrics, k, startA, 50000);
+
 
 %row is cluste and column is resource type
 constraintsMean = zeros(k, variableNres);
@@ -129,7 +228,7 @@ constraintsStd = zeros(k, variableNres);
 %variableConstraints
 clusterText = cell();
 for i=1:k
-  c = variableConstraints(idx==i, :)
+  c = variableConstraints(idx==i, :);
   if(numel(c)==0)
     constraintsMean(i, :) = NaN;
     constraintsStd(i, :) = NaN;
@@ -161,50 +260,66 @@ mkdir(outFolder);
 
 %winsize = get(0,'screensize');
 %winsize = [1 1 winsize(4) winsize(3)];
-marks = cellstr(['or'; 'ob'; 'ok'; 'sr'; 'sb'; 'sk'; '*r'; '*b'; '*k'; '.r'; '.b'; '.k'; '^r'; '^b'; '^k']);
+marks = cellstr(['or'; 'ob'; 'ok'; 'sb'; 'sk'; '*b'; '*k'; '.b'; '.k'; '^b'; '^k'; 'or'; 'ob'; 'ok'; 'sb'; 'sk'; '*b'; '*k'; '.b'; '.k'; '^b'; '^k']);
+
+[~, sortedCyclesIdx] = sort(centers(:,1));
 
 plotcond = 1;
 if(plotcond == 1)
-for i=1:numel(measures)-1
-  fighandle = figure(i); hold on;
-  miny = 0.9*min(min(metrics(:, i+1)));
-  maxy = 1.1*max(max(metrics(:, i+1)));
+  %[metrics idx]
+  %sort(unique(idx))
+  %sortedCenterIdx
 
-  for j=1:k
-    plot(metrics(idx==j,1), metrics(idx==j, i+1), marks(j));
-    plot([centers(j), centers(j)], [miny, maxy], '-r');
-    xp = centers;
-    yp = maxy*ones(size(centers));
-    %text(xp(1), yp(1), clusterText(1));
-    %gtext(clusterText{j});
-    title(legendText);
+  for i=1:nmeasures-1
+    fighandle = figure(i); hold on;
+
+    for j=sortedCyclesIdx'
+      j
+      plot(metrics(idx==j,1), metrics(idx==j, i+1), '.b');
+      dp = distancePoints([metrics(idx==j,1), metrics(idx==j, i+1)], [centers(j, 1), centers(j, i+1)] );
+      radius = max(dp);
+      if (numel(radius) != 0)
+        drawCircle (centers(j, 1), centers(j, i+1), radius, 'r');
+        plot(centers(j, 1), centers(j, i+1), '*r');
+      end
+      %text(centers(j, 1), centers(j, i+1), num2cell(j));
+      title(legendText);
+    end
+
+    figure(2)
+    plot(metrics(:,1), metrics(:,2), '.b');
+
+    pause
+
+    xlabel(measures(1));
+    ylabel(measures(i+1));
+
+    graphname = strcat(outFolder, '/Corr', measures{i+1}, '.jpg');
+    print(fighandle, char(graphname), '-djpg');
   end
-
-  xlabel(measures(1));
-  ylabel(measures(i+1));
-
-  graphname = strcat(outFolder, '/Corr', measures{i+1}, '.jpg');
-  print(fighandle, char(graphname), '-djpg');
-end
 end
 
 %print table as latex
-[~, idxs] = sort(centers);
 filename = strcat(outFolder, '/clusterAvgConstraints.txt');
 fid = fopen(filename{1}, "w");
 
 fprintf(fid, "Cluster ");
 for j=1:variableNres
-  fprintf(fid, " & %s", variableResources{j});
+  tx = strrep(variableResources{j}, '_', ' ');
+  tx = strrep(tx, 'unsigned', 'u ');
+  tx = strrep(tx, 'signed', 's ');
+  fprintf(fid, " & %s", tx);
 end
-fprintf(fid, " ///hline\n");
+fprintf(fid, " \\\\\\hline\n");
 
-%constraintsMean
-for j=idxs'
-  fprintf(fid, "%.2f", centers(j));
+%printing latex table with average constraints for clusters
+%sotting according to cycles
+
+for j=sortedCyclesIdx'
+  fprintf(fid, "%.2f,%.2f", centers(j, 1), centers(j, 2));
   for l=1:variableNres
-     fprintf(fid, " & %.2f \\pm %.2f", constraintsMean(j, l), constraintsStd(j, l));
+     fprintf(fid, " & %.2f $\\pm$ %.2f", constraintsMean(j, l), constraintsStd(j, l));
   end
-  fprintf(fid, " ///hline \n");
+  fprintf(fid, " \\\\\\hline \n");
 end
 fclose(fid);
