@@ -229,13 +229,19 @@ constraintsStd = zeros(k, variableNres);
 clusterText = cell();
 for i=1:k
   c = variableConstraints(idx==i, :);
-  if(numel(c)==0)
+  if (numel(c)==0)
     constraintsMean(i, :) = NaN;
     constraintsStd(i, :) = NaN;
+  elseif (rows(c) ==1)
+    constraintsMean(i, :) = c;
+    constraintsStd(i, :) = zeros(size(c));
   else
     constraintsMean(i, :) = mean(c);
     constraintsStd(i, :) = std(c);
   end
+  %constraintsMean(i, :)
+  %constraintsStd(i, :)
+
   text = '';
   for j=1:variableNres
      text = strcat(text, 'r', num2str(j), ': ', num2str(constraintsMean(i, j)), '\pm', num2str(constraintsStd(i, j)), "\n");
@@ -274,7 +280,7 @@ if(plotcond == 1)
     fighandle = figure(i); hold on;
 
     for j=sortedCyclesIdx'
-      j
+      %j
       plot(metrics(idx==j,1), metrics(idx==j, i+1), '.b');
       dp = distancePoints([metrics(idx==j,1), metrics(idx==j, i+1)], [centers(j, 1), centers(j, i+1)] );
       radius = max(dp);
@@ -289,7 +295,7 @@ if(plotcond == 1)
     figure(2)
     plot(metrics(:,1), metrics(:,2), '.b');
 
-    pause
+    %pause
 
     xlabel(measures(1));
     ylabel(measures(i+1));
@@ -300,26 +306,43 @@ if(plotcond == 1)
 end
 
 %print table as latex
-filename = strcat(outFolder, '/clusterAvgConstraints.txt');
+filename = strcat(outFolder, '/clusterAvgConstraints.tex');
 fid = fopen(filename{1}, "w");
 
-fprintf(fid, "Cluster ");
+%\begin{tabulary}{\textwidth}{|c|c|c|c|c|c|}
+fprintf(fid, "\\begin\{tabulary\}\{\\textwidth\}\{|c|");
+for j=1:variableNres
+fprintf(fid, "c|");
+end
+fprintf(fid, "\}\n");
+
+%table header
+fprintf(fid, "\\hline\nCluster ");
 for j=1:variableNres
   tx = strrep(variableResources{j}, '_', ' ');
   tx = strrep(tx, 'unsigned', 'u ');
   tx = strrep(tx, 'signed', 's ');
   fprintf(fid, " & %s", tx);
-end
+endfor
 fprintf(fid, " \\\\\\hline\n");
 
 %printing latex table with average constraints for clusters
 %sotting according to cycles
-
+%constraintsMean
+%constraintsStd
 for j=sortedCyclesIdx'
-  fprintf(fid, "%.2f,%.2f", centers(j, 1), centers(j, 2));
-  for l=1:variableNres
-     fprintf(fid, " & %.2f $\\pm$ %.2f", constraintsMean(j, l), constraintsStd(j, l));
-  end
-  fprintf(fid, " \\\\\\hline \n");
-end
+  if (!isnan(constraintsMean(j, 1)))
+    fprintf(fid, "%.2f, %.2f", centers(j, 1), centers(j, 2));
+    for l=1:variableNres
+      fprintf(fid, " & %.2f $\\pm$ %.2f", constraintsMean(j, l), constraintsStd(j, l));
+    endfor
+    fprintf(fid, " \\\\\\hline \n");
+  endif
+endfor
+
+%\end{tabulary}
+fprintf(fid, "\\end\{tabulary\}");
 fclose(fid);
+
+close all
+clear all

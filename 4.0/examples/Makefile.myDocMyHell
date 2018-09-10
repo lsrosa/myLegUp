@@ -145,7 +145,7 @@ outputDirs: cleanall
 
 # set $OVERRIDE if you'd like to change the 'all' target.
 # see phi/Makefile
-extracNests: $(OBJS) outputDirs
+extractNests: $(OBJS) outputDirs
 ifndef DEVICE_FAMILY
 	$(shell $(FPGA_BOARD_CMD))
 	$(error 'LegUp Error!')
