@@ -57,7 +57,8 @@ constraints(1,:) = con;
 fclose(fid);
 
 %read the rest
-for i=2:nfiles
+for i=1:nfiles
+  readconfig=configFiles{i};
   fid = fopen(configFiles{i});
   con = [];
   while((line=fgets(fid)) != -1)
@@ -81,12 +82,17 @@ nres = numel(resources);
 variableConstraints = [];
 variableResources = cell();
 
-for i=1:nres
-  v = constraints(:,i);
-  %are all elements the same?
-  if( !all(v == v(1)) )
-    variableConstraints = [variableConstraints, v];
-    variableResources = [variableResources; resources(i)];
+if (rows(constraints)==1)
+  variableConstraints = constraints;
+  variableResources = resources;
+else
+  for i=1:nres
+    v = constraints(:,i);
+    %are all elements the same?
+    if( !all(v == v(1)) )
+      variableConstraints = [variableConstraints, v];
+      variableResources = [variableResources; resources(i)];
+    end
   end
 end
 variableNres = numel(variableResources);
@@ -225,7 +231,7 @@ endfunction
 %row is cluste and column is resource type
 constraintsMean = zeros(k, variableNres);
 constraintsStd = zeros(k, variableNres);
-%variableConstraints
+
 clusterText = cell();
 for i=1:k
   c = variableConstraints(idx==i, :);
@@ -261,7 +267,7 @@ legendText = strrep(legendText, '_', ' ');
 %constraintsMean
 %constraintsStd
 
-outFolder = strcat(strsplit(arg_list{i}, '/')(1), '/', 'plots');
+outFolder = strcat(strsplit(arg_list{1}, '/')(1), '/', 'plots');
 mkdir(outFolder);
 
 %winsize = get(0,'screensize');
