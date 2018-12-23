@@ -249,7 +249,7 @@ class ModuloScheduler {
     void findMemoryAliasingWithStore(MEM_ACCESS storeAccess,
                                      std::vector<MEM_ACCESS> &aliasedAccesses);
 };
-
+ 
 } // End legup namespace
 
 #endif

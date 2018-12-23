@@ -4,16 +4,13 @@
 // University of Toronto
 // For research and academic purposes only. Commercial use is prohibited.
 // Please send bugs to: legup@eecg.toronto.edu
-// Date: Mon Aug  6 19:17:26 2018
+// Date: Wed Sep 12 20:17:05 2018
 //----------------------------------------------------------------------------//
 
 `define MEMORY_CONTROLLER_ADDR_SIZE 32
 `define MEMORY_CONTROLLER_DATA_SIZE 64
-// Number of RAM elements: 1
+// Number of RAM elements: 2
 `define MEMORY_CONTROLLER_TAG_SIZE 9
-// @a = internal unnamed_addr global [100 x i32] zeroinitializer, align 4
-`define TAG_g_a `MEMORY_CONTROLLER_TAG_SIZE'd2
-`define TAG_g_a_a {`TAG_g_a, 23'd0}
 
 // Turn off warning 'ignoring unsupported system task'
 // altera message_off 10175
@@ -34,41 +31,9 @@ input start;
 output wire finish;
 input waitrequest;
 output wire [31:0] return_val;
-wire memory_controller_waitrequest;
-wire memory_controller_enable_a;
-wire [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] memory_controller_address_a;
-wire memory_controller_write_enable_a;
-wire [`MEMORY_CONTROLLER_DATA_SIZE-1:0] memory_controller_in_a;
-wire [1:0] memory_controller_size_a;
-wire [`MEMORY_CONTROLLER_DATA_SIZE-1:0] memory_controller_out_a;
-
-wire memory_controller_enable_b;
-wire [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] memory_controller_address_b;
-wire memory_controller_write_enable_b;
-wire [`MEMORY_CONTROLLER_DATA_SIZE-1:0] memory_controller_in_b;
-wire [1:0] memory_controller_size_b;
-wire [`MEMORY_CONTROLLER_DATA_SIZE-1:0] memory_controller_out_b;
-
 /* synthesis translate_off */
 assign memory_controller_waitrequest = waitrequest;
 /* synthesis translate_on */
-
-memory_controller memory_controller_inst (
-	.clk( clk ),
-	.memory_controller_enable_a( memory_controller_enable_a ),
-	.memory_controller_enable_b( memory_controller_enable_b ),
-	.memory_controller_address_a( memory_controller_address_a ),
-	.memory_controller_address_b( memory_controller_address_b ),
-	.memory_controller_write_enable_a( memory_controller_write_enable_a ),
-	.memory_controller_write_enable_b( memory_controller_write_enable_b ),
-	.memory_controller_in_a( memory_controller_in_a ),
-	.memory_controller_in_b( memory_controller_in_b ),
-	.memory_controller_size_a( memory_controller_size_a ),
-	.memory_controller_size_b( memory_controller_size_b ),
-	.memory_controller_waitrequest( memory_controller_waitrequest ),
-	.memory_controller_out_reg_a( memory_controller_out_a ),
-	.memory_controller_out_reg_b( memory_controller_out_b )
-);
 
 main main_inst(
 	.clk( clk ),
@@ -78,239 +43,10 @@ main main_inst(
 	.start( start ),
 	.finish( finish ),
 	.return_val( return_val ),
-	.memory_controller_waitrequest(memory_controller_waitrequest),
-	.memory_controller_enable_a(memory_controller_enable_a),
-	.memory_controller_address_a(memory_controller_address_a),
-	.memory_controller_write_enable_a(memory_controller_write_enable_a),
-	.memory_controller_in_a(memory_controller_in_a),
-	.memory_controller_size_a(memory_controller_size_a),
-	.memory_controller_out_a(memory_controller_out_a),
-	.memory_controller_enable_b(memory_controller_enable_b),
-	.memory_controller_address_b(memory_controller_address_b),
-	.memory_controller_write_enable_b(memory_controller_write_enable_b),
-	.memory_controller_in_b(memory_controller_in_b),
-	.memory_controller_size_b(memory_controller_size_b),
-	.memory_controller_out_b(memory_controller_out_b)
+	.memory_controller_waitrequest(memory_controller_waitrequest)
 );
 
 endmodule
-
-`timescale 1 ns / 1 ns
-module memory_controller
-(
-	clk,
-	memory_controller_address_a,
-	memory_controller_address_b,
-	memory_controller_enable_a,
-	memory_controller_enable_b,
-	memory_controller_write_enable_a,
-	memory_controller_write_enable_b,
-	memory_controller_in_a,
-	memory_controller_in_b,
-	memory_controller_size_a,
-	memory_controller_size_b,
-	memory_controller_waitrequest,
-	memory_controller_out_reg_a,
-	memory_controller_out_reg_b
-);
-
-parameter latency = 2;
-
-parameter ram_latency = latency-1;
-
-integer j;
-
-input clk;
-input memory_controller_waitrequest;
-input [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] memory_controller_address_a;
-input memory_controller_enable_a;
-input memory_controller_write_enable_a;
-input [64-1:0] memory_controller_in_a;
-input [1:0] memory_controller_size_a;
-output reg [64-1:0] memory_controller_out_reg_a;
-reg [64-1:0] memory_controller_out_prev_a;
-reg [64-1:0] memory_controller_out_a;
-
-reg memory_controller_enable_reg_a;
-input [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] memory_controller_address_b;
-input memory_controller_enable_b;
-input memory_controller_write_enable_b;
-input [64-1:0] memory_controller_in_b;
-input [1:0] memory_controller_size_b;
-output reg [64-1:0] memory_controller_out_reg_b;
-reg [64-1:0] memory_controller_out_prev_b;
-reg [64-1:0] memory_controller_out_b;
-
-reg memory_controller_enable_reg_b;
-
-reg [6:0] a_address_a;
-reg [6:0] a_address_b;
-reg a_write_enable_a;
-reg a_write_enable_b;
-reg [31:0] a_in_a;
-reg [31:0] a_in_b;
-wire [31:0] a_out_a;
-wire [31:0] a_out_b;
-
-// @a = internal unnamed_addr global [100 x i32] zeroinitializer, align 4
-ram_dual_port a (
-	.clk( clk ),
-	.clken( !memory_controller_waitrequest ),
-	.address_a( a_address_a ),
-	.address_b( a_address_b ),
-	.wren_a( a_write_enable_a ),
-	.wren_b( a_write_enable_b ),
-	.data_a( a_in_a ),
-	.data_b( a_in_b ),
-	.byteena_a( 1'b1 ),
-	.byteena_b( 1'b1 ),
-	.q_a( a_out_a ),
-	.q_b( a_out_b)
-);
-defparam a.width_a = 32;
-defparam a.width_b = 32;
-defparam a.widthad_a = 7;
-defparam a.widthad_b = 7;
-defparam a.width_be_a = 1;
-defparam a.width_be_b = 1;
-defparam a.numwords_a = 100;
-defparam a.numwords_b = 100;
-defparam a.latency = ram_latency;
-defparam a.init_file = "a.mif";
-wire [`MEMORY_CONTROLLER_TAG_SIZE-1:0] tag_a;
-assign tag_a = memory_controller_address_a[`MEMORY_CONTROLLER_ADDR_SIZE-1:`MEMORY_CONTROLLER_ADDR_SIZE-`MEMORY_CONTROLLER_TAG_SIZE];
-reg [2:0] prevAddr_a;
-reg [1:0] prevSize_a;
-reg [2:0] prevSize_a_and;
-
-always @(posedge clk)
-if (!memory_controller_waitrequest)
-begin
-	prevAddr_a <= memory_controller_address_a[2:0];
-	prevSize_a <= memory_controller_size_a;
-end
-wire [`MEMORY_CONTROLLER_TAG_SIZE-1:0] tag_b;
-assign tag_b = memory_controller_address_b[`MEMORY_CONTROLLER_ADDR_SIZE-1:`MEMORY_CONTROLLER_ADDR_SIZE-`MEMORY_CONTROLLER_TAG_SIZE];
-reg [2:0] prevAddr_b;
-reg [1:0] prevSize_b;
-reg [2:0] prevSize_b_and;
-
-always @(posedge clk)
-if (!memory_controller_waitrequest)
-begin
-	prevAddr_b <= memory_controller_address_b[2:0];
-	prevSize_b <= memory_controller_size_b;
-end
-
-reg [2:0] select_not_struct_a;
-
-wire select_a_a;
-assign select_a_a = (tag_a == `TAG_g_a);
-reg [ram_latency:0] select_a_reg_a;
-wire [31:0] memory_controller_a_out_a;
-assign memory_controller_a_out_a = {32{ select_a_reg_a[ram_latency]}} & a_out_a;
-
-always @(*)
-begin
-	a_address_a = memory_controller_address_a [7-1+2:2] & {7{select_a_a}};
-	a_write_enable_a = memory_controller_write_enable_a & select_a_a;
-	a_in_a [32-1:0] = memory_controller_in_a[32-1:0];
-
-end
-always @(*)
-begin
-	select_not_struct_a [2:0] = 3'b0 | {2{select_a_reg_a[ram_latency]}};
-	if (prevAddr_a[2:0] & select_not_struct_a[2:0] != 0 && memory_controller_enable_a)
-	begin
-		$display("Error: memory address not aligned to ram word size!");
-		$finish;
-	end
-
-	prevSize_a_and[0] = prevSize_a[1] | prevSize_a[0];
-	prevSize_a_and[1] = prevSize_a[1];
-	prevSize_a_and[2] = prevSize_a[1] & prevSize_a[0];
-	if ((prevAddr_a & prevSize_a_and) != 0 && memory_controller_enable_a)
-	begin
-		$display("Error: memory address not aligned to ram word size!");
-		$finish;
-	end
-	memory_controller_out_prev_a = memory_controller_out_reg_a & { 64{!memory_controller_enable_reg_a}};
-	memory_controller_out_a = 1'b0 | memory_controller_out_prev_a | memory_controller_a_out_a;
-end
-
-always @(posedge clk)
-if (!memory_controller_waitrequest)
-begin
-memory_controller_out_reg_a <= memory_controller_out_a;
-memory_controller_enable_reg_a <= memory_controller_enable_a;
-end
-
-always @(posedge clk)
-if (!memory_controller_waitrequest)
-for (j = 0; j < ram_latency; j=j+1)
-begin
-select_a_reg_a[j+1] <= select_a_reg_a[j];
-end
-always @(*)
-begin
-select_a_reg_a[0] <= select_a_a;
-end
-
-reg [2:0] select_not_struct_b;
-
-wire select_a_b;
-assign select_a_b = (tag_b == `TAG_g_a);
-reg [ram_latency:0] select_a_reg_b;
-wire [31:0] memory_controller_a_out_b;
-assign memory_controller_a_out_b = {32{ select_a_reg_b[ram_latency]}} & a_out_b;
-
-always @(*)
-begin
-	a_address_b = memory_controller_address_b [7-1+2:2] & {7{select_a_b}};
-	a_write_enable_b = memory_controller_write_enable_b & select_a_b;
-	a_in_b [32-1:0] = memory_controller_in_b[32-1:0];
-
-end
-always @(*)
-begin
-	select_not_struct_b [2:0] = 3'b0 | {2{select_a_reg_b[ram_latency]}};
-	if (prevAddr_b[2:0] & select_not_struct_b[2:0] != 0 && memory_controller_enable_b)
-	begin
-		$display("Error: memory address not aligned to ram word size!");
-		$finish;
-	end
-
-	prevSize_b_and[0] = prevSize_b[1] | prevSize_b[0];
-	prevSize_b_and[1] = prevSize_b[1];
-	prevSize_b_and[2] = prevSize_b[1] & prevSize_b[0];
-	if ((prevAddr_b & prevSize_b_and) != 0 && memory_controller_enable_b)
-	begin
-		$display("Error: memory address not aligned to ram word size!");
-		$finish;
-	end
-	memory_controller_out_prev_b = memory_controller_out_reg_b & { 64{!memory_controller_enable_reg_b}};
-	memory_controller_out_b = 1'b0 | memory_controller_out_prev_b | memory_controller_a_out_b;
-end
-
-always @(posedge clk)
-if (!memory_controller_waitrequest)
-begin
-memory_controller_out_reg_b <= memory_controller_out_b;
-memory_controller_enable_reg_b <= memory_controller_enable_b;
-end
-
-always @(posedge clk)
-if (!memory_controller_waitrequest)
-for (j = 0; j < ram_latency; j=j+1)
-begin
-select_a_reg_b[j+1] <= select_a_reg_b[j];
-end
-always @(*)
-begin
-select_a_reg_b[0] <= select_a_b;
-end
-
-endmodule 
 
 `timescale 1 ns / 1 ns
 module main
@@ -322,24 +58,15 @@ module main
 	start,
 	finish,
 	memory_controller_waitrequest,
-	memory_controller_enable_a,
-	memory_controller_address_a,
-	memory_controller_write_enable_a,
-	memory_controller_in_a,
-	memory_controller_size_a,
-	memory_controller_out_a,
-	memory_controller_enable_b,
-	memory_controller_address_b,
-	memory_controller_write_enable_b,
-	memory_controller_in_b,
-	memory_controller_size_b,
-	memory_controller_out_b,
 	return_val
 );
 
-parameter [1:0] LEGUP_0 = 2'd0;
-parameter [1:0] LEGUP_loop_pipeline_wait_loop6_1_1 = 2'd1;
-parameter [1:0] LEGUP_F_main_BB__6_2 = 2'd2;
+parameter [2:0] LEGUP_0 = 3'd0;
+parameter [2:0] LEGUP_loop_pipeline_wait_loop6_1_1 = 3'd1;
+parameter [2:0] LEGUP_F_main_BB__9_2 = 3'd2;
+parameter [2:0] LEGUP_F_main_BB__12_3 = 3'd3;
+parameter [2:0] LEGUP_F_main_BB__14_4 = 3'd4;
+parameter [2:0] LEGUP_F_main_BB__16_5 = 3'd5;
 parameter [8:0] tag_offset = 9'd0;
 parameter [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] tag_addr_offset = {tag_offset, 23'd0};
 
@@ -350,27 +77,55 @@ input  reset;
 input  start;
 output reg  finish;
 input  memory_controller_waitrequest;
-output reg  memory_controller_enable_a;
-output reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] memory_controller_address_a;
-output reg  memory_controller_write_enable_a;
-output reg [`MEMORY_CONTROLLER_DATA_SIZE-1:0] memory_controller_in_a;
-output reg [1:0] memory_controller_size_a;
-input [`MEMORY_CONTROLLER_DATA_SIZE-1:0] memory_controller_out_a;
-output reg  memory_controller_enable_b;
-output reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] memory_controller_address_b;
-output reg  memory_controller_write_enable_b;
-output reg [`MEMORY_CONTROLLER_DATA_SIZE-1:0] memory_controller_in_b;
-output reg [1:0] memory_controller_size_b;
-input [`MEMORY_CONTROLLER_DATA_SIZE-1:0] memory_controller_out_b;
 output reg [31:0] return_val;
-reg [1:0] cur_state;
-reg [1:0] next_state;
-reg [31:0] main_1_i01;
-reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep;
+reg [2:0] cur_state;
+reg [2:0] next_state;
+reg [31:0] main_1_indvar;
+reg [31:0] main_1_indvar_reg;
+reg [31:0] main_1_result01;
+reg [31:0] main_1_result01_reg;
 reg [31:0] main_1_2;
+reg [31:0] main_1_2_reg;
+reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep;
+reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg;
+reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep2;
+reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep2_reg;
 reg [31:0] main_1_3;
+reg [31:0] main_1_3_reg;
+reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep3;
+reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep3_reg;
 reg [31:0] main_1_4;
+reg [31:0] main_1_4_reg;
 reg [31:0] main_1_5;
+reg [31:0] main_1_5_reg;
+reg [31:0] main_1_6;
+reg [31:0] main_1_6_reg;
+reg [31:0] main_1_7;
+reg [31:0] main_1_7_reg;
+reg [31:0] main_1_8;
+reg [31:0] main_1_8_reg;
+reg [31:0] main_1_indvarnext;
+reg [31:0] main_1_indvarnext_reg;
+reg  main_1_exitcond1;
+reg  main_1_exitcond1_reg;
+reg  main_9_11;
+reg  main_9_11_reg;
+reg [6:0] a_address_a;
+reg  a_write_enable_a;
+reg [31:0] a_in_a;
+wire [31:0] a_out_a;
+wire [6:0] a_address_b;
+wire  a_write_enable_b;
+wire [31:0] a_in_b;
+wire [31:0] a_out_b;
+reg [6:0] b_address_a;
+reg  b_write_enable_a;
+wire [31:0] b_in_a;
+wire [31:0] b_out_a;
+wire [6:0] b_address_b;
+wire  b_write_enable_b;
+wire [31:0] b_in_b;
+wire [31:0] b_out_b;
 reg  loop6_1_pipeline_start;
 reg  loop6_1_started;
 reg [1:0] loop6_1_ii_state;
@@ -418,38 +173,21 @@ reg  loop6_1_valid_bit_38;
 reg  loop6_1_valid_bit_39;
 reg  loop6_1_valid_bit_40;
 reg  loop6_1_valid_bit_41;
-reg  loop6_1_valid_bit_42;
-reg  loop6_1_valid_bit_43;
-reg  loop6_1_valid_bit_44;
-reg  loop6_1_valid_bit_45;
-reg  loop6_1_valid_bit_46;
-reg  loop6_1_valid_bit_47;
-reg  loop6_1_valid_bit_48;
-reg  loop6_1_valid_bit_49;
-reg  loop6_1_valid_bit_50;
-reg  loop6_1_valid_bit_51;
-reg  loop6_1_valid_bit_52;
-reg  loop6_1_valid_bit_53;
-reg  loop6_1_valid_bit_54;
-reg  loop6_1_valid_bit_55;
-reg  loop6_1_valid_bit_56;
-reg  loop6_1_valid_bit_57;
-reg  loop6_1_valid_bit_58;
-reg  loop6_1_valid_bit_59;
-reg  loop6_1_valid_bit_60;
-reg  loop6_1_valid_bit_61;
-reg  loop6_1_valid_bit_62;
-reg  loop6_1_valid_bit_63;
-reg  loop6_1_valid_bit_64;
-reg  loop6_1_valid_bit_65;
-reg  loop6_1_valid_bit_66;
-reg  loop6_1_valid_bit_67;
-reg  loop6_1_valid_bit_68;
-reg  loop6_1_valid_bit_69;
-reg  loop6_1_valid_bit_70;
-reg  loop6_1_valid_bit_71;
-reg [31:0] main_1_i01_reg_stage0;
-reg [31:0] main_1_i01_reg_stage1;
+reg [31:0] loop6_1_i_stage1;
+reg [31:0] loop6_1_i_stage2;
+reg [31:0] loop6_1_i_stage3;
+reg [31:0] loop6_1_i_stage4;
+reg [31:0] loop6_1_i_stage5;
+reg [31:0] loop6_1_i_stage6;
+reg [31:0] loop6_1_i_stage7;
+reg [31:0] loop6_1_i_stage8;
+reg [31:0] loop6_1_i_stage9;
+reg [31:0] loop6_1_i_stage10;
+reg [31:0] loop6_1_i_stage11;
+reg [31:0] loop6_1_i_stage12;
+reg [31:0] loop6_1_i_stage13;
+reg [31:0] main_1_result01_reg_stage13;
+reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage0;
 reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage1;
 reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage2;
 reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage3;
@@ -462,66 +200,117 @@ reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage9;
 reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage10;
 reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage11;
 reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage12;
-reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage13;
-reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage14;
-reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage15;
-reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage16;
-reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage17;
-reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage18;
-reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage19;
-reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage20;
-reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage21;
-reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage22;
-reg [`MEMORY_CONTROLLER_ADDR_SIZE-1:0] main_1_scevgep_reg_stage23;
-reg [31:0] main_1_2_reg_stage2;
-reg [31:0] main_1_2_reg_stage3;
-reg [31:0] main_1_2_reg_stage4;
-reg [31:0] main_1_2_reg_stage5;
-reg [31:0] main_1_2_reg_stage6;
-reg [31:0] main_1_2_reg_stage7;
-reg [31:0] main_1_2_reg_stage8;
-reg [31:0] main_1_2_reg_stage9;
-reg [31:0] main_1_2_reg_stage10;
-reg [31:0] main_1_2_reg_stage11;
-reg [31:0] main_1_2_reg_stage12;
-reg [31:0] main_1_5_reg_stage23;
+reg [31:0] main_1_3_reg_stage0;
+reg [31:0] main_1_3_reg_stage1;
+reg [31:0] main_1_5_reg_stage0;
+reg [31:0] main_1_5_reg_stage1;
+reg [31:0] main_1_6_reg_stage12;
+reg [31:0] main_1_7_reg_stage13;
 reg  loop6_1_pipeline_exit_cond;
 reg  loop6_1_pipeline_finish;
 reg [31:0] main_signed_divide_32_0_op0;
 reg [31:0] main_signed_divide_32_0_op1;
-wire [31:0] lpm_divide_main_1_4_temp_out;
-wire [31:0] main_1_4_unused;
-reg  lpm_divide_main_1_4_en;
-reg [31:0] lpm_divide_main_1_4_out;
+wire [31:0] lpm_divide_main_1_6_temp_out;
+wire [31:0] main_1_6_unused;
+reg  lpm_divide_main_1_6_en;
+reg [31:0] lpm_divide_main_1_6_out;
 reg [31:0] main_signed_divide_32_0;
 
-/*   %4 = sdiv i32 %i.01, %3, !legup.pipeline.start_time !9, !legup.pipeline.avail_time !10, !legup.pipeline.stage !2*/
-lpm_divide lpm_divide_main_1_4 (
-	.quotient (lpm_divide_main_1_4_temp_out),
-	.remain (main_1_4_unused),
+/*   %6 = sdiv i32 %4, %5, !legup.pipeline.start_time !11, !legup.pipeline.avail_time !12, !legup.pipeline.stage !2*/
+lpm_divide lpm_divide_main_1_6 (
+	.quotient (lpm_divide_main_1_6_temp_out),
+	.remain (main_1_6_unused),
 	.clock (clk),
 	.aclr (1'd0),
-	.clken (lpm_divide_main_1_4_en),
+	.clken (lpm_divide_main_1_6_en),
 	.numer (main_signed_divide_32_0_op0),
 	.denom (main_signed_divide_32_0_op1)
 );
 
 defparam
-	lpm_divide_main_1_4.lpm_pipeline = 32,
-	lpm_divide_main_1_4.lpm_widthn = 32,
-	lpm_divide_main_1_4.lpm_widthd = 32,
-	lpm_divide_main_1_4.lpm_drepresentation = "SIGNED",
-	lpm_divide_main_1_4.lpm_nrepresentation = "SIGNED",
-	lpm_divide_main_1_4.lpm_hint = "LPM_REMAINDERPOSITIVE=FALSE";
+	lpm_divide_main_1_6.lpm_pipeline = 32,
+	lpm_divide_main_1_6.lpm_widthn = 32,
+	lpm_divide_main_1_6.lpm_widthd = 32,
+	lpm_divide_main_1_6.lpm_drepresentation = "SIGNED",
+	lpm_divide_main_1_6.lpm_nrepresentation = "SIGNED",
+	lpm_divide_main_1_6.lpm_hint = "LPM_REMAINDERPOSITIVE=FALSE";
+
+// Local Rams
+
+
+// @a = internal global [100 x i32] [i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22,...
+ram_dual_port a (
+	.clk( clk ),
+	.clken( !memory_controller_waitrequest ),
+	.address_a( a_address_a ),
+	.address_b( a_address_b ),
+	.wren_a( a_write_enable_a ),
+	.wren_b( a_write_enable_b ),
+	.data_a( a_in_a ),
+	.data_b( a_in_b ),
+	.byteena_a( 1'b1 ),
+	.byteena_b( 1'b1 ),
+	.q_a( a_out_a ),
+	.q_b( a_out_b)
+);
+defparam a.width_a = 32;
+defparam a.width_b = 32;
+defparam a.widthad_a = 7;
+defparam a.widthad_b = 7;
+defparam a.width_be_a = 1;
+defparam a.width_be_b = 1;
+defparam a.numwords_a = 100;
+defparam a.numwords_b = 100;
+defparam a.latency = 1;
+defparam a.init_file = "a.mif";
+
+
+// @b = internal global [100 x i32] [i32 1, i32 2, i32 3, i32 4, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 15, i32 16, i32 17, i32 18, i32 19, i32 20, i32 21, i32 22,...
+ram_dual_port b (
+	.clk( clk ),
+	.clken( !memory_controller_waitrequest ),
+	.address_a( b_address_a ),
+	.address_b( b_address_b ),
+	.wren_a( b_write_enable_a ),
+	.wren_b( b_write_enable_b ),
+	.data_a( b_in_a ),
+	.data_b( b_in_b ),
+	.byteena_a( 1'b1 ),
+	.byteena_b( 1'b1 ),
+	.q_a( b_out_a ),
+	.q_b( b_out_b)
+);
+defparam b.width_a = 32;
+defparam b.width_b = 32;
+defparam b.widthad_a = 7;
+defparam b.widthad_b = 7;
+defparam b.width_be_a = 1;
+defparam b.width_be_b = 1;
+defparam b.numwords_a = 100;
+defparam b.numwords_b = 100;
+defparam b.latency = 1;
+defparam b.init_file = "b.mif";
 
 
 /* Unsynthesizable Statements */
 always @(posedge clk)
 	if (!memory_controller_waitrequest) begin
-	/* main: %6*/
-	/*   %7 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([14 x i8]* @.str1, i32 0, i32 0)) #2*/
-	if ((cur_state == LEGUP_F_main_BB__6_2)) begin
+	/* main: %9*/
+	/*   %10 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([12 x i8]* @.str1, i32 0, i32 0), i32 %8) #2*/
+	if ((cur_state == LEGUP_F_main_BB__9_2)) begin
+		$write("Result: %d\n", $signed(main_1_8_reg));
+		// to fix quartus warning
+		if (reset == 1'b0 && ^(main_1_8_reg) === 1'bX) finish <= 0;
+	end
+	/* main: %12*/
+	/*   %13 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([14 x i8]* @.str2, i32 0, i32 0)) #2*/
+	if ((cur_state == LEGUP_F_main_BB__12_3)) begin
 		$write("RESULT: PASS\n");
+	end
+	/* main: %14*/
+	/*   %15 = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([14 x i8]* @.str3, i32 0, i32 0)) #2*/
+	if ((cur_state == LEGUP_F_main_BB__14_4)) begin
+		$write("RESULT: FAIL\n");
 	end
 end
 always @(posedge clk) begin
@@ -540,13 +329,22 @@ case(cur_state)  // synthesis parallel_case
 LEGUP_0:
 	if ((start == 1'd1))
 		next_state = LEGUP_loop_pipeline_wait_loop6_1_1;
-LEGUP_F_main_BB__6_2:
+LEGUP_F_main_BB__12_3:
+		next_state = LEGUP_F_main_BB__16_5;
+LEGUP_F_main_BB__14_4:
+		next_state = LEGUP_F_main_BB__16_5;
+LEGUP_F_main_BB__16_5:
 		next_state = LEGUP_0;
+LEGUP_F_main_BB__9_2:
+	if ((main_9_11 == 1'd1))
+		next_state = LEGUP_F_main_BB__12_3;
+	else if ((main_9_11 == 1'd0))
+		next_state = LEGUP_F_main_BB__14_4;
 LEGUP_loop_pipeline_wait_loop6_1_1:
 	if ((loop6_1_pipeline_finish == 1'd1))
-		next_state = LEGUP_F_main_BB__6_2;
+		next_state = LEGUP_F_main_BB__9_2;
 	else if ((loop6_1_pipeline_finish == 1'd1))
-		next_state = LEGUP_F_main_BB__6_2;
+		next_state = LEGUP_F_main_BB__9_2;
 default:
 	next_state = cur_state;
 endcase
@@ -554,33 +352,309 @@ endcase
 end
 always @(*) begin
 	/* main: %1*/
-	/*   %i.01 = add i32 %indvar, 1, !legup.pipeline.start_time !2, !legup.pipeline.avail_time !2, !legup.pipeline.stage !3
+	/*   %indvar = phi i32 [ %indvar.next, %1 ], [ 0, %0 ], !legup.canonical_induction !2, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !3, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 0 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 0 % 3 = 0*/
+if (reset) begin main_1_indvar = 0; end
+		main_1_indvar = 32'd0;
+end
+always @(posedge clk) begin
+	/* main: %1*/
+	/*   %indvar = phi i32 [ %indvar.next, %1 ], [ 0, %0 ], !legup.canonical_induction !2, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !3, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 0 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 0 % 3 = 0*/
+	if ((((cur_state == LEGUP_0) & (memory_controller_waitrequest == 1'd0)) & (start == 1'd1))) begin
+		main_1_indvar_reg <= main_1_indvar;
+		if (start == 1'b0 && ^(main_1_indvar) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_indvar_reg"); $finish; end
+	end
+end
+always @(*) begin
+	/* main: %1*/
+	/*   %result.01 = phi i32 [ %8, %1 ], [ 0, %0 ], !legup.pipeline.start_time !4, !legup.pipeline.avail_time !4, !legup.pipeline.stage !5
+	start_time: 38 avail_time: 38 stage: 12 II: 3 start_ii_state = 38 % 3 = 2 avail_ii_state = 38 % 3 = 2*/
+	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_41))) begin
+		main_1_result01 = main_1_8;
+	end
+	/* main: %1*/
+	/*   %result.01 = phi i32 [ %8, %1 ], [ 0, %0 ], !legup.pipeline.start_time !4, !legup.pipeline.avail_time !4, !legup.pipeline.stage !5
+	start_time: 38 avail_time: 38 stage: 12 II: 3 start_ii_state = 38 % 3 = 2 avail_ii_state = 38 % 3 = 2*/
+	else /* if ((((cur_state == LEGUP_0) & (memory_controller_waitrequest == 1'd0)) & (start == 1'd1))) */ begin
+		main_1_result01 = 32'd0;
+	end
+end
+always @(posedge clk) begin
+	/* main: %1*/
+	/*   %result.01 = phi i32 [ %8, %1 ], [ 0, %0 ], !legup.pipeline.start_time !4, !legup.pipeline.avail_time !4, !legup.pipeline.stage !5
+	start_time: 38 avail_time: 38 stage: 12 II: 3 start_ii_state = 38 % 3 = 2 avail_ii_state = 38 % 3 = 2*/
+	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_41))) begin
+		main_1_result01_reg <= main_1_result01;
+		if (start == 1'b0 && ^(main_1_result01) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_result01_reg"); $finish; end
+	end
+	/* main: %1*/
+	/*   %result.01 = phi i32 [ %8, %1 ], [ 0, %0 ], !legup.pipeline.start_time !4, !legup.pipeline.avail_time !4, !legup.pipeline.stage !5
+	start_time: 38 avail_time: 38 stage: 12 II: 3 start_ii_state = 38 % 3 = 2 avail_ii_state = 38 % 3 = 2*/
+	if ((((cur_state == LEGUP_0) & (memory_controller_waitrequest == 1'd0)) & (start == 1'd1))) begin
+		main_1_result01_reg <= main_1_result01;
+		if (start == 1'b0 && ^(main_1_result01) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_result01_reg"); $finish; end
+	end
+end
+always @(*) begin
+	/* main: %1*/
+	/*   %2 = add i32 %indvar, 1, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !3, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 0 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 0 % 3 = 0*/
+		main_1_2 = (loop6_1_i_stage0 + 32'd1);
+end
+always @(posedge clk) begin
+	/* main: %1*/
+	/*   %2 = add i32 %indvar, 1, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !3, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 0 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 0 % 3 = 0*/
+	if ((~(memory_controller_waitrequest) & ((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_0))) begin
+		main_1_2_reg <= main_1_2;
+		if (start == 1'b0 && ^(main_1_2) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_2_reg"); $finish; end
+	end
+end
+always @(*) begin
+	/* main: %1*/
+	/*   %scevgep = getelementptr [100 x i32]* @a, i32 0, i32 %2, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !3, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 0 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 0 % 3 = 0*/
+		main_1_scevgep = (1'd0 + (4 * main_1_2));
+end
+always @(posedge clk) begin
+	/* main: %1*/
+	/*   %scevgep = getelementptr [100 x i32]* @a, i32 0, i32 %2, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !3, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 0 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 0 % 3 = 0*/
+	if ((~(memory_controller_waitrequest) & ((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_0))) begin
+		main_1_scevgep_reg <= main_1_scevgep;
+		if (start == 1'b0 && ^(main_1_scevgep) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg"); $finish; end
+	end
+end
+always @(*) begin
+	/* main: %1*/
+	/*   %scevgep2 = getelementptr [100 x i32]* @b, i32 0, i32 %2, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !3, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 0 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 0 % 3 = 0*/
+		main_1_scevgep2 = (1'd0 + (4 * main_1_2));
+end
+always @(posedge clk) begin
+	/* main: %1*/
+	/*   %scevgep2 = getelementptr [100 x i32]* @b, i32 0, i32 %2, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !3, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 0 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 0 % 3 = 0*/
+	if ((~(memory_controller_waitrequest) & ((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_0))) begin
+		main_1_scevgep2_reg <= main_1_scevgep2;
+		if (start == 1'b0 && ^(main_1_scevgep2) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep2_reg"); $finish; end
+	end
+end
+always @(*) begin
+	/* main: %1*/
+	/*   %3 = add i32 %indvar, 2, !legup.pipeline.start_time !2, !legup.pipeline.avail_time !2, !legup.pipeline.stage !3
 	start_time: 1 avail_time: 1 stage: 0 II: 3 start_ii_state = 1 % 3 = 1 avail_ii_state = 1 % 3 = 1*/
-		main_1_i01 = (loop6_1_i_stage0 + 32'd1);
+		main_1_3 = (loop6_1_i_stage0 + 32'd2);
+end
+always @(posedge clk) begin
+	/* main: %1*/
+	/*   %3 = add i32 %indvar, 2, !legup.pipeline.start_time !2, !legup.pipeline.avail_time !2, !legup.pipeline.stage !3
+	start_time: 1 avail_time: 1 stage: 0 II: 3 start_ii_state = 1 % 3 = 1 avail_ii_state = 1 % 3 = 1*/
+	if ((~(memory_controller_waitrequest) & ((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_1))) begin
+		main_1_3_reg <= main_1_3;
+		if (start == 1'b0 && ^(main_1_3) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_3_reg"); $finish; end
+	end
 end
 always @(*) begin
 	/* main: %1*/
-	/*   %scevgep = getelementptr [100 x i32]* @a, i32 0, i32 %i.01, !legup.pipeline.start_time !4, !legup.pipeline.avail_time !4, !legup.pipeline.stage !2
+	/*   %scevgep3 = getelementptr [100 x i32]* @a, i32 0, i32 %3, !legup.pipeline.start_time !6, !legup.pipeline.avail_time !6, !legup.pipeline.stage !2
 	start_time: 3 avail_time: 3 stage: 1 II: 3 start_ii_state = 3 % 3 = 0 avail_ii_state = 3 % 3 = 0*/
-		main_1_scevgep = (`TAG_g_a_a + (4 * main_1_i01_reg_stage1));
+		main_1_scevgep3 = (1'd0 + (4 * main_1_3_reg_stage1));
+end
+always @(posedge clk) begin
+	/* main: %1*/
+	/*   %scevgep3 = getelementptr [100 x i32]* @a, i32 0, i32 %3, !legup.pipeline.start_time !6, !legup.pipeline.avail_time !6, !legup.pipeline.stage !2
+	start_time: 3 avail_time: 3 stage: 1 II: 3 start_ii_state = 3 % 3 = 0 avail_ii_state = 3 % 3 = 0*/
+	if ((~(memory_controller_waitrequest) & ((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_3))) begin
+		main_1_scevgep3_reg <= main_1_scevgep3;
+		if (start == 1'b0 && ^(main_1_scevgep3) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep3_reg"); $finish; end
+	end
 end
 always @(*) begin
 	/* main: %1*/
-	/*   %2 = load i32* %scevgep, align 4, !tbaa !5, !legup.pipeline.start_time !4, !legup.pipeline.avail_time !9, !legup.pipeline.stage !2
-	start_time: 3 avail_time: 5 stage: 1 II: 3 start_ii_state = 3 % 3 = 0 avail_ii_state = 5 % 3 = 2*/
-		main_1_2 = memory_controller_out_a[31:0];
+	/*   %4 = load volatile i32* %scevgep3, align 4, !tbaa !7, !legup.pipeline.start_time !6, !legup.pipeline.avail_time !11, !legup.pipeline.stage !2
+	start_time: 3 avail_time: 4 stage: 1 II: 3 start_ii_state = 3 % 3 = 0 avail_ii_state = 4 % 3 = 1*/
+		main_1_4 = a_out_a;
+end
+always @(posedge clk) begin
+	/* main: %1*/
+	/*   %4 = load volatile i32* %scevgep3, align 4, !tbaa !7, !legup.pipeline.start_time !6, !legup.pipeline.avail_time !11, !legup.pipeline.stage !2
+	start_time: 3 avail_time: 4 stage: 1 II: 3 start_ii_state = 3 % 3 = 0 avail_ii_state = 4 % 3 = 1*/
+	if ((~(memory_controller_waitrequest) & ((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_4))) begin
+		main_1_4_reg <= main_1_4;
+		if (start == 1'b0 && ^(main_1_4) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_4_reg"); $finish; end
+	end
 end
 always @(*) begin
 	/* main: %1*/
-	/*   %3 = add nsw i32 %2, 1, !legup.pipeline.start_time !9, !legup.pipeline.avail_time !9, !legup.pipeline.stage !2
-	start_time: 5 avail_time: 5 stage: 1 II: 3 start_ii_state = 5 % 3 = 2 avail_ii_state = 5 % 3 = 2*/
-		main_1_3 = (main_1_2 + 32'd1);
+	/*   %5 = load volatile i32* %scevgep2, align 4, !tbaa !7, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !2, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 1 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 1 % 3 = 1*/
+		main_1_5 = b_out_a;
+end
+always @(posedge clk) begin
+	/* main: %1*/
+	/*   %5 = load volatile i32* %scevgep2, align 4, !tbaa !7, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !2, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 1 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 1 % 3 = 1*/
+	if ((~(memory_controller_waitrequest) & ((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_1))) begin
+		main_1_5_reg <= main_1_5;
+		if (start == 1'b0 && ^(main_1_5) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_5_reg"); $finish; end
+	end
 end
 always @(*) begin
-	main_1_4 = main_signed_divide_32_0;
+	main_1_6 = main_signed_divide_32_0;
+end
+always @(posedge clk) begin
+	/* main: %1*/
+	/*   %6 = sdiv i32 %4, %5, !legup.pipeline.start_time !11, !legup.pipeline.avail_time !12, !legup.pipeline.stage !2
+	start_time: 4 avail_time: 36 stage: 1 II: 3 start_ii_state = 4 % 3 = 1 avail_ii_state = 36 % 3 = 0*/
+	if ((~(memory_controller_waitrequest) & ((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_36))) begin
+		main_1_6_reg <= main_1_6;
+		if (start == 1'b0 && ^(main_1_6) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_6_reg"); $finish; end
+	end
+	/* main: %1*/
+	/*   %6 = sdiv i32 %4, %5, !legup.pipeline.start_time !11, !legup.pipeline.avail_time !12, !legup.pipeline.stage !2
+	start_time: 4 avail_time: 36 stage: 1 II: 3 start_ii_state = 4 % 3 = 1 avail_ii_state = 36 % 3 = 0*/
+	if ((~(memory_controller_waitrequest) & ((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_36))) begin
+		main_1_6_reg <= main_1_6;
+		if (start == 1'b0 && ^(main_1_6) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_6_reg"); $finish; end
+	end
 end
 always @(*) begin
-	main_1_5 = main_signed_divide_32_0;
+	/* main: %1*/
+	/*   %7 = load volatile i32* %scevgep, align 4, !tbaa !7, !legup.pipeline.start_time !4, !legup.pipeline.avail_time !14, !legup.pipeline.stage !5
+	start_time: 38 avail_time: 39 stage: 12 II: 3 start_ii_state = 38 % 3 = 2 avail_ii_state = 39 % 3 = 0*/
+		main_1_7 = a_out_a;
+end
+always @(posedge clk) begin
+	/* main: %1*/
+	/*   %7 = load volatile i32* %scevgep, align 4, !tbaa !7, !legup.pipeline.start_time !4, !legup.pipeline.avail_time !14, !legup.pipeline.stage !5
+	start_time: 38 avail_time: 39 stage: 12 II: 3 start_ii_state = 38 % 3 = 2 avail_ii_state = 39 % 3 = 0*/
+	if ((~(memory_controller_waitrequest) & ((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_39))) begin
+		main_1_7_reg <= main_1_7;
+		if (start == 1'b0 && ^(main_1_7) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_7_reg"); $finish; end
+	end
+end
+always @(*) begin
+	/* main: %1*/
+	/*   %8 = add nsw i32 %7, %result.01, !legup.pipeline.start_time !15, !legup.pipeline.avail_time !15, !legup.pipeline.stage !16
+	start_time: 41 avail_time: 41 stage: 13 II: 3 start_ii_state = 41 % 3 = 2 avail_ii_state = 41 % 3 = 2*/
+		main_1_8 = (main_1_7_reg_stage13 + main_1_result01_reg);
+end
+always @(posedge clk) begin
+	/* main: %1*/
+	/*   %8 = add nsw i32 %7, %result.01, !legup.pipeline.start_time !15, !legup.pipeline.avail_time !15, !legup.pipeline.stage !16
+	start_time: 41 avail_time: 41 stage: 13 II: 3 start_ii_state = 41 % 3 = 2 avail_ii_state = 41 % 3 = 2*/
+	if ((~(memory_controller_waitrequest) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_41))) begin
+		main_1_8_reg <= main_1_8;
+		if (start == 1'b0 && ^(main_1_8) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_8_reg"); $finish; end
+	end
+end
+always @(*) begin
+	/* main: %1*/
+	/*   %indvar.next = add i32 %indvar, 1, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !3, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 0 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 0 % 3 = 0*/
+		main_1_indvarnext = (loop6_1_i_stage0 + 32'd1);
+end
+always @(posedge clk) begin
+	/* main: %1*/
+	/*   %indvar.next = add i32 %indvar, 1, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !3, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 0 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 0 % 3 = 0*/
+	if ((~(memory_controller_waitrequest) & ((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_0))) begin
+		main_1_indvarnext_reg <= main_1_indvarnext;
+		if (start == 1'b0 && ^(main_1_indvarnext) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_indvarnext_reg"); $finish; end
+	end
+end
+always @(*) begin
+		main_1_exitcond1 = loop6_1_pipeline_finish;
+end
+always @(posedge clk) begin
+	if ((cur_state == LEGUP_loop_pipeline_wait_loop6_1_1)) begin
+		main_1_exitcond1_reg <= loop6_1_pipeline_finish;
+		if (start == 1'b0 && ^(loop6_1_pipeline_finish) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_exitcond1_reg"); $finish; end
+	end
+end
+always @(*) begin
+	/* main: %9*/
+	/*   %11 = icmp eq i32 %8, 96*/
+		main_9_11 = (main_1_8_reg == 32'd96);
+end
+always @(posedge clk) begin
+	/* main: %9*/
+	/*   %11 = icmp eq i32 %8, 96*/
+	if ((cur_state == LEGUP_F_main_BB__9_2)) begin
+		main_9_11_reg <= main_9_11;
+		if (start == 1'b0 && ^(main_9_11) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_9_11_reg"); $finish; end
+	end
+end
+always @(*) begin
+	a_address_a = 1'd0;
+	/* main: %1*/
+	/*   %4 = load volatile i32* %scevgep3, align 4, !tbaa !7, !legup.pipeline.start_time !6, !legup.pipeline.avail_time !11, !legup.pipeline.stage !2
+	start_time: 3 avail_time: 4 stage: 1 II: 3 start_ii_state = 3 % 3 = 0 avail_ii_state = 4 % 3 = 1*/
+	if (((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_3)) begin
+		a_address_a = (main_1_scevgep3 >>> 3'd2);
+	end
+	/* main: %1*/
+	/*   store volatile i32 %6, i32* %scevgep, align 4, !tbaa !7, !legup.pipeline.start_time !13, !legup.pipeline.avail_time !4, !legup.pipeline.stage !5
+	start_time: 37 avail_time: 38 stage: 12 II: 3 start_ii_state = 37 % 3 = 1 avail_ii_state = 38 % 3 = 2*/
+	if (((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_37)) begin
+		a_address_a = (main_1_scevgep_reg_stage12 >>> 3'd2);
+	end
+	/* main: %1*/
+	/*   %7 = load volatile i32* %scevgep, align 4, !tbaa !7, !legup.pipeline.start_time !4, !legup.pipeline.avail_time !14, !legup.pipeline.stage !5
+	start_time: 38 avail_time: 39 stage: 12 II: 3 start_ii_state = 38 % 3 = 2 avail_ii_state = 39 % 3 = 0*/
+	if (((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_38)) begin
+		a_address_a = (main_1_scevgep_reg_stage12 >>> 3'd2);
+	end
+end
+always @(*) begin
+	a_write_enable_a = 1'd0;
+	/* main: %1*/
+	/*   %4 = load volatile i32* %scevgep3, align 4, !tbaa !7, !legup.pipeline.start_time !6, !legup.pipeline.avail_time !11, !legup.pipeline.stage !2
+	start_time: 3 avail_time: 4 stage: 1 II: 3 start_ii_state = 3 % 3 = 0 avail_ii_state = 4 % 3 = 1*/
+	if (((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_3)) begin
+		a_write_enable_a = 1'd0;
+	end
+	/* main: %1*/
+	/*   store volatile i32 %6, i32* %scevgep, align 4, !tbaa !7, !legup.pipeline.start_time !13, !legup.pipeline.avail_time !4, !legup.pipeline.stage !5
+	start_time: 37 avail_time: 38 stage: 12 II: 3 start_ii_state = 37 % 3 = 1 avail_ii_state = 38 % 3 = 2*/
+	if (((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_37)) begin
+		a_write_enable_a = 1'd1;
+	end
+	/* main: %1*/
+	/*   %7 = load volatile i32* %scevgep, align 4, !tbaa !7, !legup.pipeline.start_time !4, !legup.pipeline.avail_time !14, !legup.pipeline.stage !5
+	start_time: 38 avail_time: 39 stage: 12 II: 3 start_ii_state = 38 % 3 = 2 avail_ii_state = 39 % 3 = 0*/
+	if (((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_38)) begin
+		a_write_enable_a = 1'd0;
+	end
+end
+always @(*) begin
+	a_in_a = 1'd0;
+	/* main: %1*/
+	/*   store volatile i32 %6, i32* %scevgep, align 4, !tbaa !7, !legup.pipeline.start_time !13, !legup.pipeline.avail_time !4, !legup.pipeline.stage !5
+	start_time: 37 avail_time: 38 stage: 12 II: 3 start_ii_state = 37 % 3 = 1 avail_ii_state = 38 % 3 = 2*/
+	if (((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_37)) begin
+		a_in_a = main_1_6_reg_stage12;
+	end
+end
+always @(*) begin
+	b_address_a = 1'd0;
+	/* main: %1*/
+	/*   %5 = load volatile i32* %scevgep2, align 4, !tbaa !7, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !2, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 1 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 1 % 3 = 1*/
+	if (((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_0)) begin
+		b_address_a = (main_1_scevgep2 >>> 3'd2);
+	end
+end
+always @(*) begin
+	b_write_enable_a = 1'd0;
+	/* main: %1*/
+	/*   %5 = load volatile i32* %scevgep2, align 4, !tbaa !7, !legup.pipeline.start_time !3, !legup.pipeline.avail_time !2, !legup.pipeline.stage !3
+	start_time: 0 avail_time: 1 stage: 0 II: 3 start_ii_state = 0 % 3 = 0 avail_ii_state = 1 % 3 = 1*/
+	if (((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_0)) begin
+		b_write_enable_a = 1'd0;
+	end
 end
 always @(*) begin
 	loop6_1_pipeline_start = 1'd0;
@@ -600,7 +674,7 @@ always @(posedge clk) begin
 		loop6_1_started <= 1'd1;
 		if (start == 1'b0 && ^(1'd1) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_started"); $finish; end
 	end
-	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_epilogue & (~(loop6_1_valid_bit_70) & loop6_1_valid_bit_71)))) begin
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_epilogue & (~(loop6_1_valid_bit_40) & loop6_1_valid_bit_41)))) begin
 		loop6_1_started <= 1'd0;
 		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_started"); $finish; end
 	end
@@ -654,7 +728,7 @@ always @(posedge clk) begin
 		loop6_1_epilogue <= 1'd1;
 		if (start == 1'b0 && ^(1'd1) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_epilogue"); $finish; end
 	end
-	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_epilogue & (~(loop6_1_valid_bit_70) & loop6_1_valid_bit_71)))) begin
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_epilogue & (~(loop6_1_valid_bit_40) & loop6_1_valid_bit_41)))) begin
 		loop6_1_epilogue <= 1'd0;
 		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_epilogue"); $finish; end
 	end
@@ -1080,321 +1154,203 @@ always @(posedge clk) begin
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_42 <= loop6_1_valid_bit_41;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_41) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_42"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_pipeline_start & ~(loop6_1_started)))) begin
+		loop6_1_i_stage1 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage1"); $finish; end
+	end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_ii_state == 2'd2))) begin
+		loop6_1_i_stage1 <= loop6_1_i_stage0;
+		if (start == 1'b0 && ^(loop6_1_i_stage0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage1"); $finish; end
 	end
 	if (reset) begin
-		loop6_1_valid_bit_42 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_42"); $finish; end
+		loop6_1_i_stage1 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage1"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_43 <= loop6_1_valid_bit_42;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_42) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_43"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_pipeline_start & ~(loop6_1_started)))) begin
+		loop6_1_i_stage2 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage2"); $finish; end
+	end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_ii_state == 2'd2))) begin
+		loop6_1_i_stage2 <= loop6_1_i_stage1;
+		if (start == 1'b0 && ^(loop6_1_i_stage1) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage2"); $finish; end
 	end
 	if (reset) begin
-		loop6_1_valid_bit_43 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_43"); $finish; end
+		loop6_1_i_stage2 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage2"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_44 <= loop6_1_valid_bit_43;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_43) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_44"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_pipeline_start & ~(loop6_1_started)))) begin
+		loop6_1_i_stage3 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage3"); $finish; end
+	end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_ii_state == 2'd2))) begin
+		loop6_1_i_stage3 <= loop6_1_i_stage2;
+		if (start == 1'b0 && ^(loop6_1_i_stage2) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage3"); $finish; end
 	end
 	if (reset) begin
-		loop6_1_valid_bit_44 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_44"); $finish; end
+		loop6_1_i_stage3 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage3"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_45 <= loop6_1_valid_bit_44;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_44) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_45"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_pipeline_start & ~(loop6_1_started)))) begin
+		loop6_1_i_stage4 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage4"); $finish; end
+	end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_ii_state == 2'd2))) begin
+		loop6_1_i_stage4 <= loop6_1_i_stage3;
+		if (start == 1'b0 && ^(loop6_1_i_stage3) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage4"); $finish; end
 	end
 	if (reset) begin
-		loop6_1_valid_bit_45 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_45"); $finish; end
+		loop6_1_i_stage4 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage4"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_46 <= loop6_1_valid_bit_45;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_45) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_46"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_pipeline_start & ~(loop6_1_started)))) begin
+		loop6_1_i_stage5 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage5"); $finish; end
+	end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_ii_state == 2'd2))) begin
+		loop6_1_i_stage5 <= loop6_1_i_stage4;
+		if (start == 1'b0 && ^(loop6_1_i_stage4) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage5"); $finish; end
 	end
 	if (reset) begin
-		loop6_1_valid_bit_46 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_46"); $finish; end
+		loop6_1_i_stage5 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage5"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_47 <= loop6_1_valid_bit_46;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_46) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_47"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_pipeline_start & ~(loop6_1_started)))) begin
+		loop6_1_i_stage6 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage6"); $finish; end
+	end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_ii_state == 2'd2))) begin
+		loop6_1_i_stage6 <= loop6_1_i_stage5;
+		if (start == 1'b0 && ^(loop6_1_i_stage5) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage6"); $finish; end
 	end
 	if (reset) begin
-		loop6_1_valid_bit_47 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_47"); $finish; end
+		loop6_1_i_stage6 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage6"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_48 <= loop6_1_valid_bit_47;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_47) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_48"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_pipeline_start & ~(loop6_1_started)))) begin
+		loop6_1_i_stage7 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage7"); $finish; end
+	end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_ii_state == 2'd2))) begin
+		loop6_1_i_stage7 <= loop6_1_i_stage6;
+		if (start == 1'b0 && ^(loop6_1_i_stage6) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage7"); $finish; end
 	end
 	if (reset) begin
-		loop6_1_valid_bit_48 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_48"); $finish; end
+		loop6_1_i_stage7 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage7"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_49 <= loop6_1_valid_bit_48;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_48) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_49"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_pipeline_start & ~(loop6_1_started)))) begin
+		loop6_1_i_stage8 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage8"); $finish; end
+	end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_ii_state == 2'd2))) begin
+		loop6_1_i_stage8 <= loop6_1_i_stage7;
+		if (start == 1'b0 && ^(loop6_1_i_stage7) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage8"); $finish; end
 	end
 	if (reset) begin
-		loop6_1_valid_bit_49 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_49"); $finish; end
+		loop6_1_i_stage8 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage8"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_50 <= loop6_1_valid_bit_49;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_49) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_50"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_pipeline_start & ~(loop6_1_started)))) begin
+		loop6_1_i_stage9 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage9"); $finish; end
+	end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_ii_state == 2'd2))) begin
+		loop6_1_i_stage9 <= loop6_1_i_stage8;
+		if (start == 1'b0 && ^(loop6_1_i_stage8) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage9"); $finish; end
 	end
 	if (reset) begin
-		loop6_1_valid_bit_50 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_50"); $finish; end
+		loop6_1_i_stage9 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage9"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_51 <= loop6_1_valid_bit_50;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_50) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_51"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_pipeline_start & ~(loop6_1_started)))) begin
+		loop6_1_i_stage10 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage10"); $finish; end
+	end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_ii_state == 2'd2))) begin
+		loop6_1_i_stage10 <= loop6_1_i_stage9;
+		if (start == 1'b0 && ^(loop6_1_i_stage9) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage10"); $finish; end
 	end
 	if (reset) begin
-		loop6_1_valid_bit_51 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_51"); $finish; end
+		loop6_1_i_stage10 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage10"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_52 <= loop6_1_valid_bit_51;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_51) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_52"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_pipeline_start & ~(loop6_1_started)))) begin
+		loop6_1_i_stage11 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage11"); $finish; end
+	end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_ii_state == 2'd2))) begin
+		loop6_1_i_stage11 <= loop6_1_i_stage10;
+		if (start == 1'b0 && ^(loop6_1_i_stage10) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage11"); $finish; end
 	end
 	if (reset) begin
-		loop6_1_valid_bit_52 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_52"); $finish; end
+		loop6_1_i_stage11 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage11"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_53 <= loop6_1_valid_bit_52;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_52) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_53"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_pipeline_start & ~(loop6_1_started)))) begin
+		loop6_1_i_stage12 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage12"); $finish; end
+	end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_ii_state == 2'd2))) begin
+		loop6_1_i_stage12 <= loop6_1_i_stage11;
+		if (start == 1'b0 && ^(loop6_1_i_stage11) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage12"); $finish; end
 	end
 	if (reset) begin
-		loop6_1_valid_bit_53 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_53"); $finish; end
+		loop6_1_i_stage12 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage12"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_54 <= loop6_1_valid_bit_53;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_53) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_54"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_pipeline_start & ~(loop6_1_started)))) begin
+		loop6_1_i_stage13 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage13"); $finish; end
+	end
+	if (((memory_controller_waitrequest == 1'd0) & (loop6_1_ii_state == 2'd2))) begin
+		loop6_1_i_stage13 <= loop6_1_i_stage12;
+		if (start == 1'b0 && ^(loop6_1_i_stage12) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage13"); $finish; end
 	end
 	if (reset) begin
-		loop6_1_valid_bit_54 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_54"); $finish; end
+		loop6_1_i_stage13 <= 0;
+		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_i_stage13"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_55 <= loop6_1_valid_bit_54;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_54) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_55"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_55 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_55"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_38))) begin
+		main_1_result01_reg_stage13 <= main_1_result01;
+		if (start == 1'b0 && ^(main_1_result01) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_result01_reg_stage13"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_56 <= loop6_1_valid_bit_55;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_55) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_56"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_56 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_56"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_57 <= loop6_1_valid_bit_56;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_56) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_57"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_57 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_57"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_58 <= loop6_1_valid_bit_57;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_57) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_58"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_58 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_58"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_59 <= loop6_1_valid_bit_58;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_58) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_59"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_59 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_59"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_60 <= loop6_1_valid_bit_59;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_59) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_60"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_60 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_60"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_61 <= loop6_1_valid_bit_60;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_60) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_61"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_61 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_61"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_62 <= loop6_1_valid_bit_61;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_61) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_62"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_62 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_62"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_63 <= loop6_1_valid_bit_62;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_62) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_63"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_63 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_63"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_64 <= loop6_1_valid_bit_63;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_63) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_64"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_64 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_64"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_65 <= loop6_1_valid_bit_64;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_64) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_65"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_65 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_65"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_66 <= loop6_1_valid_bit_65;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_65) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_66"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_66 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_66"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_67 <= loop6_1_valid_bit_66;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_66) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_67"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_67 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_67"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_68 <= loop6_1_valid_bit_67;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_67) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_68"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_68 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_68"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_69 <= loop6_1_valid_bit_68;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_68) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_69"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_69 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_69"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_70 <= loop6_1_valid_bit_69;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_69) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_70"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_70 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_70"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if ((memory_controller_waitrequest == 1'd0)) begin
-		loop6_1_valid_bit_71 <= loop6_1_valid_bit_70;
-		if (start == 1'b0 && ^(loop6_1_valid_bit_70) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_71"); $finish; end
-	end
-	if (reset) begin
-		loop6_1_valid_bit_71 <= 1'd0;
-		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to loop6_1_valid_bit_71"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_1))) begin
-		main_1_i01_reg_stage0 <= main_1_i01;
-		if (start == 1'b0 && ^(main_1_i01) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_i01_reg_stage0"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_0))) begin
+		main_1_scevgep_reg_stage0 <= main_1_scevgep;
+		if (start == 1'b0 && ^(main_1_scevgep) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage0"); $finish; end
 	end
 end
 always @(posedge clk) begin
 	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_2))) begin
-		main_1_i01_reg_stage1 <= main_1_i01_reg_stage0;
-		if (start == 1'b0 && ^(main_1_i01_reg_stage0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_i01_reg_stage1"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_3))) begin
-		main_1_scevgep_reg_stage1 <= main_1_scevgep;
-		if (start == 1'b0 && ^(main_1_scevgep) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage1"); $finish; end
+		main_1_scevgep_reg_stage1 <= main_1_scevgep_reg_stage0;
+		if (start == 1'b0 && ^(main_1_scevgep_reg_stage0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage1"); $finish; end
 	end
 end
 always @(posedge clk) begin
@@ -1464,310 +1420,78 @@ always @(posedge clk) begin
 	end
 end
 always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_38))) begin
-		main_1_scevgep_reg_stage13 <= main_1_scevgep_reg_stage12;
-		if (start == 1'b0 && ^(main_1_scevgep_reg_stage12) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage13"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_1))) begin
+		main_1_3_reg_stage0 <= main_1_3;
+		if (start == 1'b0 && ^(main_1_3) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_3_reg_stage0"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_41))) begin
-		main_1_scevgep_reg_stage14 <= main_1_scevgep_reg_stage13;
-		if (start == 1'b0 && ^(main_1_scevgep_reg_stage13) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage14"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_2))) begin
+		main_1_3_reg_stage1 <= main_1_3_reg_stage0;
+		if (start == 1'b0 && ^(main_1_3_reg_stage0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_3_reg_stage1"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_44))) begin
-		main_1_scevgep_reg_stage15 <= main_1_scevgep_reg_stage14;
-		if (start == 1'b0 && ^(main_1_scevgep_reg_stage14) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage15"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_1))) begin
+		main_1_5_reg_stage0 <= main_1_5;
+		if (start == 1'b0 && ^(main_1_5) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_5_reg_stage0"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_47))) begin
-		main_1_scevgep_reg_stage16 <= main_1_scevgep_reg_stage15;
-		if (start == 1'b0 && ^(main_1_scevgep_reg_stage15) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage16"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_2))) begin
+		main_1_5_reg_stage1 <= main_1_5_reg_stage0;
+		if (start == 1'b0 && ^(main_1_5_reg_stage0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_5_reg_stage1"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_50))) begin
-		main_1_scevgep_reg_stage17 <= main_1_scevgep_reg_stage16;
-		if (start == 1'b0 && ^(main_1_scevgep_reg_stage16) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage17"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_36))) begin
+		main_1_6_reg_stage12 <= main_1_6;
+		if (start == 1'b0 && ^(main_1_6) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_6_reg_stage12"); $finish; end
 	end
 end
 always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_53))) begin
-		main_1_scevgep_reg_stage18 <= main_1_scevgep_reg_stage17;
-		if (start == 1'b0 && ^(main_1_scevgep_reg_stage17) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage18"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_56))) begin
-		main_1_scevgep_reg_stage19 <= main_1_scevgep_reg_stage18;
-		if (start == 1'b0 && ^(main_1_scevgep_reg_stage18) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage19"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_59))) begin
-		main_1_scevgep_reg_stage20 <= main_1_scevgep_reg_stage19;
-		if (start == 1'b0 && ^(main_1_scevgep_reg_stage19) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage20"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_62))) begin
-		main_1_scevgep_reg_stage21 <= main_1_scevgep_reg_stage20;
-		if (start == 1'b0 && ^(main_1_scevgep_reg_stage20) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage21"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_65))) begin
-		main_1_scevgep_reg_stage22 <= main_1_scevgep_reg_stage21;
-		if (start == 1'b0 && ^(main_1_scevgep_reg_stage21) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage22"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_68))) begin
-		main_1_scevgep_reg_stage23 <= main_1_scevgep_reg_stage22;
-		if (start == 1'b0 && ^(main_1_scevgep_reg_stage22) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_scevgep_reg_stage23"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_5))) begin
-		main_1_2_reg_stage2 <= main_1_2;
-		if (start == 1'b0 && ^(main_1_2) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_2_reg_stage2"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_8))) begin
-		main_1_2_reg_stage3 <= main_1_2_reg_stage2;
-		if (start == 1'b0 && ^(main_1_2_reg_stage2) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_2_reg_stage3"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_11))) begin
-		main_1_2_reg_stage4 <= main_1_2_reg_stage3;
-		if (start == 1'b0 && ^(main_1_2_reg_stage3) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_2_reg_stage4"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_14))) begin
-		main_1_2_reg_stage5 <= main_1_2_reg_stage4;
-		if (start == 1'b0 && ^(main_1_2_reg_stage4) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_2_reg_stage5"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_17))) begin
-		main_1_2_reg_stage6 <= main_1_2_reg_stage5;
-		if (start == 1'b0 && ^(main_1_2_reg_stage5) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_2_reg_stage6"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_20))) begin
-		main_1_2_reg_stage7 <= main_1_2_reg_stage6;
-		if (start == 1'b0 && ^(main_1_2_reg_stage6) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_2_reg_stage7"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_23))) begin
-		main_1_2_reg_stage8 <= main_1_2_reg_stage7;
-		if (start == 1'b0 && ^(main_1_2_reg_stage7) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_2_reg_stage8"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_26))) begin
-		main_1_2_reg_stage9 <= main_1_2_reg_stage8;
-		if (start == 1'b0 && ^(main_1_2_reg_stage8) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_2_reg_stage9"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_29))) begin
-		main_1_2_reg_stage10 <= main_1_2_reg_stage9;
-		if (start == 1'b0 && ^(main_1_2_reg_stage9) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_2_reg_stage10"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_32))) begin
-		main_1_2_reg_stage11 <= main_1_2_reg_stage10;
-		if (start == 1'b0 && ^(main_1_2_reg_stage10) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_2_reg_stage11"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_35))) begin
-		main_1_2_reg_stage12 <= main_1_2_reg_stage11;
-		if (start == 1'b0 && ^(main_1_2_reg_stage11) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_2_reg_stage12"); $finish; end
-	end
-end
-always @(posedge clk) begin
-	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_69))) begin
-		main_1_5_reg_stage23 <= main_1_5;
-		if (start == 1'b0 && ^(main_1_5) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_5_reg_stage23"); $finish; end
+	if (((memory_controller_waitrequest == 1'd0) & ((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_39))) begin
+		main_1_7_reg_stage13 <= main_1_7;
+		if (start == 1'b0 && ^(main_1_7) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to main_1_7_reg_stage13"); $finish; end
 	end
 end
 always @(*) begin
-	loop6_1_pipeline_exit_cond = (loop6_1_i_stage0 == 98);
+	loop6_1_pipeline_exit_cond = (loop6_1_i_stage0 == 97);
 end
 always @(*) begin
-	loop6_1_pipeline_finish = ((memory_controller_waitrequest == 1'd0) & (loop6_1_epilogue & (~(loop6_1_valid_bit_70) & loop6_1_valid_bit_71)));
+	loop6_1_pipeline_finish = ((memory_controller_waitrequest == 1'd0) & (loop6_1_epilogue & (~(loop6_1_valid_bit_40) & loop6_1_valid_bit_41)));
 end
 always @(*) begin
 	/* main: %1*/
-	/*   %4 = sdiv i32 %i.01, %3, !legup.pipeline.start_time !9, !legup.pipeline.avail_time !10, !legup.pipeline.stage !2
-	start_time: 5 avail_time: 37 stage: 1 II: 3 start_ii_state = 5 % 3 = 2 avail_ii_state = 37 % 3 = 1*/
-	if (((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_5)) begin
-		main_signed_divide_32_0_op0 = main_1_i01_reg_stage1;
-	end
-	/* main: %1*/
-	/*   %5 = sdiv i32 %2, %4, !legup.pipeline.start_time !10, !legup.pipeline.avail_time !11, !legup.pipeline.stage !12
-	start_time: 37 avail_time: 69 stage: 12 II: 3 start_ii_state = 37 % 3 = 1 avail_ii_state = 69 % 3 = 0*/
-	else /* if (((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_37)) */ begin
-		main_signed_divide_32_0_op0 = main_1_2_reg_stage12;
-	end
+	/*   %6 = sdiv i32 %4, %5, !legup.pipeline.start_time !11, !legup.pipeline.avail_time !12, !legup.pipeline.stage !2
+	start_time: 4 avail_time: 36 stage: 1 II: 3 start_ii_state = 4 % 3 = 1 avail_ii_state = 36 % 3 = 0*/
+		main_signed_divide_32_0_op0 = main_1_4;
 end
 always @(*) begin
 	/* main: %1*/
-	/*   %4 = sdiv i32 %i.01, %3, !legup.pipeline.start_time !9, !legup.pipeline.avail_time !10, !legup.pipeline.stage !2
-	start_time: 5 avail_time: 37 stage: 1 II: 3 start_ii_state = 5 % 3 = 2 avail_ii_state = 37 % 3 = 1*/
-	if (((loop6_1_ii_state == 2'd2) & loop6_1_valid_bit_5)) begin
-		main_signed_divide_32_0_op1 = main_1_3;
-	end
-	/* main: %1*/
-	/*   %5 = sdiv i32 %2, %4, !legup.pipeline.start_time !10, !legup.pipeline.avail_time !11, !legup.pipeline.stage !12
-	start_time: 37 avail_time: 69 stage: 12 II: 3 start_ii_state = 37 % 3 = 1 avail_ii_state = 69 % 3 = 0*/
-	else /* if (((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_37)) */ begin
-		main_signed_divide_32_0_op1 = main_1_4;
-	end
+	/*   %6 = sdiv i32 %4, %5, !legup.pipeline.start_time !11, !legup.pipeline.avail_time !12, !legup.pipeline.stage !2
+	start_time: 4 avail_time: 36 stage: 1 II: 3 start_ii_state = 4 % 3 = 1 avail_ii_state = 36 % 3 = 0*/
+		main_signed_divide_32_0_op1 = main_1_5_reg_stage1;
 end
 always @(*) begin
-	lpm_divide_main_1_4_en = (memory_controller_waitrequest == 1'd0);
+	lpm_divide_main_1_6_en = (memory_controller_waitrequest == 1'd0);
 end
 always @(*) begin
-	lpm_divide_main_1_4_out = lpm_divide_main_1_4_temp_out;
+	lpm_divide_main_1_6_out = lpm_divide_main_1_6_temp_out;
 end
 always @(*) begin
-	main_signed_divide_32_0 = lpm_divide_main_1_4_out;
+	main_signed_divide_32_0 = lpm_divide_main_1_6_out;
 end
 always @(posedge clk) begin
 	if ((cur_state == LEGUP_0)) begin
 		finish <= 1'd0;
 		if (start == 1'b0 && ^(1'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to finish"); $finish; end
 	end
-	/* main: %6*/
-	/*   ret i32 0*/
-	if ((cur_state == LEGUP_F_main_BB__6_2)) begin
+	/* main: %16*/
+	/*   ret i32 %8*/
+	if ((cur_state == LEGUP_F_main_BB__16_5)) begin
 		finish <= (memory_controller_waitrequest == 1'd0);
 		if (start == 1'b0 && ^((memory_controller_waitrequest == 1'd0)) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to finish"); $finish; end
-	end
-end
-always @(*) begin
-	memory_controller_enable_a = 1'd0;
-	if ((cur_state == LEGUP_0)) begin
-		memory_controller_enable_a = 1'd0;
-	end
-	/* main: %1*/
-	/*   %2 = load i32* %scevgep, align 4, !tbaa !5, !legup.pipeline.start_time !4, !legup.pipeline.avail_time !9, !legup.pipeline.stage !2
-	start_time: 3 avail_time: 5 stage: 1 II: 3 start_ii_state = 3 % 3 = 0 avail_ii_state = 5 % 3 = 2*/
-	if (((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_3)) begin
-		memory_controller_enable_a = 1'd1;
-	end
-	/* main: %1*/
-	/*   store i32 %5, i32* %scevgep, align 4, !tbaa !5, !legup.pipeline.start_time !13, !legup.pipeline.avail_time !14, !legup.pipeline.stage !15
-	start_time: 70 avail_time: 71 stage: 23 II: 3 start_ii_state = 70 % 3 = 1 avail_ii_state = 71 % 3 = 2*/
-	if (((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_70)) begin
-		memory_controller_enable_a = 1'd1;
-	end
-end
-always @(*) begin
-	memory_controller_address_a = 1'd0;
-	if ((cur_state == LEGUP_0)) begin
-		memory_controller_address_a = 1'd0;
-	end
-	/* main: %1*/
-	/*   %2 = load i32* %scevgep, align 4, !tbaa !5, !legup.pipeline.start_time !4, !legup.pipeline.avail_time !9, !legup.pipeline.stage !2
-	start_time: 3 avail_time: 5 stage: 1 II: 3 start_ii_state = 3 % 3 = 0 avail_ii_state = 5 % 3 = 2*/
-	if (((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_3)) begin
-		memory_controller_address_a = main_1_scevgep;
-	end
-	/* main: %1*/
-	/*   store i32 %5, i32* %scevgep, align 4, !tbaa !5, !legup.pipeline.start_time !13, !legup.pipeline.avail_time !14, !legup.pipeline.stage !15
-	start_time: 70 avail_time: 71 stage: 23 II: 3 start_ii_state = 70 % 3 = 1 avail_ii_state = 71 % 3 = 2*/
-	if (((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_70)) begin
-		memory_controller_address_a = main_1_scevgep_reg_stage23;
-	end
-end
-always @(*) begin
-	memory_controller_write_enable_a = 1'd0;
-	if ((cur_state == LEGUP_0)) begin
-		memory_controller_write_enable_a = 1'd0;
-	end
-	/* main: %1*/
-	/*   %2 = load i32* %scevgep, align 4, !tbaa !5, !legup.pipeline.start_time !4, !legup.pipeline.avail_time !9, !legup.pipeline.stage !2
-	start_time: 3 avail_time: 5 stage: 1 II: 3 start_ii_state = 3 % 3 = 0 avail_ii_state = 5 % 3 = 2*/
-	if (((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_3)) begin
-		memory_controller_write_enable_a = 1'd0;
-	end
-	/* main: %1*/
-	/*   store i32 %5, i32* %scevgep, align 4, !tbaa !5, !legup.pipeline.start_time !13, !legup.pipeline.avail_time !14, !legup.pipeline.stage !15
-	start_time: 70 avail_time: 71 stage: 23 II: 3 start_ii_state = 70 % 3 = 1 avail_ii_state = 71 % 3 = 2*/
-	if (((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_70)) begin
-		memory_controller_write_enable_a = 1'd1;
-	end
-end
-always @(*) begin
-	memory_controller_in_a = 1'd0;
-	if ((cur_state == LEGUP_0)) begin
-		memory_controller_in_a = 1'd0;
-	end
-	/* main: %1*/
-	/*   store i32 %5, i32* %scevgep, align 4, !tbaa !5, !legup.pipeline.start_time !13, !legup.pipeline.avail_time !14, !legup.pipeline.stage !15
-	start_time: 70 avail_time: 71 stage: 23 II: 3 start_ii_state = 70 % 3 = 1 avail_ii_state = 71 % 3 = 2*/
-	if (((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_70)) begin
-		memory_controller_in_a = main_1_5_reg_stage23;
-	end
-end
-always @(*) begin
-	memory_controller_size_a = 1'd0;
-	if ((cur_state == LEGUP_0)) begin
-		memory_controller_size_a = 1'd0;
-	end
-	/* main: %1*/
-	/*   %2 = load i32* %scevgep, align 4, !tbaa !5, !legup.pipeline.start_time !4, !legup.pipeline.avail_time !9, !legup.pipeline.stage !2
-	start_time: 3 avail_time: 5 stage: 1 II: 3 start_ii_state = 3 % 3 = 0 avail_ii_state = 5 % 3 = 2*/
-	if (((loop6_1_ii_state == 2'd0) & loop6_1_valid_bit_3)) begin
-		memory_controller_size_a = 2'd2;
-	end
-	/* main: %1*/
-	/*   store i32 %5, i32* %scevgep, align 4, !tbaa !5, !legup.pipeline.start_time !13, !legup.pipeline.avail_time !14, !legup.pipeline.stage !15
-	start_time: 70 avail_time: 71 stage: 23 II: 3 start_ii_state = 70 % 3 = 1 avail_ii_state = 71 % 3 = 2*/
-	if (((loop6_1_ii_state == 2'd1) & loop6_1_valid_bit_70)) begin
-		memory_controller_size_a = 2'd2;
-	end
-end
-always @(*) begin
-	memory_controller_enable_b = 1'd0;
-	if ((cur_state == LEGUP_0)) begin
-		memory_controller_enable_b = 1'd0;
-	end
-end
-always @(*) begin
-	memory_controller_address_b = 1'd0;
-	if ((cur_state == LEGUP_0)) begin
-		memory_controller_address_b = 1'd0;
-	end
-end
-always @(*) begin
-	memory_controller_write_enable_b = 1'd0;
-	if ((cur_state == LEGUP_0)) begin
-		memory_controller_write_enable_b = 1'd0;
-	end
-end
-always @(*) begin
-	memory_controller_in_b = 1'd0;
-	if ((cur_state == LEGUP_0)) begin
-		memory_controller_in_b = 1'd0;
-	end
-end
-always @(*) begin
-	memory_controller_size_b = 1'd0;
-	if ((cur_state == LEGUP_0)) begin
-		memory_controller_size_b = 1'd0;
 	end
 end
 always @(posedge clk) begin
@@ -1775,11 +1499,11 @@ always @(posedge clk) begin
 		return_val <= 0;
 		if (start == 1'b0 && ^(0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to return_val"); $finish; end
 	end
-	/* main: %6*/
-	/*   ret i32 0*/
-	if ((cur_state == LEGUP_F_main_BB__6_2)) begin
-		return_val <= 32'd0;
-		if (start == 1'b0 && ^(32'd0) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to return_val"); $finish; end
+	/* main: %16*/
+	/*   ret i32 %8*/
+	if ((cur_state == LEGUP_F_main_BB__16_5)) begin
+		return_val <= main_1_8_reg;
+		if (start == 1'b0 && ^(main_1_8_reg) === 1'bX) begin $display ("ERROR: Right hand side is 'X'. Assigned to return_val"); $finish; end
 	end
 end
 
@@ -2304,6 +2028,8 @@ top top_inst (
 	.return_val (return_val)
 );
 
+
+// Local Rams
 
 
 

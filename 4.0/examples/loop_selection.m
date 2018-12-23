@@ -108,15 +108,30 @@ finalConfigNames = uniqueConfigNames;
 %finalValues = vals
 %finalConfigNames = configNames
 
-for i=1:numel(measures)-1
+finalValues
+finalConfigNames
+for i=1:2%numel(measures)-1
   fighandle = figure(i); hold on;
   plot(finalValues(:,1), finalValues(:, i+1), '.b');
-  text(finalValues(:,1), finalValues(:, i+1), finalConfigNames);
+  %text(finalValues(:,1), finalValues(:, i+1), finalConfigNames);
   xlabel(measures(1));
   ylabel(measures(i+1));
-  ppoints = findPareto(finalValues(:,1), finalValues(:, i+1));
+  ppoints = findPareto(finalValues(:,1), finalValues(:, i+1))
   if(numel(ppoints) > 0)
-    plot(ppoints(:,1), ppoints(:, 2), '*r');
+    pspeed = finalValues(:,1) == ppoints(:,1)';
+    parea = finalValues(:,i+1) == ppoints(:,2)';
+    match = pspeed & parea;
+    for cf = 1:columns(match)
+      finalConfigNames(match(:,cf), :)
+    end
+    
+    px = ppoints(:,1);
+    py = ppoints(:,2);
+    [px,idx] = sort(px);
+    py = py(idx);
+    plot(px, py, '*r-');
+    text(px(1), py(1), 'speed');
+    text(px(end), py(end), 'area');
   end
 
   graphname = strcat(outFolder, '/', measures{i+1}, '.jpg');

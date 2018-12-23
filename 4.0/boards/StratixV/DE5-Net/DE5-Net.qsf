@@ -38,9 +38,9 @@
 # TODO: not sure how much info to copy from top.qsf from DE5-Net example
 
 #leandro ---  disable DPSs for scaling tests
-#set_global_assignment -name auto_dsp_recognition off
-#set_global_assignment -name dsp_block_balancing "logic elements"
-#set_global_assignment -name max_balancing_dsp_blocks 0
+set_global_assignment -name auto_dsp_recognition off
+set_global_assignment -name dsp_block_balancing "logic elements"
+set_global_assignment -name max_balancing_dsp_blocks 0
 #set_global_assignment -name OPTIMIZATION_TECHNIQUE area
 
 set_global_assignment -name FAMILY "Stratix V"

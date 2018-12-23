@@ -7,14 +7,15 @@ add_llvm_loadable_module( LLVMLeandro
   SwOnly.cpp
   utils.cpp
   WatchVariables.cpp
-   AcceleratorAnalysis.cpp
+  AcceleratorAnalysis.cpp
   SDCModuloScheduler.cpp
   utils.cpp
   ILPModuloScheduler.cpp
   NIModuloScheduler.cpp
   SMModuloScheduler.cpp
   GAModuloScheduler.cpp
-  LoopSelect.cpp
-  )
+  LoopFullDSE.cpp
+  LoopFastDSE.cpp
+)
 
 target_link_libraries(LLVMLeandro LLVMCodeGen)

@@ -1,4 +1,4 @@
-# Created by Octave 3.8.1, Mon Aug 06 19:20:42 2018 -03 <leandro@MuroDasLamentacoes>
+# Created by Octave 3.8.1, Wed Sep 12 20:18:36 2018 -03 <leandro@MuroDasLamentacoes>
 # name: measures
 # type: cell
 # rows: 1
@@ -57,6 +57,6 @@ DSPs
 # type: matrix
 # rows: 1
 # columns: 6
- 269 59 50 110 0 0
+ 335 1284 1216 2337 3890 0
 
 
