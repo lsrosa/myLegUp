@@ -10,9 +10,9 @@ int main() {
     int result = 0;
 
     loop6: for(int i=1; i<N-1; i++){
-      a[i] = ((a[i+1]))/(b[i]);
+      a[i] /= ((a[i]+1))/(b[i]+1);
       result += a[i];
-      //a[i] /= (i/(a[i]+1))/(b[i]+1);
+      //a[i] = ((a[i+1]))/(b[i]);
       //b[i] /= (i/(b[i]+1))/(a[i]+1);
     }
 

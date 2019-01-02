@@ -41,7 +41,7 @@ fclose(fid);
 
 %----------------------------------------------------------------------
 %find the first os ALM resources
-comment = 'getting resources'
+disp('getting resources')
 
 %read the quartus report file
 fid = fopen(arg_list{1}, 'r');

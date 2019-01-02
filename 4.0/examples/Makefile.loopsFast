@@ -83,6 +83,7 @@ compile:
 		make -C $(LOOPS_OUTDIR) -f $(LEGUPHOME)/examples/Makefile.myDocMyHell q; \
 		make -C $(LOOPS_OUTDIR) -f $(LEGUPHOME)/examples/Makefile.myDocMyHell v; \
 		octave $(LEGUPHOME)/examples/estimation.m $(LOOPS_OUTDIR)/top.map.rpt; \
+		octave $(LEGUPHOME)/examples/read_metrics.m $(LOOPS_OUTDIR);\
 		else \
 		echo "C to V compilation failed"; \
 		exit 1; \
@@ -94,28 +95,13 @@ compile:
 # Cleaning targets
 ################################################################################
 
-
-cleannew:
-	rm -rf $(OUTPUT_PATH)
-
-cleantiger:
-	rm -rf a.out *.bc *.dat *.dump *.elf *.o *.s *.src *.hash *.flist *.flist_lab *.emul.*
-	rm -rf $(PROC_DIR)/work
-	rm -rf $(PROC_DIR)/verilog_libs
-
-cleanpcie:
-	echo $(PROCESSOR)
-	rm -rf pcie_tutorial legup_pcie_wrappers_generated.c legup_qsys_pcie_generated.tcl $(NAME)_sw $(NAME)_sw_memtest simulation_tb tb_master.v lib$(NAME).a legup_riffa.tar legup_riffa
-
-cleanarm:
-	rm -rf *.bin *.srec $(NAME)_jtag_uart.output
-
 # "make clean" is run by the test suite -- do not delete Quartus or Modelsim files (use "make cleanall" instead)
 clean: cleantiger cleanpcie cleanarm cleannew cleanprivate
 	rm -rf *.ll *.mif $(VFILE) *.smsg *.ver lli.txt sim.txt *_hw.tcl legup_sopc.tcl legup_qsys.tcl legup_wrappers.c work *.log functions.list wave.do *.legup.rpt tiger *.dot *.csv *.tex parallelaccels.tcl $(NAME)_labeled.c genRAM.pl *.wlf *.qsf *.sdc *.txt *profile* *llvmprof* compile.tcl sim.tcl ModelsimListener.tcl Inspect.config init.tcl *.vstf board_programmed.txt *.native
 
 # be careful: removes Quartus and Modelsim files
 cleanall: clean
+	rm -rf nextconfig partial_data.mat tempconfig.tcl
 	rm -rf loops_out
 	rm -rf out.config*.tcl
 	rm -rf ir_out loops_out

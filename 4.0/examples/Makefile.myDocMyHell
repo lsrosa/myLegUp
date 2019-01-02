@@ -137,7 +137,7 @@ endif # DEBUG_KEEP_VARS_IN_MEM
 	# produces verilog: $(NAME).v
 	$(LLVM_HOME)llc $(LLC_FLAGS) -march=v $(NAME).bc -o $(VFILE)
 
-outputDirs: cleanall
+outputDirs: #cleanall
 	mkdir -p ir_out
 
 ################################################################################
@@ -189,8 +189,8 @@ endif # DEBUG_KEEP_VARS_IN_MEM
 	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).1.bc
 	#$(LLVM_HOME)llvm-dis ir_out/$(NAME).2.bc
 
-	#-------------------------------------------------------------------
-	#_---------- here we start compiling loops ---------------------
+	#---------------------------------------------------------------
+	#----------- here we start compiling loops ---------------------
 
 ifndef LEGUPHOME
 	$(error LegUP home is missing! Please add "export LEGUPHOME=<LegUP dir>" in your bashrc)
@@ -200,7 +200,7 @@ endif
 	$(eval LOOP_FOLDERS:=./fast_loops_out/*)
 	@echo $(LOOP_FOLDERS)
 
-	#TODO loop-select creates an module.bc file, which has already passed through all opt passes, this file is used to compile with each different config. This is generating errors in the modelsim.
+	#TODO loop-select creates an module.bc file, which has already passed through all opt passes, this file is used to compile with each different config.
 	#TODO we are hotfixing this, but the loop wrapper inplementation should solve this. I hope.
 	for mkfile in  $(LOOP_FOLDERS) ; do \
 		echo cp $(NAME).c $$mkfile/module.c; \
@@ -209,7 +209,7 @@ endif
 
 	#read -p "Press any key to continue... " -n1 -s
 
-	#compile each config effectivly
+	#compile each config in fact
 	for mkfile in  $(LOOP_FOLDERS) ; do \
 		$(MAKE) --ignore-errors -C $$mkfile; \
 	done
@@ -218,8 +218,8 @@ endif
 	$(eval LOOP_BUILTS:=./fast_loops_out/*/out.config*.tcl/hardware_estimation.mat	)
 
 	#TODO gonna have to run this in the end
-	octave $(LEGUPHOME)/examples/loop_selection.m $(LOOP_BUILTS)
-	octave $(LEGUPHOME)/examples/cluster_correlation.m $(LOOP_BUILTS)
+	octave $(LEGUPHOME)/examples/loop_selection.m $(LOOP_BUILTS) fast
+	octave $(LEGUPHOME)/examples/cluster_correlation.m $(LOOP_BUILTS) fast
 
 ################################################################################
 # Extract loops and info for later Exhaustive selection
@@ -299,8 +299,8 @@ endif
 
 	#first, get only folders and configs that generated hardware
 	$(eval LOOP_BUILTS:=./loops_out/*/out.config*.tcl/hardware_estimation.mat	)
-	octave $(LEGUPHOME)/examples/loop_selection.m $(LOOP_BUILTS)
-	octave $(LEGUPHOME)/examples/cluster_correlation.m $(LOOP_BUILTS)
+	octave $(LEGUPHOME)/examples/loop_selection.m $(LOOP_BUILTS) full
+	octave $(LEGUPHOME)/examples/cluster_correlation.m $(LOOP_BUILTS) full
 
 ################################################################################
 # Quartus stuff

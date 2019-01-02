@@ -5,6 +5,11 @@ if  nfiles == 0
   return;
 end
 
+%TODO this is a temporary workaround
+%first argument should be "fast" or "full" just to distinguish the graphs
+type = arg_list{end};
+nfiles = nfiles - 1;
+
 %get the name of each loop and config
 for i=1:nfiles
   parts = strsplit(arg_list{i}, '/');
@@ -58,8 +63,8 @@ fclose(fid);
 
 %read the rest
 for i=1:nfiles
-  readconfig=configFiles{i};
-  fid = fopen(configFiles{i});
+  readconfig=configFiles{i}
+  fid = fopen(configFiles{i})
   con = [];
   while((line=fgets(fid)) != -1)
     parts = strsplit(line, ' ');
@@ -306,7 +311,7 @@ if(plotcond == 1)
     xlabel(measures(1));
     ylabel(measures(i+1));
 
-    graphname = strcat(outFolder, '/Corr', measures{i+1}, '.jpg');
+    graphname = strcat(outFolder, '/Corr', measures{i+1}, '_', type, '.jpg');
     print(fighandle, char(graphname), '-djpg');
   end
 end

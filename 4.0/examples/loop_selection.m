@@ -1,9 +1,14 @@
 arg_list = argv();
 nfiles = numel(arg_list);
 
-if  nfiles == 0
+if  nfiles < 2
   return;
 end
+
+%TODO this is a temporary workaround
+%first argument should be "fast" or "full" just to distinguish the graphs
+type = arg_list{end}
+nfiles = nfiles - 1;
 
 %get the name of each loop and config
 for i=1:nfiles
@@ -124,7 +129,7 @@ for i=1:2%numel(measures)-1
     for cf = 1:columns(match)
       finalConfigNames(match(:,cf), :)
     end
-    
+
     px = ppoints(:,1);
     py = ppoints(:,2);
     [px,idx] = sort(px);
@@ -134,6 +139,6 @@ for i=1:2%numel(measures)-1
     text(px(end), py(end), 'area');
   end
 
-  graphname = strcat(outFolder, '/', measures{i+1}, '.jpg');
+  graphname = strcat(outFolder, '/', measures{i+1}, '_', type, '.jpg');
   print(fighandle, char(graphname), '-djpg');
 end
