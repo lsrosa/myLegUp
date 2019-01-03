@@ -26,32 +26,34 @@ end
 %first iteration just to take the measures
 load(arg_list{1});
 %measures;
-nmeasures = numel(measures);
+%nmeasures = numel(measures);
+nmeasures = 2;
 vals = zeros(nfiles, nmeasures);
-vals(1,:) = values;
+vals(1,1:nmeasures) = values(1:nmeasures);
 
 %get the measures for the rest of the loops
 for i=2:nfiles
   load(arg_list{i});
-  vals(i,:) = values;
+  vals(i,1:nmeasures) = values(1:nmeasures);
 end
 
 function [paretoPoints] =  findPareto(x, y)
   paretoPoints = [];
   cond = zeros(numel(x), 1);
+  x = x';
+  y = y';
 
   for i=1:numel(x)
-    cond(i) = sum((x<=x(i) & y<=y(i)));
-  end
-
-  for i=1:numel(x)
-    c = sum((x<=x(i) & y<=y(i)));
-    if( c == min(cond) )
+    c1 = x < x(i) & y < y(i);
+    c2 = x == x(i) & y < y(i);
+    c3 = x < x(i) & y == y(i);
+    cond = sum(  c1 | c2 | c3 );
+    if(cond == 0)
       paretoPoints = [paretoPoints; x(i) y(i)];
     end
   end
 
-
+  paretoPoints = paretoPoints';
   return;
 end
 
@@ -66,8 +68,9 @@ rows = zeros(nfiles,1);
 
 for i=1:nfiles
   if(rows(i) == 0)
-    indexes = sum(vals == vals(i,:), 2) == nmeasures;
-    uniqueVals = [uniqueVals; vals(i,:)]; %add only on instance
+    %comparing just cycles and ALMs for now -- change vals(i, 1:2) by  vals(i, :) to compare all metrics
+    indexes = sum(vals(:, 1:nmeasures) == vals(i,1:nmeasures), 2) == nmeasures;
+    uniqueVals = [uniqueVals; vals(i,1:nmeasures)]; %add only on instance
 
     processNames = configNames(indexes);
 
@@ -115,7 +118,7 @@ finalConfigNames = uniqueConfigNames;
 
 finalValues
 finalConfigNames
-for i=1:2%numel(measures)-1
+for i=1:nmeasures-1
   fighandle = figure(i); hold on;
   plot(finalValues(:,1), finalValues(:, i+1), '.b');
   %text(finalValues(:,1), finalValues(:, i+1), finalConfigNames);
