@@ -1,7 +1,7 @@
 arg_list = argv();
 nfiles = numel(arg_list);
 
-if  nfiles == 0
+if  nfiles < 2
   return;
 end
 
@@ -63,8 +63,8 @@ fclose(fid);
 
 %read the rest
 for i=1:nfiles
-  readconfig=configFiles{i}
-  fid = fopen(configFiles{i})
+  readconfig=configFiles{i};
+  fid = fopen(configFiles{i});
   con = [];
   while((line=fgets(fid)) != -1)
     parts = strsplit(line, ' ');

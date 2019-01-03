@@ -227,14 +227,20 @@ if (strcmpi(state,'nextStep'))
         end
       end
     end
-  until(rows(compileQueue) > 0)
-  compileQueue
 
-  if(rows(compileQueue)>0)
+    rows(compileQueue)
+    %pause
+  until(rows(compileQueue) > 0)
+
+  compileQueue
+  rows(compileQueue)
+
+  if(rows(compileQueue) > 0)
     state = 'spread'
   else
     state = 'quit'
   end
+
   %pause
 end
 
@@ -250,7 +256,7 @@ if(strcmpi(state,'spread'))
     if(rows(compileQueue) == 1)
       compileQueue = [];
     else
-      compileQueue = compileQueue(2,:);
+      compileQueue = compileQueue(2:end,:);
     end
   else
     disp('there is something wrong with the compileQueue')
@@ -258,9 +264,12 @@ if(strcmpi(state,'spread'))
   end
 
   %if all spread configs were generated
+  compileQueue
+  rows(compileQueue)
   if(rows(compileQueue) == 0)
     state = 'nextStep'
   end
+  %pause
 
   constraintsValues
   compileQueue

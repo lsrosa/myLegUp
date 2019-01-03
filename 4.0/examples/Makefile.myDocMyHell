@@ -224,7 +224,7 @@ endif
 ################################################################################
 # Extract loops and info for later Exhaustive selection
 ################################################################################
-singleLoopExhaustiveDSE: $(OBJS) outputDirs
+singleLoopFullDSE: $(OBJS) outputDirs
 ifndef DEVICE_FAMILY
 	$(shell $(FPGA_BOARD_CMD))
 	$(error 'LegUp Error!')
