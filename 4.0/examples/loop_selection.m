@@ -26,8 +26,8 @@ end
 %first iteration just to take the measures
 load(arg_list{1});
 %measures;
-nmeasures = numel(measures);
-%nmeasures = 2;
+%nmeasures = numel(measures);
+nmeasures = 2;
 vals = zeros(nfiles, nmeasures);
 vals(1,1:nmeasures) = values(1:nmeasures);
 
@@ -127,7 +127,10 @@ for i=1:nmeasures-1
   xlabel(measures(1));
   ylabel(measures(i+1));
   [ppoints, pidx] = findPareto(finalValues(:,1), finalValues(:, i+1))
-  finalConfigNames(pidx, :)
+  [~,sortedIx] = sort(ppoints(:, 1));
+  ppoints = ppoints(sortedIx, :);
+  pidx = pidx(sortedIx);
+  finalConfigNames(pidx, :);
 
   if(numel(ppoints) > 0)
     %this is an old and buggy way to get the labels
@@ -138,10 +141,10 @@ for i=1:nmeasures-1
     %  finalConfigNames(match(:,cf), :)
     %end
 
-    [~, idspeed] = min(ppoints(:,1))
-    [~, idarea] = min(ppoints(:,2))
-    pspeed = ppoints(idspeed,:)
-    parea = ppoints(idarea,:)
+    [~, idspeed] = min(ppoints(:,1));
+    [~, idarea] = min(ppoints(:,2));
+    pspeed = ppoints(idspeed,:);
+    parea = ppoints(idarea,:);
 
     plot(ppoints(:,1), ppoints(:,2), '*r-');
     text(pspeed(1), pspeed(2), 'speed');
