@@ -26,8 +26,8 @@ end
 %first iteration just to take the measures
 load(arg_list{1});
 %measures;
-%nmeasures = numel(measures);
-nmeasures = 2;
+nmeasures = numel(measures);
+%nmeasures = 2;
 vals = zeros(nfiles, nmeasures);
 vals(1,1:nmeasures) = values(1:nmeasures);
 
@@ -139,13 +139,13 @@ for i=1:nmeasures-1
     %end
 
     [~, idspeed] = min(ppoints(:,1))
-    [~, idarea] = min(ppoints(:,i+1))
+    [~, idarea] = min(ppoints(:,2))
     pspeed = ppoints(idspeed,:)
     parea = ppoints(idarea,:)
 
-    plot(ppoints(:,1), ppoints(:,i+1), '*r-');
-    text(pspeed(1), pspeed(i+1), 'speed');
-    text(parea(1), parea(i+1), 'area');
+    plot(ppoints(:,1), ppoints(:,2), '*r-');
+    text(pspeed(1), pspeed(2), 'speed');
+    text(parea(1), parea(2), 'area');
   end
 
   graphname = strcat(outFolder, '/', measures{i+1}, '_', type, '.jpg');
