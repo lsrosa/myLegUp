@@ -37,11 +37,12 @@ for i=2:nfiles
   vals(i,1:nmeasures) = values(1:nmeasures);
 end
 
-function [paretoPoints] =  findPareto(x, y)
+function [paretoPoints, idx] =  findPareto(x, y)
   paretoPoints = [];
+  idx = [];
   cond = zeros(numel(x), 1);
-  x = x';
-  y = y';
+  %x = x';
+  %y = y';
 
   for i=1:numel(x)
     c1 = x < x(i) & y < y(i);
@@ -50,10 +51,11 @@ function [paretoPoints] =  findPareto(x, y)
     cond = sum(  c1 | c2 | c3 );
     if(cond == 0)
       paretoPoints = [paretoPoints; x(i) y(i)];
+      idx = [idx; i];
     end
   end
 
-  paretoPoints = paretoPoints';
+  %paretoPoints = paretoPoints';
   return;
 end
 
@@ -124,22 +126,26 @@ for i=1:nmeasures-1
   %text(finalValues(:,1), finalValues(:, i+1), finalConfigNames);
   xlabel(measures(1));
   ylabel(measures(i+1));
-  ppoints = findPareto(finalValues(:,1), finalValues(:, i+1))
-  if(numel(ppoints) > 0)
-    pspeed = finalValues(:,1) == ppoints(:,1)';
-    parea = finalValues(:,i+1) == ppoints(:,2)';
-    match = pspeed & parea;
-    for cf = 1:columns(match)
-      finalConfigNames(match(:,cf), :)
-    end
+  [ppoints, pidx] = findPareto(finalValues(:,1), finalValues(:, i+1))
+  finalConfigNames(pidx, :)
 
-    px = ppoints(:,1);
-    py = ppoints(:,2);
-    [px,idx] = sort(px);
-    py = py(idx);
-    plot(px, py, '*r-');
-    text(px(1), py(1), 'speed');
-    text(px(end), py(end), 'area');
+  if(numel(ppoints) > 0)
+    %this is an old and buggy way to get the labels
+    %pspeed = finalValues(:,1) == ppoints(:,1)';
+    %parea = finalValues(:,i+1) == ppoints(:,2)';
+    %match = pspeed & parea;
+    %for cf = 1:columns(match)
+    %  finalConfigNames(match(:,cf), :)
+    %end
+
+    [~, idspeed] = min(ppoints(:,1))
+    [~, idarea] = min(ppoints(:,i+1))
+    pspeed = ppoints(idspeed,:)
+    parea = ppoints(idarea,:)
+
+    plot(ppoints(:,1), ppoints(:,i+1), '*r-');
+    text(pspeed(1), pspeed(i+1), 'speed');
+    text(parea(1), parea(i+1), 'area');
   end
 
   graphname = strcat(outFolder, '/', measures{i+1}, '_', type, '.jpg');
