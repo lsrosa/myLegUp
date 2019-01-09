@@ -6,6 +6,28 @@ masterPause = false;
 
 cond = exist(dataFileName, 'file');
 
+function [paretoPoints, idx] =  findPareto(x, y)
+  paretoPoints = [];
+  idx = [];
+  cond = zeros(numel(x), 1);
+  %x = x';
+  %y = y';
+
+  for i=1:numel(x)
+    c1 = x < x(i) & y < y(i);
+    c2 = x == x(i) & y < y(i);
+    c3 = x < x(i) & y == y(i);
+    cond = sum(  c1 | c2 | c3 );
+    if(cond == 0)
+      paretoPoints = [paretoPoints; x(i) y(i)];
+      idx = [idx; i];
+    end
+  end
+
+  %paretoPoints = paretoPoints';
+  return;
+end
+
 function [ names, vals ] = readResources( tempConfigName )
   fid = fopen(tempConfigName);
 
@@ -199,15 +221,28 @@ if (strcmpi(state,'nextStep'))
   notCOnes = c1 || c2
   %pause
 
-  %TODO might be in the wrong place
+  %might be in the wrong place , but its working
   %if searchQueue is empty we should stop
   if ( rows(searchQueue) == 0 )
     constraintsValues
     if(~notCOnes)
-      newConstraint = constraintsValues(currentConfigNumber,:)
+
+      %newConstraint = constraintsValues(currentConfigNumber,:)
+      % here we get the pareto points between the points already covered and create a new constraint based on them.
+      cycles = 1;
+      ALMs = 2; %TODO use all metrics distances
+      %find pareto
+      [pp, pIdx] = findPareto(metricsValues(:, cycles), metricsValues(:, ALMs))
+      %sort the points according to Cycles,  we want the point with less resources and more cycles (the last of the sorted pareto points)
+      [~, sortedPIdx] = sort(pp(:, 1)) %1 is the first metric we selected in the paretoPoints function
+      pIdx = pIdx(sortedPIdx)
+      %TODO we should check if the point is already discarded or covered, in this case, we should try to generate another point
+      newConstraint = constraintsValues(pIdx(end),:)
+      %pause
 
       exploreResources = newConstraint > 1
       diff = ceil(0.1*newConstraint)
+
       for resIdx=1:numel(newConstraint)
         %disp('pause outside if')
         %pause

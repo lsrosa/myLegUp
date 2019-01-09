@@ -212,11 +212,7 @@ endif
 	#compile each config in fact
 	#$(MAKE) --ignore-errors -C $$mkfile
 	for mkfile in  $(LOOP_FOLDERS) ; do \
-		echo 'before' $(LOOP_FOLDERS) - $$mkfile; \
-		read -p "Press any key to continue... " -n1 -s; \
 		$(MAKE) -C $$mkfile; \
-		echo 'after' $(LOOP_FOLDERS) - $$mkfile; \
-		read -p "Press any key to continue... " -n1 -s; \
 	done
 
 	#first, get only folders and configs that generated hardware

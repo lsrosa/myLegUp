@@ -43,7 +43,7 @@ out.%/$(VFILE):%
 	@echo $(TARGETS)
 	@echo 'I am here starting compiling configurations for loop' $<
 	@echo $< $@
-	read -p "Press any key to continue... " -n1 -s
+	#read -p "Press any key to continue... " -n1 -s
 ifndef LEGUPHOME
 	$(error LegUP home is missing! Please add "export LEGUPHOME=<LegUP dir>" in your bashrc)
 endif
