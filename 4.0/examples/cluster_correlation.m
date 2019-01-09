@@ -13,15 +13,8 @@ nfiles = nfiles - 1;
 %get the name of each loop and config
 for i=1:nfiles
   parts = strsplit(arg_list{i}, '/');
-  configFiles(i) = strrep(arg_list(i), '/hardware_estimation.mat', '');
-  configFiles(i) = strrep(configFiles(i), 'out.', '');
-
-  configNames(i) = strcat(parts(3), parts(4));
-  %makes nomes shorter for printing purposes
-  configNames(i) = strrep(configNames(i), 'loop', 'l');
-  configNames(i) = strrep(configNames(i), 'out.', '');
-  configNames(i) = strrep(configNames(i), 'config', 'c');
-  configNames(i) = strrep(configNames(i), '.tcl', '');
+  configname = strrep(parts(4), 'out.', '');
+  configFiles(i) = strrep(arg_list(i), 'hardware_estimation.mat', configname);
 end
 %configNames
 %configFiles
@@ -41,7 +34,9 @@ end
 
 %readConfigs
 %read one of them to get the resources
-fid = fopen(configFiles{i});
+configFiles{1}
+fid = fopen(configFiles{1})
+pwd
 res = cell(); con = [];
 while((line=fgets(fid)) != -1)
   parts = strsplit(line, ' ');
@@ -110,17 +105,22 @@ metrics = metrics(:, 1:2);
 nmeasures = 2;
 
 resourcesK = ceil(max(max(variableConstraints))*1.1);
-[h1 h2] = hist(metrics(:,1),resourcesK);
-startCycles = h2(h1!=0)';
-cyclesK = numel(startCycles);
+%resourcesK = 4;%this line helps to control the number of clusters
+[h1 h2] = hist(metrics(:,1),resourcesK)
+startCycles = h2(h1!=0)'
+%startCycles = [442.27 543.36 695.00 947.73]'%that's cheating
+cyclesK = numel(startCycles)
 
-[h1 h2] = hist(metrics(:,2:end),resourcesK);
-metricsK = ceil(mean(sum(h1!=0)));
+%resourcesK = 2;%this line helps to control the number of clusters
+[h1 h2] = hist(metrics(:,2:end),resourcesK)
+metricsK = ceil(mean(sum(h1!=0)))
+%metricsK = 2;%this line helps to control the nuber of clusters
 for i=2:nmeasures
-  [h1 h2] = hist(metrics(:,i),metricsK);
-  startMetrics(:,i-1) = h2(h1!=0);
+  [h1 h2] = hist(metrics(:,i),metricsK)
+  startMetrics(:,i-1) = h2(h1!=0)
 end
-[metricsK, ~] = size(startMetrics);
+[metricsK, ~] = size(startMetrics)
+%metricsK = 2;%this line helps to control the number of clusters
 %startCycles
 %startMetrics
 %cyclesK

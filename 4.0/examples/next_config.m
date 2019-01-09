@@ -2,6 +2,7 @@ disp('I am on next_config.m');
 disp(pwd)
 tempConfigName = 'tempconfig.tcl';
 dataFileName = 'partial_data.mat';
+masterPause = false;
 
 cond = exist(dataFileName, 'file');
 
@@ -89,6 +90,9 @@ if (cond == 0) %this means there is no file
   searchQueue = [];
   partialMetricValues = [];
   partialConstraintsValues = [];
+  discardedConstraints = [];
+  flag10 = false;
+  maxResources = constraintsValues;
 
   %create a new confi#.tcl and out folder, copy .bc and config into the folder
   mkdir('out.config1.tcl');
@@ -113,7 +117,7 @@ if (cond == 0) %this means there is no file
     end
   end
 
-  save(dataFileName, 'constraintsNames', 'constraintsValues', 'currentConfigNumber', 'state', 'compileQueue', 'searchQueue', 'partialMetricValues', 'partialConstraintsValues');
+  save(dataFileName, 'constraintsNames', 'constraintsValues', 'currentConfigNumber', 'state', 'compileQueue', 'searchQueue', 'partialMetricValues', 'partialConstraintsValues', 'discardedConstraints', 'maxResources', 'flag10');
 
   compileQueue
   %pause
@@ -144,31 +148,34 @@ if (strcmpi(state,'nextStep'))
   da = currMetrics(ALMs) - partialMetricValues(:, ALMs)
   %gw = zeros(size(dt));
 
-  %we need to treat dt == 0 and da == 0 cases
+  %we need to treat dt == 0 and/or da == 0 cases
   for ix=1:rows(dt)
-    %same or worse time, area improved
-    if(dt(ix) <= 0 && da(ix) > 0)
-      %gw(ix) = Inf;
+    %same time, area improved
+    if(dt(ix) == 0 && da(ix) > 0)
       searchQueue = [searchQueue; nconfigs+ix];
-    %time improved, same or worse area
-    elseif (dt(ix) > 0 && da(ix) <= 0)
-      %gw(ix) = Inf;
+    %worse time, area improved
+    elseif(dt(ix) < 0 && da(ix) > 0)
+      searchQueue = [searchQueue; nconfigs+ix];
+    %time improved, same area
+    elseif (dt(ix) > 0 && da(ix) == 0)
+      searchQueue = [searchQueue; nconfigs+ix];
+    %time improved, worse area
+    elseif (dt(ix) > 0 && da(ix) < 0)
       searchQueue = [searchQueue; nconfigs+ix];
     %same time, same area
     elseif (dt(ix) == 0 && da(ix) == 0)
-      %gw(ix) = Inf;
       searchQueue = [searchQueue; nconfigs+ix];
     %same time, area degraded
     elseif (dt(ix) == 0 && da(ix) < 0)
-      %gw(ix) = -Inf;
+      disp('oro? 1');
     %time degraded, same area
     elseif (dt(ix) < 0 && da(ix) == 0)
-      %gw(ix) = -Inf;
+      disp('oro? 2');
     %time degraded, area degraded
     elseif (dt(ix) < 0 && da(ix) < 0)
-      %gw(ix) = -Inf;
+      disp('oro? 3');
     else
-      %gw(ix) = da(ix)/dt(ix);
+      disp('oro? 4');
     end
   end
 
@@ -184,14 +191,77 @@ if (strcmpi(state,'nextStep'))
   partialConstraintsValues = [];
   partialMetricValues = [];
 
+  %TODO evaluate conditions to add the 10% desing in the queue
+  onesConstraint = ones(size(maxResources))
+  c1 = ismember(onesConstraint, constraintsValues, 'rows')
+  c2 = ismember(onesConstraint, discardedConstraints, 'rows')
+  %pause
+  notCOnes = c1 || c2
+  %pause
+
   %TODO might be in the wrong place
   %if searchQueue is empty we should stop
   if ( rows(searchQueue) == 0 )
-    disp('removing file tempconfig.tcl');
-    delete('tempconfig.tcl');
-    return;
+    constraintsValues
+    if(~notCOnes)
+      newConstraint = constraintsValues(currentConfigNumber,:)
+
+      exploreResources = newConstraint > 1
+      diff = ceil(0.1*newConstraint)
+      for resIdx=1:numel(newConstraint)
+        %disp('pause outside if')
+        %pause
+        if(exploreResources(resIdx) == 1)
+          %disp('pause inside if')
+          %pause
+          newConstraint(resIdx) - diff(resIdx);
+          newValue = newConstraint(resIdx) - diff(resIdx);
+          if(newValue >= 1)
+            newConstraint(resIdx) = newValue;
+          else
+            newConstraint(resIdx) = 1;
+          end
+          assert(newConstraint(resIdx) >= 1 && 'new constraint should be >= 1 when adding the 10% rule');
+        end
+      end
+      newConstraint
+      constraintsValues = [constraintsValues; newConstraint]
+      searchQueue = rows(constraintsValues)
+
+      %add all possible designs to a queue
+      currConfig = newConstraint
+      exploreResources = currConfig > 1
+      for resIdx=1:numel(constraintsNames)
+        %check if this resource is up to variation
+        if(exploreResources(resIdx) == 1)
+          newConstraint = currConfig;
+          newConstraint(resIdx) = newConstraint(resIdx)-1
+          compileQueue = [compileQueue; newConstraint];
+        end
+      end
+
+      compileQueue
+      nextConfigName = writeResources(tempConfigName, constraintsNames, newConstraint, rows(constraintsValues))
+      currentConfigNumber = rows(constraintsValues)
+      state = 'spread';
+      flag10 = true
+
+      save(dataFileName, 'constraintsNames', 'constraintsValues', 'currentConfigNumber', 'metrics', 'metricsValues', 'state', 'compileQueue', 'searchQueue', 'partialMetricValues', 'partialConstraintsValues', 'discardedConstraints', 'maxResources', 'flag10');
+
+      fid = fopen('nextconfig', 'w');
+      fputs(fid, strcat(nextConfigName,"\n"));
+      fclose(fid);
+
+      %pause
+      return;
+    else
+      disp('removing file tempconfig.tcl');
+      delete('tempconfig.tcl');
+      return;
+    end
   end
 
+  %this loop pop the searchQueue and creates configs varying the constraints
   do
     disp('popping from searchQueue');
 
@@ -213,17 +283,46 @@ if (strcmpi(state,'nextStep'))
     currConfig = constraintsValues(currentConfigNumber,:)
     searchQueue
 
-    %add all possible designs to a compileQueue
-    exploreResources = currConfig > 1
+    %selects constraints to be reduced
+    exploreResourcesDown = currConfig > 1
+    %selects constraints to be increased
+    exploreResourcesUp = currConfig < maxResources & maxResources > 1
+
     for resIdx=1:numel(constraintsNames)
       %check if this resource is up to variation
-      if(exploreResources(resIdx) == 1)
+      if(exploreResourcesDown(resIdx) == 1)
         newConstraint = currConfig;
         newConstraint(resIdx) = newConstraint(resIdx)-1;
 
+        newConstraintDown = newConstraint
+
         %check is the new constraint has not been searched before
-        if(~ismember(newConstraint, constraintsValues, 'rows'))
+        c1 = ~ismember(newConstraint, constraintsValues, 'rows');
+        AlreadyCompiledDown = c1
+        c2 = ~ismember(newConstraint, discardedConstraints, 'rows');
+        AlreadydiscardedDown = c2
+        if(c1 && c2)
           compileQueue = [compileQueue; newConstraint];
+        end
+      end
+
+      %setting this false for some tests
+      if(false)
+        %this adds the increasing resources
+        if(exploreResourcesUp(resIdx) == 1)
+          newConstraint = currConfig;
+          newConstraint(resIdx) = newConstraint(resIdx)+1;
+
+          newConstraintUP = newConstraint
+
+          %check is the new constraint has not been searched before
+          c1 = ~ismember(newConstraint, constraintsValues, 'rows');
+          AlreadyCompiledUp = c1
+          c2 = ~ismember(newConstraint, discardedConstraints, 'rows');
+          AlreadydiscardedUp = c2
+          if(c1 && c2)
+            compileQueue = [compileQueue; newConstraint];
+          end
         end
       end
     end
@@ -241,17 +340,57 @@ if (strcmpi(state,'nextStep'))
     state = 'quit'
   end
 
-  %pause
+  if (masterPause)
+    pause
+  end
 end
 
 % spread subtracts one from each resource to evaluate the next step
 if(strcmpi(state,'spread'))
   disp('I am at spread');
 
+  %the logic to unschedule nodes should comes there.
+  %lastConstraint = the last compiled config
+  %compare with currConfig  and currMetrics
+
+  dominanceFlag = false;
+  if( rows(partialMetricValues) > 0 )
+    %TODO get automatically those indexes
+    cycles = 1;
+    ALMs = 2; %TODO use all metrics distances
+    currMetrics
+    partialMetricValues
+    dt = currMetrics(cycles) - partialMetricValues(end, cycles)
+    da = currMetrics(ALMs) - partialMetricValues(end, ALMs)
+
+    %These are the cases where we should unschedule the parent and other children points
+    c1 = dt == 0 && da >  0;
+    paretoAreaDominant = c1
+    c2 = dt >  0 && da == 0;
+    paretoCyclesDominant = c2
+    c3 = dt == 0 && da == 0;
+    SamePoint = c3
+    %same time, area improved
+    if(c1 || c2 || c3)
+      %this flag will control the next_config generation
+      dominanceFlag = true;
+
+      %this serves to check if configs were discarded up in "nextStep"
+      discardedConstraints = [discardedConstraints; compileQueue]
+
+      %unschedule by emptying the compile queue
+      compileQueue = [];
+      disp('emptying compileQueue since dominant or same point has been found');
+      %TODO at this point a compilation will occur in the upper makefile, thus we need to go back at "nextStep" -- GOD forbbids me to use a GOTO =(
+    end
+    %pause
+  end
+  discardedConstraints
   compileQueue
+
   if(rows(compileQueue) > 0)
     %get first
-    currConstraint = compileQueue(1,:);
+    lastConstraint = compileQueue(1,:);
     %pop the compileQueue
     if(rows(compileQueue) == 1)
       compileQueue = [];
@@ -260,31 +399,44 @@ if(strcmpi(state,'spread'))
     end
   else
     disp('there is something wrong with the compileQueue')
-    assert(rows(compileQueue) >= 0 && 'compileQueue size is not positive')
+    %assert(rows(compileQueue) >= 0 && 'compileQueue size is not positive')
   end
-
   %if all spread configs were generated
   compileQueue
   rows(compileQueue)
+
   if(rows(compileQueue) == 0)
     state = 'nextStep'
   end
-  %pause
 
-  constraintsValues
-  compileQueue
-  partialConstraintsValues = [partialConstraintsValues; currConstraint]
+  %if we emptyied the compileQueue we skip creating a new config.tcl
+  if(~dominanceFlag)
+    %pause
+    constraintsValues
+    compileQueue
+    partialConstraintsValues = [partialConstraintsValues; lastConstraint]
+    nextConfigName = writeResources(tempConfigName, constraintsNames, lastConstraint, rows(constraintsValues)+rows(partialConstraintsValues))
+  end
 
-  nextConfigName = writeResources(tempConfigName, constraintsNames, currConstraint, rows(constraintsValues)+rows(partialConstraintsValues))
-
+  if (masterPause)
+    pause
+  end
   %saving states and data for makefile
   %TODO I should do all this inside Octave
-  save(dataFileName, 'constraintsNames', 'constraintsValues', 'currentConfigNumber', 'metrics', 'metricsValues', 'state', 'compileQueue', 'searchQueue', 'partialMetricValues', 'partialConstraintsValues');
+  save(dataFileName, 'constraintsNames', 'constraintsValues', 'currentConfigNumber', 'metrics', 'metricsValues', 'state', 'compileQueue', 'searchQueue', 'partialMetricValues', 'partialConstraintsValues', 'discardedConstraints', 'maxResources', 'flag10');
 
-  fid = fopen('nextconfig', 'w');
-  fputs(fid, strcat(nextConfigName,"\n"));
+  %if we emptyied the compileQueue we write a dummy for the upper level Makefile skip compilation
+  if(dominanceFlag)
+    fid = fopen('dummy', 'w');
+    fputs(fid, strcat("dummy","\n"));
+  else
+    fid = fopen('nextconfig', 'w');
+    fputs(fid, strcat(nextConfigName,"\n"));
+  end
   fclose(fid);
 
-  %pause
+  if (masterPause)
+    pause
+  end
   return;
 end

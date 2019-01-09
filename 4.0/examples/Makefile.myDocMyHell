@@ -202,7 +202,7 @@ endif
 
 	#TODO loop-select creates an module.bc file, which has already passed through all opt passes, this file is used to compile with each different config.
 	#TODO we are hotfixing this, but the loop wrapper inplementation should solve this. I hope.
-	for mkfile in  $(LOOP_FOLDERS) ; do \
+	for mkfile in $(LOOP_FOLDERS) ; do \
 		echo cp $(NAME).c $$mkfile/module.c; \
 		cp $(NAME).c $$mkfile/module.c;	 \
 	done
@@ -210,8 +210,13 @@ endif
 	#read -p "Press any key to continue... " -n1 -s
 
 	#compile each config in fact
+	#$(MAKE) --ignore-errors -C $$mkfile
 	for mkfile in  $(LOOP_FOLDERS) ; do \
-		$(MAKE) --ignore-errors -C $$mkfile; \
+		echo 'before' $(LOOP_FOLDERS) - $$mkfile; \
+		read -p "Press any key to continue... " -n1 -s; \
+		$(MAKE) -C $$mkfile; \
+		echo 'after' $(LOOP_FOLDERS) - $$mkfile; \
+		read -p "Press any key to continue... " -n1 -s; \
 	done
 
 	#first, get only folders and configs that generated hardware

@@ -12,7 +12,7 @@ cond = exist(dataFileName, 'file');
 assert(cond ~= 0, 'there should be a partial_data.mat file here');
 
 %contains: constraintsNames, constraintsValues, currentConfigNumber
-dataFile = load(dataFileName)
+dataFile = load(dataFileName);
 constraintsNames = dataFile.constraintsNames;
 constraintsValues = dataFile.constraintsValues;
 currentConfigNumber = dataFile.currentConfigNumber;
@@ -21,6 +21,9 @@ compileQueue = dataFile.compileQueue;
 searchQueue = dataFile.searchQueue;
 partialMetricValues = dataFile.partialMetricValues;
 partialConstraintsValues = dataFile.partialConstraintsValues;
+discardedConstraints = dataFile.discardedConstraints;
+maxResources = dataFile.maxResources;
+flag10 = dataFile.flag10;
 
 %contains: measures, values
 metricsFile = load(metricsFileName);
@@ -43,13 +46,19 @@ else
   assert(~noMetricsCondition, 'there should be metrics in the partial_data.mat file');
   metrics = dataFile.metrics;
   metricsValues = dataFile.metricsValues;
-  partialMetricValues = [partialMetricValues; currentMetricsValues];
+  if(flag10)
+    metricsValues = [metricsValues; currentMetricsValues];
+    flag10 = false;
+  else
+    partialMetricValues = [partialMetricValues; currentMetricsValues];
+  end
 end
 
-save(dataFileName, 'constraintsNames', 'constraintsValues', 'currentConfigNumber', 'metrics', 'metricsValues', 'state', 'compileQueue', 'searchQueue', 'partialMetricValues', 'partialConstraintsValues');
+save(dataFileName, 'constraintsNames', 'constraintsValues', 'currentConfigNumber', 'metrics', 'metricsValues', 'state', 'compileQueue', 'searchQueue', 'partialMetricValues', 'partialConstraintsValues', 'discardedConstraints', 'maxResources', 'flag10');
 
 %this is for debug only
-data2 = load(dataFileName)
+data2 = load(dataFileName);
+
 
 %pause
 return

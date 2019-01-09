@@ -33,27 +33,50 @@ NAME=module
 TARGET_DIRS=$(patsubst %,out.%,$(CONFIGS))
 TARGETS=$(patsubst %,%/$(VFILE),$(TARGET_DIRS))
 
-$(OVERRIDE)all: $(OBJS) $(TARGETS)
+$(OVERRIDE)all: $(TARGETS)
 	@echo ready "=)"
 
 export LEVEL:=$(LEGUPHOME)/examples
 export CUSTOM_MODULE_SCHEDULING:=1
 
 out.%/$(VFILE):%
+	@echo $(TARGETS)
+	@echo 'I am here starting compiling configurations for loop' $<
 	@echo $< $@
+	read -p "Press any key to continue... " -n1 -s
 ifndef LEGUPHOME
 	$(error LegUP home is missing! Please add "export LEGUPHOME=<LegUP dir>" in your bashrc)
 endif
-
 	#copy this config to a temporary, which we are gonna iterate on
 	cp $< tempconfig.tcl
-
 	while [ -f ./tempconfig.tcl ] ; do \
 		octave $(LEGUPHOME)/examples/next_config.m; \
-	 	$(MAKE) compile; \
+	 	$(MAKE) trycompile; \
 	done
+	rm -rf ./nextconfig ./partial_data.mat ./tempconfig.tcl ./config*.tcl
 
-	rm -rf ./nextconfig ./partial_data.mat
+trycompile:
+	if [ -f ./dummy ]; then \
+		rm -rf ./dummy; \
+	else \
+		$(MAKE) trycompile2; \
+	fi
+
+#this rule is to skip compilation while developing the next_config heuristic
+#TODO remove the above call later
+trycompile2:
+	$(eval NEXT_CONFIG:=$(shell cat ./nextconfig))
+	$(eval LOOPS_OUTDIR:=out.$(NEXT_CONFIG))
+	@echo $(LOOPS_OUTDIR)
+	if [ -f $(LOOPS_OUTDIR)/top.map.rpt ]; then \
+		#read -p "Skipping Compilation - Press any key to continue... " -n1 -s; \
+		echo 'already compiled'; \
+		octave $(LEGUPHOME)/examples/estimation.m $(LOOPS_OUTDIR)/top.map.rpt; \
+		octave $(LEGUPHOME)/examples/read_metrics.m $(LOOPS_OUTDIR);\
+	else \
+		$(MAKE) compile; \
+	fi
+
 
 compile:
 	$(eval NEXT_CONFIG:=$(shell cat ./nextconfig))
@@ -115,17 +138,6 @@ cleanall: clean
 	rm -rf on_board
 
 # end cleaning targets
-
-
-################################################################################
-# dependency targets
-################################################################################
-function:
-	#hybridHwOnlyPass \
-	$(LLVM_HOME)opt -legup-config=config.tcl $(OPT_FLAGS) -legup-hw-only < $(NAME).prelto.bc > $(NAME).prelto.hw.bc
-	$(LLVM_HOME)llvm-dis $(NAME).prelto.hw.bc \
-	hybridHWloweringLinking \
-	HWVerilogbackend
 
 ################################################################################
 # dependency targets
