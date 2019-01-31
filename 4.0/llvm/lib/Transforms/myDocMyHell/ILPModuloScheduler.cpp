@@ -1100,7 +1100,7 @@ bool ILPModuloScheduler::solveILP(){
 
       assert(idx <= numVars);
       //std::cout << "before assignment: " << moduloScheduler.schedTime[i] << " variables[i] = " << variables[idx-1] << '\n';
-      moduloScheduler.schedTime[i] = variables[idx-1];
+      moduloScheduler.schedTime[i] = (int)variables[idx-1];
       //if( moduloScheduler.schedTime[i] !=   variables[idx-1] ){
       //  i->dump();
       //  printf("\n%f\n", moduloScheduler.schedTime[i] - variables[idx-1]);
@@ -1112,7 +1112,7 @@ bool ILPModuloScheduler::solveILP(){
         std::cout << " - " <<getLabel(i) << "_" << idx << "_" << idx-1 <<"_t=" << variables[idx-1] << "_" << moduloScheduler.schedTime[i] << "\n\n";
       }
 
-      assert(moduloScheduler.schedTime[i] ==  variables[idx-1] && "weird bug");
+      assert(moduloScheduler.schedTime[i] == (int)variables[idx-1] && "weird int-float casting bug");
     }
 
     if (ILPdebug){
