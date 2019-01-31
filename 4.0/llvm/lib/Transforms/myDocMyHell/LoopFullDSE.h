@@ -80,6 +80,7 @@ class LoopFullDSE : public ModulePass {
     LoopData * getLoopBasicMetrics(llvm::Loop * loop);
 
     void addRAMConstraints(LoopData *ld);
+    void addSolverConstraints(LoopData *ld);
     void addResourcesConstraints(LoopData *ld);
     void addPipelineConstraint(LoopData *ld);
     std::vector<Constraint*> parseConstraints(LoopData *ld);

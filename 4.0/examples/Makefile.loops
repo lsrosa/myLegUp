@@ -58,7 +58,7 @@ out.%/$(VFILE):%
 	mkdir -p $(LOOPS_OUTDIR)
 	cp $< $(LOOPS_OUTDIR)/$<
 	cp module.c $(LOOPS_OUTDIR)/module.c
-	read -p "Press any key to continue... \n" -n1 -s
+	#read -p "Press any key to continue... \n" -n1 -s
 ifndef LEGUPHOME
 	$(error LegUP home is missing! Please add "export LEGUPHOME=<LegUP dir>" in your bashrc)
 endif

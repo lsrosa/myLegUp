@@ -143,11 +143,23 @@ LoopData * LoopFastDSE::getLoopBasicMetrics(llvm::Loop * loop){
 
 void LoopFastDSE::addRAMConstraints(LoopData *ld){
   //local rams always improve performance
-  Constraint *constraint = new Constraint("set_parameter LOCAL_RAMS", 1, 1);
+  Constraint *constraint = new Constraint("set_parameter LOCAL_RAMS", 2, 2);
   ld->TCLConstraints.push_back(constraint);
 
   if(debug){
     std::cout << "adding Local RAM constraint to loop: " << ld->label << "\n";
+  }
+
+  return;
+}
+
+void LoopFastDSE::addSolverConstraints(LoopData *ld){
+  //local rams always improve performance
+  Constraint *constraint = new Constraint(std::string("set_parameter SOLVER \"GUROBI\""), 0, 0);
+  ld->TCLConstraints.push_back(constraint);
+
+  if(debug){
+    std::cout << "adding gurobi solver constraint to loop: " << ld->label << "\n";
   }
 
   return;
@@ -246,6 +258,7 @@ void LoopFastDSE::createTCLConfigs(llvm::Loop *loop){
 
   //add the Local RAM constraints in the TCL constraints list
   addRAMConstraints(ld);
+  addSolverConstraints(ld);
   //ADD resource constraints
   addResourcesConstraints(ld);
   addPipelineConstraint(ld);

@@ -958,9 +958,7 @@ int ILPModuloScheduler::runILPLPSolver() {
     }
 
     assert(count == numInst);
-
     set_obj_fnex(sdcSolver.lp, count, variableCoefficients, variableIndices);
-
     set_minim(sdcSolver.lp);
 
     if (ILPdebug)
@@ -994,7 +992,6 @@ int ILPModuloScheduler::runILPLPSolver() {
       ILPGRBmodel->set(GRB_DoubleParam_TimeLimit, solver_time_budget*60.0);
 
       GRBsolution = ILPGRBmodel->getVars();
-
       //fix for integer variables
       for(auto imap : FUinstMap){
         for(auto i : imap.second){
@@ -1006,12 +1003,10 @@ int ILPModuloScheduler::runILPLPSolver() {
           GRBsolution[instYindex[i]-1].set(GRB_CharAttr_VType, 'I');
         }
       }
-
       for (auto entry : startVariableIndex) {
         //std::cout << "setting C" << entry.second << " as integer" << '\n';
         GRBsolution[entry.second-1].set(GRB_CharAttr_VType, 'I');
       }
-
       ticsv = clock();
       ILPGRBmodel->optimize();
       tocsv = clock();
