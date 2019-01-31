@@ -67,15 +67,7 @@ trycompile:
 trycompile2:
 	$(eval NEXT_CONFIG:=$(shell cat ./nextconfig))
 	$(eval LOOPS_OUTDIR:=out.$(NEXT_CONFIG))
-	@echo $(LOOPS_OUTDIR)
-	if [ -f $(LOOPS_OUTDIR)/top.map.rpt ]; then \
-		#read -p "Skipping Compilation - Press any key to continue... " -n1 -s; \
-		echo 'already compiled'; \
-		octave $(LEGUPHOME)/examples/estimation.m $(LOOPS_OUTDIR)/top.map.rpt; \
-		octave $(LEGUPHOME)/examples/read_metrics.m $(LOOPS_OUTDIR);\
-	else \
-		$(MAKE) compile; \
-	fi
+	@echo $(L─  c “”
 
 
 compile:

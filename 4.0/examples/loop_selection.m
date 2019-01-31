@@ -127,6 +127,16 @@ for i=1:nmeasures-1
   xlabel(measures(1));
   ylabel(measures(i+1));
   [ppoints, pidx] = findPareto(finalValues(:,1), finalValues(:, i+1))
+
+  names = finalConfigNames(pidx, :)
+  mtrcs = finalValues(pidx, :)
+  nunique = numel(pidx)
+  npareto = 0;
+  for n=1:nunique
+    npareto = npareto + columns(strsplit(names(n, :), ','));
+  end
+  npareto
+
   [~,sortedIx] = sort(ppoints(:, 1));
   ppoints = ppoints(sortedIx, :);
   pidx = pidx(sortedIx);

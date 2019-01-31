@@ -79,6 +79,10 @@ nres = numel(resources);
 %resources
 %constraints
 
+filename = strcat('results_', type, '.m')
+save(filename, 'constraints', 'metrics', 'configFiles')
+return;
+
 variableConstraints = [];
 variableResources = cell();
 

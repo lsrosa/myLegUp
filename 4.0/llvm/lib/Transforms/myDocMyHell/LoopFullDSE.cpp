@@ -189,7 +189,7 @@ void LoopFullDSE::addPipelineConstraint(LoopData *ld){
     ld->TCLConstraints.push_back(constraint);
 
     //just to set the modulo scheduler
-    constraint = new Constraint(std::string("set_parameter MODULO_SCHEDULER \"NI\""), 0, 0);
+    constraint = new Constraint(std::string("set_parameter MODULO_SCHEDULER \"ILP\""), 0, 0);
     ld->TCLConstraints.push_back(constraint);
     return;
   }

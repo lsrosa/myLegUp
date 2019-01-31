@@ -187,6 +187,9 @@ if (strcmpi(state,'nextStep'))
     %same time, same area
     elseif (dt(ix) == 0 && da(ix) == 0)
       searchQueue = [searchQueue; nconfigs+ix];
+    %better time and better area
+    elseif (dt(ix) > 0 && da(ix) > 0)
+      searchQueue = [searchQueue; nconfigs+ix];
     %same time, area degraded
     elseif (dt(ix) == 0 && da(ix) < 0)
       disp('oro? 1');
@@ -223,8 +226,8 @@ if (strcmpi(state,'nextStep'))
 
   %might be in the wrong place , but its working
   %if searchQueue is empty we should stop
+  searchQueue
   if ( rows(searchQueue) == 0 )
-    constraintsValues
     if(~notCOnes)
 
       %newConstraint = constraintsValues(currentConfigNumber,:)
@@ -237,46 +240,77 @@ if (strcmpi(state,'nextStep'))
       [~, sortedPIdx] = sort(pp(:, 1)) %1 is the first metric we selected in the paretoPoints function
       pIdx = pIdx(sortedPIdx)
       %TODO we should check if the point is already discarded or covered, in this case, we should try to generate another point
-      newConstraint = constraintsValues(pIdx(end),:)
-      %pause
+      newConstraint = constraintsValues(pIdx(end),:);
+      paretoConstraint = newConstraint %debugg only
 
-      exploreResources = newConstraint > 1
-      diff = ceil(0.1*newConstraint)
-
-      for resIdx=1:numel(newConstraint)
-        %disp('pause outside if')
-        %pause
-        if(exploreResources(resIdx) == 1)
-          %disp('pause inside if')
+      %reduce by 10% until find a point that is not compiled or discarded, this is necessary
+      constraintsValues
+      discardedConstraints
+      do
+        exploreResources = newConstraint > 1
+        for resIdx=1:numel(newConstraint)
+          %disp('pause outside if')
           %pause
-          newConstraint(resIdx) - diff(resIdx);
-          newValue = newConstraint(resIdx) - diff(resIdx);
-          if(newValue >= 1)
-            newConstraint(resIdx) = newValue;
-          else
-            newConstraint(resIdx) = 1;
+          if(exploreResources(resIdx) == 1)
+            %newConstraint(resIdx)
+            %0.1*double(newConstraint(resIdx))
+            %annoying int bug
+            diff = ceil(0.1*double(newConstraint(resIdx)));
+            newValue = newConstraint(resIdx) - diff;
+            if(newValue >= 1)
+              newConstraint(resIdx) = newValue;
+              %add all partial values creating a 1-step to the 10% reduced constraints
+            else
+              newConstraint(resIdx) = 1;
+            end
+            assert(newConstraint(resIdx) >= 1 && 'new constraint should be >= 1 when adding the 10% rule');
           end
-          assert(newConstraint(resIdx) >= 1 && 'new constraint should be >= 1 when adding the 10% rule');
         end
-      end
-      newConstraint
-      constraintsValues = [constraintsValues; newConstraint]
-      searchQueue = rows(constraintsValues)
+        newConstraint
+        c1 = ismember(newConstraint, constraintsValues, 'rows');
+        c2 = ismember(newConstraint, discardedConstraints, 'rows');
+        c3 = ismember(newConstraint, onesConstraint, 'rows');
+        alreadyCompiled = c1
+        alreadyDiscarded = c2
+        isOnesConstraint = c3
+      until( (~c1 && ~c2) || c3 )
+
+      constraintsValues = [constraintsValues; newConstraint];
+      searchQueue = [searchQueue; rows(constraintsValues)];
+
+      %newConstraint
+      %constraintsValues
+      %searchQueue
 
       %add all possible designs to a queue
+      %currConfig = constraintsValues(nc, :)
       currConfig = newConstraint
       exploreResources = currConfig > 1
       for resIdx=1:numel(constraintsNames)
         %check if this resource is up to variation
         if(exploreResources(resIdx) == 1)
-          newConstraint = currConfig;
-          newConstraint(resIdx) = newConstraint(resIdx)-1
-          compileQueue = [compileQueue; newConstraint];
+          ncUP = currConfig;
+          ncDOWN = currConfig;
+
+          ncUP(resIdx) = ncUP(resIdx)-1
+          ncDOWN(resIdx) = ncDOWN(resIdx)+1
+
+          c1 = ismember(ncUP, constraintsValues, 'rows');
+          c2 = ismember(ncUP, discardedConstraints, 'rows');
+          if(~(c1 || c2))
+            compileQueue = [compileQueue; ncUP];
+          end
+
+          c3 = ismember(ncDOWN, constraintsValues, 'rows');
+          c4 = ismember(ncDOWN, discardedConstraints, 'rows');
+          if(~(c3 || c4))
+            compileQueue = [compileQueue; ncDOWN];
+          end
         end
       end
 
       compileQueue
-      nextConfigName = writeResources(tempConfigName, constraintsNames, newConstraint, rows(constraintsValues))
+      nextConfigName = writeResources(tempConfigName, constraintsNames, currConfig, rows(constraintsValues))
       currentConfigNumber = rows(constraintsValues)
       state = 'spread';
       flag10 = true
@@ -287,7 +321,7 @@ if (strcmpi(state,'nextStep'))
       fputs(fid, strcat(nextConfigName,"\n"));
       fclose(fid);
 
-      %pause
+      pause
       return;
     else
       disp('removing file tempconfig.tcl');
@@ -302,10 +336,10 @@ if (strcmpi(state,'nextStep'))
 
     if(rows(searchQueue) == 0)
       disp('nothing else to search');
-      disp('removing file tempconfig.tcl');
-      delete('tempconfig.tcl');
-      return;
-      %break;
+      %disp('removing file tempconfig.tcl');
+      %delete('tempconfig.tcl');
+      break;
+      %return;
     end
 
     currentConfigNumber = searchQueue(1)
@@ -332,12 +366,12 @@ if (strcmpi(state,'nextStep'))
         newConstraintDown = newConstraint
 
         %check is the new constraint has not been searched before
-        c1 = ~ismember(newConstraint, constraintsValues, 'rows');
+        c1 = ismember(newConstraintDown, constraintsValues, 'rows');
         AlreadyCompiledDown = c1
-        c2 = ~ismember(newConstraint, discardedConstraints, 'rows');
+        c2 = ismember(newConstraintDown, discardedConstraints, 'rows');
         AlreadydiscardedDown = c2
-        if(c1 && c2)
-          compileQueue = [compileQueue; newConstraint];
+        if(~(c1 || c2))
+          compileQueue = [compileQueue; newConstraintDown];
         end
       end
 
@@ -351,12 +385,12 @@ if (strcmpi(state,'nextStep'))
           newConstraintUP = newConstraint
 
           %check is the new constraint has not been searched before
-          c1 = ~ismember(newConstraint, constraintsValues, 'rows');
+          c1 = ismember(newConstraintUP, constraintsValues, 'rows');
           AlreadyCompiledUp = c1
-          c2 = ~ismember(newConstraint, discardedConstraints, 'rows');
+          c2 = ismember(newConstraintUP, discardedConstraints, 'rows');
           AlreadydiscardedUp = c2
-          if(c1 && c2)
-            compileQueue = [compileQueue; newConstraint];
+          if(~(c1 || c2))
+            compileQueue = [compileQueue; newConstraintUP];
           end
         end
       end
@@ -372,7 +406,15 @@ if (strcmpi(state,'nextStep'))
   if(rows(compileQueue) > 0)
     state = 'spread'
   else
-    state = 'quit'
+    if(~notCOnes)
+      state = 'nextStep'
+      save(dataFileName, 'constraintsNames', 'constraintsValues', 'currentConfigNumber', 'metrics', 'metricsValues', 'state', 'compileQueue', 'searchQueue', 'partialMetricValues', 'partialConstraintsValues', 'discardedConstraints', 'maxResources', 'flag10');
+    else
+      state = 'quit'
+      disp('removing file tempconfig.tcl');
+      delete('tempconfig.tcl');
+      return;
+    end
   end
 
   if (masterPause)
@@ -405,8 +447,10 @@ if(strcmpi(state,'spread'))
     paretoCyclesDominant = c2
     c3 = dt == 0 && da == 0;
     SamePoint = c3
+    c4 = dt > 0 && da > 0;
+    fullDominant = c4
     %same time, area improved
-    if(c1 || c2 || c3)
+    if(c1 || c2 || c3 || c4)
       %this flag will control the next_config generation
       dominanceFlag = true;
 

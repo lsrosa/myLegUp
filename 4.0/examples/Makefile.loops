@@ -31,9 +31,18 @@ include $(LEVEL)/Makefile.private
 # see phi/Makefile
 NAME=module
 TARGET_DIRS=$(patsubst %,out.%,$(CONFIGS))
-TARGETS=$(patsubst %,%/$(VFILE),$(TARGET_DIRS))
+ALL_TARGETS=$(patsubst %,%/$(VFILE),$(TARGET_DIRS))
+BUILT_TARGETS=$(wildcard out.config*.tcl/$(VFILE))
+TARGETS=$(filter-out $(BUILT_TARGETS), $(ALL_TARGETS))
 
-$(OVERRIDE)all: $(OBJS) $(TARGETS)
+$(OVERRIDE)all: $(TARGETS)
+	#@echo $(words $(ALL_TARGETS))
+	#read -p "Press any key to continue... \n" -n1 -s
+	#@echo $(BUILT_TARGETS)
+	#@echo $(words $(BUILT_TARGETS))
+	#read -p "Press any key to continue... \n" -n1 -s
+	#@echo $(words $(TARGETS))
+	#read -p "Press any key to continue... \n" -n1 -s
 	@echo ready "=)"
 
 export LEVEL:=$(LEGUPHOME)/examples
@@ -49,6 +58,7 @@ out.%/$(VFILE):%
 	mkdir -p $(LOOPS_OUTDIR)
 	cp $< $(LOOPS_OUTDIR)/$<
 	cp module.c $(LOOPS_OUTDIR)/module.c
+	read -p "Press any key to continue... \n" -n1 -s
 ifndef LEGUPHOME
 	$(error LegUP home is missing! Please add "export LEGUPHOME=<LegUP dir>" in your bashrc)
 endif
