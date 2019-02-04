@@ -48,6 +48,7 @@
 # like, but make sure they will work in your system.
 # The VENDOR_ID _must_ match what is configured on your FPGA's PCIe endpoint 
 # header. Xilinx has a VENDOR_ID = 10EE.
+export CONFIG_CC_STACKPROTECTOR_REGULAR=1
 NAME := riffa
 VENDOR_ID0 := 10EE
 VENDOR_ID1 := 1172

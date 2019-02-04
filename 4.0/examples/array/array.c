@@ -9,7 +9,7 @@ volatile int a[N] = INITIALIZE, b[N] = INITIALIZE;
 int main() {
     int result = 0;
 
-    loop6: for(int i=1; i<N-1; i++){
+    loop5:for(int i=1; i<N-1; i++){
       a[i] /= ((a[i]+1))/(b[i]+1);
       result += a[i];
       //a[i] = ((a[i+1]))/(b[i]);

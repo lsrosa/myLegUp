@@ -380,7 +380,7 @@
 #define HAVE_TCL8_5_TCL_H 1
 
 /* Define if the setupterm() function is supported this platform. */
-#define HAVE_TERMINFO 1
+/* #undef HAVE_TERMINFO */
 
 /* Define to 1 if you have the <termios.h> header file. */
 #define HAVE_TERMIOS_H 1
@@ -458,13 +458,13 @@
 /* #undef HAVE____CHKSTK */
 
 /* Linker version detected at compile time. */
-#define HOST_LINK_VERSION "2.24"
+#define HOST_LINK_VERSION "2.30"
 
 /* Installation directory for binary executables */
 #define LLVM_BINDIR "/usr/local/bin"
 
 /* Time at which LLVM was configured */
-#define LLVM_CONFIGTIME "Mon Jun  4 19:08:53 -03 2018"
+#define LLVM_CONFIGTIME "Sun Feb  3 22:32:12 -02 2019"
 
 /* Installation directory for data files */
 #define LLVM_DATADIR "/usr/local/share/llvm"

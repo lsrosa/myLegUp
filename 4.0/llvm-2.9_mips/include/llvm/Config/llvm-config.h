@@ -21,7 +21,7 @@
 #define LLVM_BINDIR "/usr/local/bin"
 
 /* Time at which LLVM was configured */
-#define LLVM_CONFIGTIME "Mon Jun  4 19:08:13 -03 2018"
+#define LLVM_CONFIGTIME "Sun Feb  3 22:30:45 -02 2019"
 
 /* Installation directory for data files */
 #define LLVM_DATADIR "/usr/local/share/llvm"

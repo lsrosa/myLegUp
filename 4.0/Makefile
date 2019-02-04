@@ -39,7 +39,7 @@ all: llvm/tools/polly/Makefile.config llvm/Makefile.config llvm-2.9_mips/Makefil
 	$(MAKE) -C tiger/processor
 	$(MAKE) -C tiger/linux_tools
 	$(MAKE) -C tiger/tool_source/profiling_tools
-	$(MAKE) -C pcie
+	#$(MAKE) -C pcie
 	#$(MAKE) -C gui
 	$(MAKE) -C ip
 	if [ -d .git ]; then \

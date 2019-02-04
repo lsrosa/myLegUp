@@ -1362,6 +1362,7 @@ static DEFINE_PCI_DEVICE_TABLE(fpga_ids) = {
 };
 
 MODULE_DEVICE_TABLE(pci, fpga_ids);
+
 static struct pci_driver fpga_driver = {
 	.name		= DEVICE_NAME,
 	.id_table	= fpga_ids,

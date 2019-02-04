@@ -21,7 +21,7 @@
 printc_uart:                            @ @printc_uart
 	.fnstart
 .Leh_func_begin0:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	movw	r1, #36864
 	movt	r1, #4096
 	str	r0, [r1]
@@ -37,21 +37,21 @@ printc_uart:                            @ @printc_uart
 print_uart:                             @ @print_uart
 	.fnstart
 .Leh_func_begin1:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	ldrb	r1, [r0]
 	cmp	r1, #0
 	bxeq	lr
 	movw	r2, #36864
 	add	r0, r0, #1
 	movt	r2, #4096
-.LBB1_1:                                @ %.lr.ph
+.LBB1_1:                                @ %while.body
                                         @ =>This Inner Loop Header: Depth=1
 	sxtb	r1, r1
 	str	r1, [r2]
 	ldrb	r1, [r0], #1
 	cmp	r1, #0
 	bne	.LBB1_1
-@ BB#2:                                 @ %._crit_edge
+@ BB#2:                                 @ %while.end
 	bx	lr
 .Ltmp1:
 	.size	print_uart, .Ltmp1-print_uart
@@ -64,7 +64,7 @@ print_uart:                             @ @print_uart
 _i2h:                                   @ @_i2h
 	.fnstart
 .Leh_func_begin2:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	mov	r1, #87
 	cmp	r0, #10
 	movwlt	r1, #48
@@ -82,7 +82,7 @@ _i2h:                                   @ @_i2h
 _i2H:                                   @ @_i2H
 	.fnstart
 .Leh_func_begin3:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	mov	r1, #55
 	cmp	r0, #10
 	movwlt	r1, #48
@@ -100,7 +100,7 @@ _i2H:                                   @ @_i2H
 i2h:                                    @ @i2h
 	.fnstart
 .Leh_func_begin4:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	push	{r4, r5, r6, r7, r8, lr}
 	sub	sp, sp, #12
 	movw	r6, :lower16:_i2H
@@ -116,7 +116,7 @@ i2h:                                    @ @i2h
 	mov	r1, #0
 	add	r8, sp, #3
 	mov	r7, #0
-.LBB4_2:                                @ %.lr.ph5
+.LBB4_2:                                @ %while.body
                                         @ =>This Inner Loop Header: Depth=1
 	and	r0, r4, #15
 	mov	r5, r1
@@ -127,25 +127,25 @@ i2h:                                    @ @i2h
 	add	r1, r5, #1
 	mov	r4, r0
 	bne	.LBB4_2
-@ BB#3:                                 @ %._crit_edge
+@ BB#3:                                 @ %while.end
 	movw	r0, :lower16:_MergedGlobals
 	mov	r2, #0
 	movt	r0, :upper16:_MergedGlobals
 	cmp	r5, #0
 	strb	r2, [r0, r1]
 	blt	.LBB4_6
-@ BB#4:                                 @ %.lr.ph.preheader
+@ BB#4:                                 @ %while.body7.preheader
 	movw	r0, :lower16:_MergedGlobals
 	sub	r2, r8, #1
 	movt	r0, :upper16:_MergedGlobals
 	mov	r3, r0
-.LBB4_5:                                @ %.lr.ph
+.LBB4_5:                                @ %while.body7
                                         @ =>This Inner Loop Header: Depth=1
 	ldrb	r7, [r2, r1]
 	subs	r1, r1, #1
 	strb	r7, [r3], #1
 	bne	.LBB4_5
-.LBB4_6:                                @ %.loopexit
+.LBB4_6:                                @ %return
 	add	sp, sp, #12
 	pop	{r4, r5, r6, r7, r8, pc}
 .LBB4_7:
@@ -164,7 +164,7 @@ i2h:                                    @ @i2h
 l2h:                                    @ @l2h
 	.fnstart
 .Leh_func_begin5:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	push	{r4, r5, r6, r7, r8, lr}
 	sub	sp, sp, #20
 	movw	r7, :lower16:_i2H
@@ -180,7 +180,7 @@ l2h:                                    @ @l2h
 @ BB#1:
 	mov	r1, #0
 	add	r8, sp, #3
-.LBB5_2:                                @ %.lr.ph5
+.LBB5_2:                                @ %while.body
                                         @ =>This Inner Loop Header: Depth=1
 	and	r0, r5, #15
 	mov	r6, r1
@@ -193,7 +193,7 @@ l2h:                                    @ @l2h
 	lsr	r4, r4, #4
 	cmp	r2, #0
 	bne	.LBB5_2
-@ BB#3:                                 @ %._crit_edge
+@ BB#3:                                 @ %while.end
 	movw	r2, :lower16:_MergedGlobals
 	mov	r3, #0
 	movt	r2, :upper16:_MergedGlobals
@@ -201,10 +201,10 @@ l2h:                                    @ @l2h
 	add	r0, r2, #53
 	strb	r3, [r0, r1]
 	blt	.LBB5_6
-@ BB#4:                                 @ %.lr.ph.preheader
+@ BB#4:                                 @ %while.body8.preheader
 	sub	r7, r8, #1
 	mov	r6, #0
-.LBB5_5:                                @ %.lr.ph
+.LBB5_5:                                @ %while.body8
                                         @ =>This Inner Loop Header: Depth=1
 	ldrb	r5, [r7, r1]
 	add	r0, r2, #53
@@ -214,7 +214,7 @@ l2h:                                    @ @l2h
 	adc	r6, r6, #0
 	cmp	r1, #0
 	bgt	.LBB5_5
-.LBB5_6:                                @ %.loopexit
+.LBB5_6:                                @ %return
 	add	sp, sp, #20
 	pop	{r4, r5, r6, r7, r8, pc}
 .LBB5_7:
@@ -233,21 +233,21 @@ l2h:                                    @ @l2h
 itoa:                                   @ @itoa
 	.fnstart
 .Leh_func_begin6:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	push	{r4, r5, r6, r7, r8, r9, r10, lr}
 	cmp	r0, #0
 	blt	.LBB6_3
-@ BB#1:
+@ BB#1:                                 @ %if.else
 	mov	lr, #0
 	bne	.LBB6_4
 @ BB#2:
 	movw	r0, :lower16:.L.str
 	movt	r0, :upper16:.L.str
 	pop	{r4, r5, r6, r7, r8, r9, r10, pc}
-.LBB6_3:
+.LBB6_3:                                @ %if.then
 	rsb	r0, r0, #0
 	mov	lr, #1
-.LBB6_4:                                @ %.preheader27
+.LBB6_4:                                @ %if.end3
 	movw	r1, #15241
 	movw	r12, #26215
 	movt	r1, #21990
@@ -365,39 +365,41 @@ itoa:                                   @ @itoa
 	add	r0, r9, #48
 	strb	r0, [r2, #9]
 	b	.LBB6_6
-.LBB6_5:                                @ %._crit_edge8
+.LBB6_5:                                @ %for.cond5.for.body8_crit_edge
                                         @   in Loop: Header=BB6_6 Depth=1
 	add	r0, r2, r3
 	mov	r3, r1
 	ldrb	r0, [r0, #10]
-.LBB6_6:                                @ =>This Inner Loop Header: Depth=1
+.LBB6_6:                                @ %for.body8
+                                        @ =>This Inner Loop Header: Depth=1
 	uxtb	r0, r0
 	cmp	r0, #48
 	bne	.LBB6_9
-@ BB#7:                                 @   in Loop: Header=BB6_6 Depth=1
+@ BB#7:                                 @ %for.cond5
+                                        @   in Loop: Header=BB6_6 Depth=1
 	add	r1, r3, #1
 	cmp	r1, #9
 	ble	.LBB6_5
-@ BB#8:                                 @ %split
+@ BB#8:                                 @ %for.end16split
 	add	r3, r3, #1
-.LBB6_9:
+.LBB6_9:                                @ %for.end16
 	cmp	lr, #0
 	beq	.LBB6_11
-@ BB#10:
+@ BB#10:                                @ %if.then17
 	mov	r0, #45
 	strb	r0, [r2, #20]
-.LBB6_11:                               @ %.preheader
+.LBB6_11:                               @ %for.cond19.preheader
 	rsb	r0, r3, #10
 	mov	r12, #0
 	mov	r1, #0
 	cmp	r0, #1
 	blt	.LBB6_15
-@ BB#12:                                @ %.lr.ph.preheader
+@ BB#12:                                @ %for.body22.lr.ph
 	mvn	r1, #8
 	sub	r3, r1, r3
 	add	r1, lr, r2
 	add	r1, r1, #20
-.LBB6_13:                               @ %.lr.ph
+.LBB6_13:                               @ %for.body22
                                         @ =>This Inner Loop Header: Depth=1
 	ldrb	r4, [r2, -r3]
 	sub	r3, r3, #1
@@ -406,7 +408,7 @@ itoa:                                   @ @itoa
 	bne	.LBB6_13
 @ BB#14:
 	mov	r1, r0
-.LBB6_15:                               @ %._crit_edge
+.LBB6_15:                               @ %for.end29
 	add	r0, r2, #20
 	add	r1, r1, lr
 	strb	r12, [r0, r1]
@@ -422,11 +424,11 @@ itoa:                                   @ @itoa
 utoa:                                   @ @utoa
 	.fnstart
 .Leh_func_begin7:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	push	{r4, r5, r6, r7, r8, r9, lr}
 	cmp	r0, #0
 	beq	.LBB7_11
-@ BB#1:                                 @ %.preheader27
+@ BB#1:                                 @ %if.end
 	movw	r1, #15241
 	movw	r12, #52429
 	movt	r1, #21990
@@ -528,32 +530,34 @@ utoa:                                   @ @utoa
 	orr	r0, r9, #48
 	strb	r0, [r1, #31]
 	b	.LBB7_3
-.LBB7_2:                                @ %._crit_edge8
+.LBB7_2:                                @ %for.cond2.for.body5_crit_edge
                                         @   in Loop: Header=BB7_3 Depth=1
 	add	r0, r1, r2
 	mov	r2, r3
 	ldrb	r0, [r0, #32]
-.LBB7_3:                                @ =>This Inner Loop Header: Depth=1
+.LBB7_3:                                @ %for.body5
+                                        @ =>This Inner Loop Header: Depth=1
 	uxtb	r0, r0
 	cmp	r0, #48
 	bne	.LBB7_6
-@ BB#4:                                 @   in Loop: Header=BB7_3 Depth=1
+@ BB#4:                                 @ %for.cond2
+                                        @   in Loop: Header=BB7_3 Depth=1
 	add	r3, r2, #1
 	cmp	r3, #9
 	ble	.LBB7_2
-@ BB#5:                                 @ %..preheader_crit_edge
+@ BB#5:                                 @ %for.cond2.for.cond14.preheader_crit_edge
 	add	r2, r2, #1
-.LBB7_6:                                @ %.preheader
+.LBB7_6:                                @ %for.cond14.preheader
 	rsb	lr, r2, #10
 	mov	r12, #0
 	mov	r3, #0
 	cmp	lr, #1
 	blt	.LBB7_10
-@ BB#7:                                 @ %.lr.ph.preheader
+@ BB#7:                                 @ %for.body17.lr.ph
 	add	r3, r1, r2
 	sub	r2, r2, #10
 	mov	r0, #0
-.LBB7_8:                                @ %.lr.ph
+.LBB7_8:                                @ %for.body17
                                         @ =>This Inner Loop Header: Depth=1
 	sub	r4, r3, r0
 	sub	r5, r1, r0
@@ -564,7 +568,7 @@ utoa:                                   @ @utoa
 	bne	.LBB7_8
 @ BB#9:
 	mov	r3, lr
-.LBB7_10:                               @ %._crit_edge
+.LBB7_10:                               @ %for.end23
 	add	r0, r1, #42
 	strb	r12, [r0, r3]
 	pop	{r4, r5, r6, r7, r8, r9, pc}
@@ -583,13 +587,13 @@ utoa:                                   @ @utoa
 ltoa:                                   @ @ltoa
 	.fnstart
 .Leh_func_begin8:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	push	{r4, r5, r6, r7, r8, r9, lr}
 	mov	r4, r1
 	mov	r5, r0
 	cmp	r4, #0
 	blt	.LBB8_3
-@ BB#1:
+@ BB#1:                                 @ %if.else
 	mov	r8, #0
 	orrs	r0, r5, r4
 	bne	.LBB8_4
@@ -597,17 +601,18 @@ ltoa:                                   @ @ltoa
 	movw	r0, :lower16:.L.str
 	movt	r0, :upper16:.L.str
 	pop	{r4, r5, r6, r7, r8, r9, pc}
-.LBB8_3:
+.LBB8_3:                                @ %if.then
 	rsbs	r5, r5, #0
 	mov	r8, #1
 	rsc	r4, r4, #0
-.LBB8_4:
+.LBB8_4:                                @ %if.end3
 	movw	r9, :lower16:_MergedGlobals
 	mov	r6, #0
 	movt	r9, :upper16:_MergedGlobals
 	mov	r7, #93
 	strb	r6, [r9, #94]
-.LBB8_5:                                @ =>This Inner Loop Header: Depth=1
+.LBB8_5:                                @ %for.body
+                                        @ =>This Inner Loop Header: Depth=1
 	mov	r0, r5
 	mov	r1, r4
 	mov	r2, #10
@@ -626,34 +631,35 @@ ltoa:                                   @ @ltoa
 	sub	r7, r7, #1
 	cmp	r0, #0
 	bgt	.LBB8_5
-.LBB8_6:                                @ %.preheader2
+.LBB8_6:                                @ %for.body8
                                         @ =>This Inner Loop Header: Depth=1
 	add	r0, r9, r6
 	ldrb	r0, [r0, #70]
 	cmp	r0, #48
 	bne	.LBB8_8
-@ BB#7:                                 @   in Loop: Header=BB8_6 Depth=1
+@ BB#7:                                 @ %for.cond5
+                                        @   in Loop: Header=BB8_6 Depth=1
 	add	r6, r6, #1
 	cmp	r6, #23
 	ble	.LBB8_6
-.LBB8_8:
+.LBB8_8:                                @ %for.end16
 	cmp	r8, #0
 	beq	.LBB8_10
-@ BB#9:
+@ BB#9:                                 @ %if.then17
 	mov	r0, #45
 	strb	r0, [r9, #95]
-.LBB8_10:                               @ %.preheader
+.LBB8_10:                               @ %for.cond19.preheader
 	rsb	r0, r6, #24
 	mov	r1, #0
 	mov	r2, #0
 	cmp	r0, #1
 	blt	.LBB8_14
-@ BB#11:                                @ %.lr.ph.preheader
+@ BB#11:                                @ %for.body22.lr.ph
 	mvn	r2, #69
 	add	r3, r8, r9
 	sub	r2, r2, r6
 	add	r3, r3, #95
-.LBB8_12:                               @ %.lr.ph
+.LBB8_12:                               @ %for.body22
                                         @ =>This Inner Loop Header: Depth=1
 	ldrb	r7, [r9, -r2]
 	sub	r2, r2, #1
@@ -662,7 +668,7 @@ ltoa:                                   @ @ltoa
 	bne	.LBB8_12
 @ BB#13:
 	mov	r2, r0
-.LBB8_14:                               @ %._crit_edge
+.LBB8_14:                               @ %for.end29
 	add	r0, r9, #95
 	add	r2, r2, r8
 	strb	r1, [r0, r2]
@@ -678,22 +684,22 @@ ltoa:                                   @ @ltoa
 puts:                                   @ @puts
 	.fnstart
 .Leh_func_begin9:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	ldrb	r1, [r0]
 	cmp	r1, #0
 	beq	.LBB9_3
-@ BB#1:                                 @ %.lr.ph.preheader
+@ BB#1:                                 @ %while.body.preheader
 	movw	r2, #36864
 	add	r0, r0, #1
 	movt	r2, #4096
-.LBB9_2:                                @ %.lr.ph
+.LBB9_2:                                @ %while.body
                                         @ =>This Inner Loop Header: Depth=1
 	sxtb	r1, r1
 	str	r1, [r2]
 	ldrb	r1, [r0], #1
 	cmp	r1, #0
 	bne	.LBB9_2
-.LBB9_3:                                @ %._crit_edge
+.LBB9_3:                                @ %while.end
 	movw	r0, #36864
 	mov	r1, #10
 	movt	r0, #4096
@@ -711,7 +717,7 @@ puts:                                   @ @puts
 printf:                                 @ @printf
 	.fnstart
 .Leh_func_begin10:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	sub	sp, sp, #12
 	push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}
 	sub	sp, sp, #44
@@ -732,10 +738,11 @@ printf:                                 @ @printf
 	str	r0, [sp, #12]
 	str	r8, [sp, #8]            @ 4-byte Spill
 	b	.LBB10_2
-.LBB10_1:                               @ %.backedge
+.LBB10_1:                               @ %while.cond.backedge
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r5, r5, #1
-.LBB10_2:                               @ =>This Loop Header: Depth=1
+.LBB10_2:                               @ %while.cond
+                                        @ =>This Loop Header: Depth=1
                                         @     Child Loop BB10_4 Depth 2
                                         @     Child Loop BB10_33 Depth 2
                                         @     Child Loop BB10_35 Depth 2
@@ -766,10 +773,11 @@ printf:                                 @ @printf
 	ldrb	r0, [r4, r5]
 	cmp	r0, #0
 	beq	.LBB10_115
-@ BB#3:                                 @   in Loop: Header=BB10_2 Depth=1
+@ BB#3:                                 @ %while.cond
+                                        @   in Loop: Header=BB10_2 Depth=1
 	cmp	r0, #37
 	bne	.LBB10_8
-.LBB10_4:                               @ %.preheader
+.LBB10_4:                               @ %while.cond7
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	mov	r0, r5
@@ -780,30 +788,37 @@ printf:                                 @ @printf
 	uxtb	r2, r2
 	cmp	r2, #10
 	blo	.LBB10_4
-@ BB#5:                                 @   in Loop: Header=BB10_2 Depth=1
+@ BB#5:                                 @ %while.end
+                                        @   in Loop: Header=BB10_2 Depth=1
 	cmp	r1, #108
 	addeq	r5, r0, #2
 	add	r0, r4, r5
 	ldrsb	r1, [r0]
 	cmp	r1, #87
 	bgt	.LBB10_9
-@ BB#6:                                 @   in Loop: Header=BB10_2 Depth=1
+@ BB#6:                                 @ %while.end
+                                        @   in Loop: Header=BB10_2 Depth=1
 	cmp	r1, #37
 	bne	.LBB10_37
-@ BB#7:                                 @   in Loop: Header=BB10_2 Depth=1
+@ BB#7:                                 @ %sw.bb97
+                                        @   in Loop: Header=BB10_2 Depth=1
 	str	r11, [r10]
 	add	r5, r5, #1
 	b	.LBB10_2
-.LBB10_8:                               @   in Loop: Header=BB10_2 Depth=1
+.LBB10_8:                               @ %if.else101
+                                        @   in Loop: Header=BB10_2 Depth=1
 	sxtb	r0, r0
 	b	.LBB10_38
-.LBB10_9:                               @   in Loop: Header=BB10_2 Depth=1
+.LBB10_9:                               @ %while.end
+                                        @   in Loop: Header=BB10_2 Depth=1
 	cmp	r1, #98
 	bgt	.LBB10_15
-@ BB#10:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#10:                                @ %while.end
+                                        @   in Loop: Header=BB10_2 Depth=1
 	cmp	r1, #88
 	bne	.LBB10_37
-@ BB#11:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#11:                                @ %sw.bb41
+                                        @   in Loop: Header=BB10_2 Depth=1
 	ldr	r1, [sp, #12]
 	add	r0, r1, #4
 	str	r0, [sp, #12]
@@ -811,7 +826,7 @@ printf:                                 @ @printf
 	ldr	r1, [r1]
 	cmp	r1, #0
 	beq	.LBB10_24
-.LBB10_12:                              @ %.lr.ph5.i82
+.LBB10_12:                              @ %while.body.i309
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	mov	r2, r0
@@ -826,7 +841,7 @@ printf:                                 @ @printf
 	add	r0, r2, #1
 	mov	r1, r3
 	bne	.LBB10_12
-@ BB#13:                                @ %._crit_edge.i83
+@ BB#13:                                @ %while.end.i312
                                         @   in Loop: Header=BB10_2 Depth=1
 	movw	r1, :lower16:_MergedGlobals
 	cmp	r2, #0
@@ -834,7 +849,7 @@ printf:                                 @ @printf
 	mov	r2, r1
 	strb	r9, [r1, r0]
 	blt	.LBB10_25
-.LBB10_14:                              @ %.lr.ph.i87
+.LBB10_14:                              @ %while.body7.i320
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	ldrb	r3, [r8, r0]
@@ -842,14 +857,17 @@ printf:                                 @ @printf
 	strb	r3, [r2], #1
 	bne	.LBB10_14
 	b	.LBB10_25
-.LBB10_15:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_15:                              @ %while.end
+                                        @   in Loop: Header=BB10_2 Depth=1
 	cmp	r1, #114
 	bgt	.LBB10_19
-@ BB#16:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#16:                                @ %while.end
+                                        @   in Loop: Header=BB10_2 Depth=1
 	sub	r1, r1, #99
 	cmp	r1, #9
 	bhi	.LBB10_37
-@ BB#17:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#17:                                @ %while.end
+                                        @   in Loop: Header=BB10_2 Depth=1
 	lsl	r1, r1, #2
 	adr	r2, .LJTI10_0_0
 	ldr	pc, [r1, r2]
@@ -864,20 +882,24 @@ printf:                                 @ @printf
 	.long	.LBB10_37
 	.long	.LBB10_37
 	.long	.LBB10_49
-.LBB10_18:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_18:                              @ %sw.bb33
+                                        @   in Loop: Header=BB10_2 Depth=1
 	ldr	r0, [sp, #12]
 	add	r1, r0, #4
 	str	r1, [sp, #12]
 	ldrsb	r0, [r0]
 	b	.LBB10_38
-.LBB10_19:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_19:                              @ %while.end
+                                        @   in Loop: Header=BB10_2 Depth=1
 	cmp	r1, #115
 	beq	.LBB10_28
-@ BB#20:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#20:                                @ %while.end
+                                        @   in Loop: Header=BB10_2 Depth=1
 	mov	r6, r12
 	cmp	r1, #117
 	bne	.LBB10_31
-@ BB#21:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#21:                                @ %sw.bb26
+                                        @   in Loop: Header=BB10_2 Depth=1
 	ldr	r0, [sp, #12]
 	mov	r11, r8
 	mov	r8, lr
@@ -888,10 +910,10 @@ printf:                                 @ @printf
 	ldrb	r1, [r0]
 	cmp	r1, #0
 	beq	.LBB10_71
-@ BB#22:                                @ %.lr.ph.i29.preheader
+@ BB#22:                                @ %while.body.i210.preheader
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r0, r0, #1
-.LBB10_23:                              @ %.lr.ph.i29
+.LBB10_23:                              @ %while.body.i210
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	sxtb	r1, r1
@@ -903,15 +925,15 @@ printf:                                 @ @printf
 .LBB10_24:                              @   in Loop: Header=BB10_2 Depth=1
 	movw	r1, :lower16:.L.str
 	movt	r1, :upper16:.L.str
-.LBB10_25:                              @ %i2h.exit89
+.LBB10_25:                              @ %i2h.exit322
                                         @   in Loop: Header=BB10_2 Depth=1
 	ldrb	r0, [r1]
 	cmp	r0, #0
 	beq	.LBB10_1
-@ BB#26:                                @ %.lr.ph.i76.preheader
+@ BB#26:                                @ %while.body.i297.preheader
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r1, r1, #1
-.LBB10_27:                              @ %.lr.ph.i76
+.LBB10_27:                              @ %while.body.i297
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	sxtb	r0, r0
@@ -920,7 +942,8 @@ printf:                                 @ @printf
 	cmp	r0, #0
 	bne	.LBB10_27
 	b	.LBB10_1
-.LBB10_28:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_28:                              @ %sw.bb30
+                                        @   in Loop: Header=BB10_2 Depth=1
 	ldr	r0, [sp, #12]
 	add	r1, r0, #4
 	str	r1, [sp, #12]
@@ -928,10 +951,10 @@ printf:                                 @ @printf
 	ldrb	r0, [r1]
 	cmp	r0, #0
 	beq	.LBB10_1
-@ BB#29:                                @ %.lr.ph.i112.preheader
+@ BB#29:                                @ %while.body.i368.preheader
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r1, r1, #1
-.LBB10_30:                              @ %.lr.ph.i112
+.LBB10_30:                              @ %while.body.i368
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	sxtb	r0, r0
@@ -940,11 +963,13 @@ printf:                                 @ @printf
 	cmp	r0, #0
 	bne	.LBB10_30
 	b	.LBB10_1
-.LBB10_31:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_31:                              @ %while.end
+                                        @   in Loop: Header=BB10_2 Depth=1
 	mov	r12, r6
 	cmp	r1, #120
 	bne	.LBB10_37
-@ BB#32:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#32:                                @ %sw.bb37
+                                        @   in Loop: Header=BB10_2 Depth=1
 	ldr	r1, [sp, #12]
 	add	r0, r1, #4
 	str	r0, [sp, #12]
@@ -952,7 +977,7 @@ printf:                                 @ @printf
 	ldr	r1, [r1]
 	cmp	r1, #0
 	beq	.LBB10_57
-.LBB10_33:                              @ %.lr.ph5.i100
+.LBB10_33:                              @ %while.body.i344
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	mov	r2, r0
@@ -967,14 +992,14 @@ printf:                                 @ @printf
 	add	r0, r2, #1
 	mov	r1, r3
 	bne	.LBB10_33
-@ BB#34:                                @ %._crit_edge.i101
+@ BB#34:                                @ %while.end.i347
                                         @   in Loop: Header=BB10_2 Depth=1
 	cmp	r2, #0
 	mov	r1, lr
 	mov	r2, lr
 	strb	r9, [lr, r0]
 	blt	.LBB10_58
-.LBB10_35:                              @ %.lr.ph.i105
+.LBB10_35:                              @ %while.body7.i355
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	ldrb	r2, [r8, r0]
@@ -984,14 +1009,16 @@ printf:                                 @ @printf
 @ BB#36:                                @   in Loop: Header=BB10_2 Depth=1
 	mov	r2, lr
 	b	.LBB10_58
-.LBB10_37:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_37:                              @ %sw.default
+                                        @   in Loop: Header=BB10_2 Depth=1
 	str	r11, [r10]
 	ldrsb	r0, [r0]
-.LBB10_38:                              @ %.backedge
+.LBB10_38:                              @ %while.cond.backedge
                                         @   in Loop: Header=BB10_2 Depth=1
 	str	r0, [r10]
 	b	.LBB10_1
-.LBB10_39:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_39:                              @ %sw.bb
+                                        @   in Loop: Header=BB10_2 Depth=1
 	ldr	r0, [sp, #12]
 	mov	r6, lr
 	mov	r8, r12
@@ -1002,11 +1029,11 @@ printf:                                 @ @printf
 	ldrb	r1, [r0]
 	cmp	r1, #0
 	beq	.LBB10_61
-@ BB#40:                                @ %.lr.ph.i.preheader
+@ BB#40:                                @ %while.body.i.preheader
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r0, r0, #1
 	mov	lr, r6
-.LBB10_41:                              @ %.lr.ph.i
+.LBB10_41:                              @ %while.body.i
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	sxtb	r1, r1
@@ -1017,7 +1044,8 @@ printf:                                 @ @printf
 @ BB#42:                                @   in Loop: Header=BB10_2 Depth=1
 	mov	r12, r8
 	b	.LBB10_62
-.LBB10_43:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_43:                              @ %sw.bb74
+                                        @   in Loop: Header=BB10_2 Depth=1
 	ldr	r0, [sp, #12]
 	add	r1, r0, #4
 	str	r1, [sp, #12]
@@ -1034,14 +1062,16 @@ printf:                                 @ @printf
 	ldrsb	r1, [r1]
 	cmp	r1, #88
 	beq	.LBB10_63
-@ BB#44:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#44:                                @ %sw.bb74
+                                        @   in Loop: Header=BB10_2 Depth=1
 	cmp	r1, #120
 	bne	.LBB10_67
-@ BB#45:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#45:                                @ %sw.bb92
+                                        @   in Loop: Header=BB10_2 Depth=1
 	mov	r1, #0
 	cmp	r0, #0
 	beq	.LBB10_82
-.LBB10_46:                              @ %.lr.ph5.i13
+.LBB10_46:                              @ %while.body.i179
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	mov	r2, r1
@@ -1056,7 +1086,7 @@ printf:                                 @ @printf
 	add	r1, r2, #1
 	mov	r0, r3
 	bne	.LBB10_46
-@ BB#47:                                @ %._crit_edge.i14
+@ BB#47:                                @ %while.end.i182
                                         @   in Loop: Header=BB10_2 Depth=1
 	movw	r0, :lower16:_MergedGlobals
 	cmp	r2, #0
@@ -1064,7 +1094,7 @@ printf:                                 @ @printf
 	mov	r2, r0
 	strb	r9, [r0, r1]
 	blt	.LBB10_83
-.LBB10_48:                              @ %.lr.ph.i18
+.LBB10_48:                              @ %while.body7.i190
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	ldrb	r3, [r8, r1]
@@ -1072,16 +1102,19 @@ printf:                                 @ @printf
 	strb	r3, [r2], #1
 	bne	.LBB10_48
 	b	.LBB10_83
-.LBB10_49:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_49:                              @ %sw.bb45
+                                        @   in Loop: Header=BB10_2 Depth=1
 	add	r2, r5, #1
 	add	r0, r4, r2
 	ldrsb	r0, [r0]
 	cmp	r0, #88
 	beq	.LBB10_72
-@ BB#50:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#50:                                @ %sw.bb45
+                                        @   in Loop: Header=BB10_2 Depth=1
 	cmp	r0, #120
 	bne	.LBB10_78
-@ BB#51:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#51:                                @ %sw.bb53
+                                        @   in Loop: Header=BB10_2 Depth=1
 	ldr	r0, [sp, #12]
 	str	r2, [sp, #4]            @ 4-byte Spill
 	add	r1, r0, #4
@@ -1093,7 +1126,7 @@ printf:                                 @ @printf
 	orrs	r1, r2, r0
 	mov	r1, #0
 	beq	.LBB10_86
-.LBB10_52:                              @ %.lr.ph5.i56
+.LBB10_52:                              @ %while.body.i254
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	mov	r3, r1
@@ -1111,24 +1144,24 @@ printf:                                 @ @printf
 	mov	r2, r6
 	cmp	r5, #0
 	bne	.LBB10_52
-@ BB#53:                                @ %._crit_edge.i57
+@ BB#53:                                @ %while.end.i257
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r2, lr, #53
 	cmp	r3, #0
 	strb	r9, [r2, r1]
 	blt	.LBB10_87
-@ BB#54:                                @ %.lr.ph.i60.preheader
+@ BB#54:                                @ %while.body8.i266.preheader
                                         @   in Loop: Header=BB10_2 Depth=1
 	sub	r0, r1, #1
 	mov	r1, #0
 	mov	r3, #0
 	b	.LBB10_56
-.LBB10_55:                              @ %.lr.ph.i60..lr.ph.i60_crit_edge
+.LBB10_55:                              @ %while.body8.i266.while.body8.i266_crit_edge
                                         @   in Loop: Header=BB10_56 Depth=2
 	adds	r1, r1, #1
 	sub	r0, r0, #1
 	adc	r3, r3, #0
-.LBB10_56:                              @ %.lr.ph.i60
+.LBB10_56:                              @ %while.body8.i266
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	ldrb	r6, [r12, r0]
@@ -1140,15 +1173,15 @@ printf:                                 @ @printf
 .LBB10_57:                              @   in Loop: Header=BB10_2 Depth=1
 	movw	r2, :lower16:.L.str
 	movt	r2, :upper16:.L.str
-.LBB10_58:                              @ %i2h.exit107
+.LBB10_58:                              @ %i2h.exit357
                                         @   in Loop: Header=BB10_2 Depth=1
 	ldrb	r0, [r2]
 	cmp	r0, #0
 	beq	.LBB10_1
-@ BB#59:                                @ %.lr.ph.i94.preheader
+@ BB#59:                                @ %while.body.i332.preheader
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r1, r2, #1
-.LBB10_60:                              @ %.lr.ph.i94
+.LBB10_60:                              @ %while.body.i332
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	sxtb	r0, r0
@@ -1160,15 +1193,17 @@ printf:                                 @ @printf
 .LBB10_61:                              @   in Loop: Header=BB10_2 Depth=1
 	mov	r12, r8
 	mov	lr, r6
-.LBB10_62:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_62:                              @ %while.cond
+                                        @   in Loop: Header=BB10_2 Depth=1
 	ldr	r8, [sp, #8]            @ 4-byte Reload
 	add	r5, r5, #1
 	b	.LBB10_2
-.LBB10_63:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_63:                              @ %sw.bb94
+                                        @   in Loop: Header=BB10_2 Depth=1
 	mov	r1, #0
 	cmp	r0, #0
 	beq	.LBB10_90
-.LBB10_64:                              @ %.lr.ph5.i
+.LBB10_64:                              @ %while.body.i159
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	mov	r2, r1
@@ -1183,7 +1218,7 @@ printf:                                 @ @printf
 	add	r1, r2, #1
 	mov	r0, r3
 	bne	.LBB10_64
-@ BB#65:                                @ %._crit_edge.i
+@ BB#65:                                @ %while.end.i
                                         @   in Loop: Header=BB10_2 Depth=1
 	movw	r0, :lower16:_MergedGlobals
 	cmp	r2, #0
@@ -1191,7 +1226,7 @@ printf:                                 @ @printf
 	mov	r2, r0
 	strb	r9, [r0, r1]
 	blt	.LBB10_91
-.LBB10_66:                              @ %.lr.ph.i4
+.LBB10_66:                              @ %while.body7.i
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	ldrb	r3, [r8, r1]
@@ -1199,10 +1234,12 @@ printf:                                 @ @printf
 	strb	r3, [r2], #1
 	bne	.LBB10_66
 	b	.LBB10_91
-.LBB10_67:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_67:                              @ %sw.bb74
+                                        @   in Loop: Header=BB10_2 Depth=1
 	cmp	r1, #100
 	bne	.LBB10_1
-@ BB#68:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#68:                                @ %sw.bb90
+                                        @   in Loop: Header=BB10_2 Depth=1
 	mov	r11, r8
 	mov	r8, lr
 	mov	r6, r12
@@ -1210,10 +1247,10 @@ printf:                                 @ @printf
 	ldrb	r1, [r0]
 	cmp	r1, #0
 	beq	.LBB10_71
-@ BB#69:                                @ %.lr.ph.i25.preheader
+@ BB#69:                                @ %while.body.i202.preheader
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r0, r0, #1
-.LBB10_70:                              @ %.lr.ph.i25
+.LBB10_70:                              @ %while.body.i202
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	sxtb	r1, r1
@@ -1228,7 +1265,8 @@ printf:                                 @ @printf
 	mov	r11, #37
 	add	r5, r5, #1
 	b	.LBB10_2
-.LBB10_72:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_72:                              @ %sw.bb62
+                                        @   in Loop: Header=BB10_2 Depth=1
 	ldr	r0, [sp, #12]
 	str	r2, [sp, #4]            @ 4-byte Spill
 	add	r1, r0, #4
@@ -1240,7 +1278,7 @@ printf:                                 @ @printf
 	orrs	r1, r2, r0
 	mov	r1, #0
 	beq	.LBB10_94
-.LBB10_73:                              @ %.lr.ph5.i39
+.LBB10_73:                              @ %while.body.i228
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	mov	r3, r1
@@ -1258,24 +1296,24 @@ printf:                                 @ @printf
 	mov	r2, r6
 	cmp	r5, #0
 	bne	.LBB10_73
-@ BB#74:                                @ %._crit_edge.i40
+@ BB#74:                                @ %while.end.i230
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r2, lr, #53
 	cmp	r3, #0
 	strb	r9, [r2, r1]
 	blt	.LBB10_95
-@ BB#75:                                @ %.lr.ph.i43.preheader
+@ BB#75:                                @ %while.body8.i.preheader
                                         @   in Loop: Header=BB10_2 Depth=1
 	sub	r0, r1, #1
 	mov	r1, #0
 	mov	r3, #0
 	b	.LBB10_77
-.LBB10_76:                              @ %.lr.ph.i43..lr.ph.i43_crit_edge
+.LBB10_76:                              @ %while.body8.i.while.body8.i_crit_edge
                                         @   in Loop: Header=BB10_77 Depth=2
 	adds	r1, r1, #1
 	sub	r0, r0, #1
 	adc	r3, r3, #0
-.LBB10_77:                              @ %.lr.ph.i43
+.LBB10_77:                              @ %while.body8.i
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	ldrb	r6, [r12, r0]
@@ -1284,17 +1322,20 @@ printf:                                 @ @printf
 	strb	r6, [r2, r1]
 	bge	.LBB10_76
 	b	.LBB10_95
-.LBB10_78:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_78:                              @ %sw.bb45
+                                        @   in Loop: Header=BB10_2 Depth=1
 	cmp	r0, #100
 	bne	.LBB10_1
-@ BB#79:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#79:                                @ %sw.bb48
+                                        @   in Loop: Header=BB10_2 Depth=1
 	ldr	r0, [sp, #12]
 	add	r1, r0, #8
 	str	r1, [sp, #12]
 	ldm	r0, {r5, r6}
 	cmp	r6, #0
 	blt	.LBB10_99
-@ BB#80:                                @   in Loop: Header=BB10_2 Depth=1
+@ BB#80:                                @ %if.else.i
+                                        @   in Loop: Header=BB10_2 Depth=1
 	orrs	r0, r5, r6
 	mov	r0, #0
 	str	r0, [sp]                @ 4-byte Spill
@@ -1306,15 +1347,15 @@ printf:                                 @ @printf
 .LBB10_82:                              @   in Loop: Header=BB10_2 Depth=1
 	movw	r0, :lower16:.L.str
 	movt	r0, :upper16:.L.str
-.LBB10_83:                              @ %i2h.exit20
+.LBB10_83:                              @ %i2h.exit192
                                         @   in Loop: Header=BB10_2 Depth=1
 	ldrb	r1, [r0]
 	cmp	r1, #0
 	beq	.LBB10_1
-@ BB#84:                                @ %.lr.ph.i7.preheader
+@ BB#84:                                @ %while.body.i167.preheader
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r0, r0, #1
-.LBB10_85:                              @ %.lr.ph.i7
+.LBB10_85:                              @ %while.body.i167
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	sxtb	r1, r1
@@ -1326,15 +1367,15 @@ printf:                                 @ @printf
 .LBB10_86:                              @   in Loop: Header=BB10_2 Depth=1
 	movw	r2, :lower16:.L.str
 	movt	r2, :upper16:.L.str
-.LBB10_87:                              @ %l2h.exit62
+.LBB10_87:                              @ %l2h.exit268
                                         @   in Loop: Header=BB10_2 Depth=1
 	ldrb	r0, [r2]
 	cmp	r0, #0
 	beq	.LBB10_98
-@ BB#88:                                @ %.lr.ph.i49.preheader
+@ BB#88:                                @ %while.body.i241.preheader
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r1, r2, #1
-.LBB10_89:                              @ %.lr.ph.i49
+.LBB10_89:                              @ %while.body.i241
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	sxtb	r0, r0
@@ -1351,10 +1392,10 @@ printf:                                 @ @printf
 	ldrb	r1, [r0]
 	cmp	r1, #0
 	beq	.LBB10_1
-@ BB#92:                                @ %.lr.ph.i2.preheader
+@ BB#92:                                @ %while.body.i157.preheader
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r0, r0, #1
-.LBB10_93:                              @ %.lr.ph.i2
+.LBB10_93:                              @ %while.body.i157
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	sxtb	r1, r1
@@ -1371,10 +1412,10 @@ printf:                                 @ @printf
 	ldrb	r0, [r2]
 	cmp	r0, #0
 	beq	.LBB10_98
-@ BB#96:                                @ %.lr.ph.i33.preheader
+@ BB#96:                                @ %while.body.i218.preheader
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r1, r2, #1
-.LBB10_97:                              @ %.lr.ph.i33
+.LBB10_97:                              @ %while.body.i218
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	sxtb	r0, r0
@@ -1386,17 +1427,20 @@ printf:                                 @ @printf
 	ldr	r5, [sp, #4]            @ 4-byte Reload
 	add	r5, r5, #1
 	b	.LBB10_2
-.LBB10_99:                              @   in Loop: Header=BB10_2 Depth=1
+.LBB10_99:                              @ %if.then.i
+                                        @   in Loop: Header=BB10_2 Depth=1
 	rsbs	r5, r5, #0
 	mov	r0, #1
 	rsc	r6, r6, #0
 	str	r0, [sp]                @ 4-byte Spill
-.LBB10_100:                             @   in Loop: Header=BB10_2 Depth=1
+.LBB10_100:                             @ %if.end3.i
+                                        @   in Loop: Header=BB10_2 Depth=1
 	strb	r9, [lr, #94]
 	mov	r9, #93
 	mov	r8, lr
 	str	r2, [sp, #4]            @ 4-byte Spill
-.LBB10_101:                             @   Parent Loop BB10_2 Depth=1
+.LBB10_101:                             @ %for.body.i
+                                        @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	mov	r0, r5
 	mov	r1, r6
@@ -1417,26 +1461,29 @@ printf:                                 @ @printf
 	sub	r9, r9, #1
 	cmp	r0, #0
 	bgt	.LBB10_101
-.LBB10_102:                             @ %.preheader2.i
+.LBB10_102:                             @ %for.body8.i
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	add	r0, r8, r11
 	ldrb	r0, [r0, #70]
 	cmp	r0, #48
 	bne	.LBB10_104
-@ BB#103:                               @   in Loop: Header=BB10_102 Depth=2
+@ BB#103:                               @ %for.cond5.i
+                                        @   in Loop: Header=BB10_102 Depth=2
 	add	r11, r11, #1
 	cmp	r11, #23
 	ble	.LBB10_102
-.LBB10_104:                             @   in Loop: Header=BB10_2 Depth=1
+.LBB10_104:                             @ %for.end16.i
+                                        @   in Loop: Header=BB10_2 Depth=1
 	ldr	r5, [sp]                @ 4-byte Reload
 	mov	lr, r8
 	cmp	r5, #0
 	beq	.LBB10_106
-@ BB#105:                               @   in Loop: Header=BB10_2 Depth=1
+@ BB#105:                               @ %if.then17.i
+                                        @   in Loop: Header=BB10_2 Depth=1
 	mov	r0, #45
 	strb	r0, [lr, #95]
-.LBB10_106:                             @ %.preheader.i
+.LBB10_106:                             @ %for.cond19.preheader.i
                                         @   in Loop: Header=BB10_2 Depth=1
 	ldr	r8, [sp, #8]            @ 4-byte Reload
 	rsb	r0, r11, #24
@@ -1445,13 +1492,13 @@ printf:                                 @ @printf
 	add	r12, sp, #27
 	cmp	r0, #1
 	blt	.LBB10_110
-@ BB#107:                               @ %.lr.ph.i72.preheader
+@ BB#107:                               @ %for.body22.lr.ph.i
                                         @   in Loop: Header=BB10_2 Depth=1
 	mvn	r1, #69
 	add	r2, lr, r5
 	sub	r1, r1, r11
 	add	r2, r2, #95
-.LBB10_108:                             @ %.lr.ph.i72
+.LBB10_108:                             @ %for.body22.i
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	ldrb	r3, [lr, -r1]
@@ -1461,7 +1508,7 @@ printf:                                 @ @printf
 	bne	.LBB10_108
 @ BB#109:                               @   in Loop: Header=BB10_2 Depth=1
 	mov	r1, r0
-.LBB10_110:                             @ %._crit_edge.i73
+.LBB10_110:                             @ %for.end29.i
                                         @   in Loop: Header=BB10_2 Depth=1
 	ldr	r2, [sp, #4]            @ 4-byte Reload
 	add	r0, r1, r5
@@ -1473,10 +1520,10 @@ printf:                                 @ @printf
 	ldrb	r0, [r1]
 	cmp	r0, #0
 	beq	.LBB10_114
-@ BB#112:                               @ %.lr.ph.i67.preheader
+@ BB#112:                               @ %while.body.i278.preheader
                                         @   in Loop: Header=BB10_2 Depth=1
 	add	r1, r1, #1
-.LBB10_113:                             @ %.lr.ph.i67
+.LBB10_113:                             @ %while.body.i278
                                         @   Parent Loop BB10_2 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	sxtb	r0, r0
@@ -1488,7 +1535,7 @@ printf:                                 @ @printf
 	mov	r5, r2
 	add	r5, r5, #1
 	b	.LBB10_2
-.LBB10_115:
+.LBB10_115:                             @ %while.end105
 	mov	r0, #0
 	add	sp, sp, #44
 	pop	{r4, r5, r6, r7, r8, r9, r10, r11, lr}
@@ -1505,13 +1552,14 @@ printf:                                 @ @printf
 exit:                                   @ @exit
 	.fnstart
 .Leh_func_begin11:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	push	{lr}
 	mov	r1, r0
 	movw	r0, :lower16:.L.str1
 	movt	r0, :upper16:.L.str1
 	bl	printf
-.LBB11_1:                               @ =>This Inner Loop Header: Depth=1
+.LBB11_1:                               @ %while.body
+                                        @ =>This Inner Loop Header: Depth=1
 	b	.LBB11_1
 .Ltmp11:
 	.size	exit, .Ltmp11-exit
@@ -1524,7 +1572,7 @@ exit:                                   @ @exit
 abort:                                  @ @abort
 	.fnstart
 .Leh_func_begin12:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	mov	lr, pc
 	b	exit
 .Ltmp12:
@@ -1547,4 +1595,4 @@ abort:                                  @ @abort
 	.local	_MergedGlobals
 	.comm	_MergedGlobals,120,16
 
-	.ident	"Ubuntu clang version 3.5.0-4ubuntu2~trusty2 (tags/RELEASE_350/final) (based on LLVM 3.5.0)"
+	.ident	"clang version 3.5.2 (tags/RELEASE_352/final)"

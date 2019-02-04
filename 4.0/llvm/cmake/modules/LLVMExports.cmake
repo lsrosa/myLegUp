@@ -321,4 +321,4 @@ set_property(TARGET LLVMXCoreInfo PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES LLV
 set_property(TARGET LLVMXCoreDesc PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES LLVMMC LLVMSupport LLVMXCoreAsmPrinter LLVMXCoreInfo)
 set_property(TARGET LLVMXCoreCodeGen PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES LLVMAnalysis LLVMAsmPrinter LLVMCodeGen LLVMCore LLVMMC LLVMSelectionDAG LLVMSupport LLVMTarget LLVMTransformUtils LLVMXCoreAsmPrinter LLVMXCoreDesc LLVMXCoreInfo)
 set_property(TARGET LLVMXCoreDisassembler PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES LLVMMC LLVMSupport LLVMXCoreInfo)
-set_property(TARGET LLVMSupport APPEND PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES lpsolve55_pic colamd tcl8.5 z pthread tinfo dl m  -I/usr/include/mysql/ mysqlclient z)
+set_property(TARGET LLVMSupport APPEND PROPERTY IMPORTED_LINK_INTERFACE_LIBRARIES lpsolve55_pic colamd tcl8.5 z pthread dl m  -I/usr/include/mysql/ mysqlclient z)

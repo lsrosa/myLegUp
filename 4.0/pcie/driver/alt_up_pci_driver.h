@@ -15,7 +15,7 @@
 #include <linux/module.h>
 #include <linux/fs.h> 
 #include <linux/interrupt.h>
-
+#include <linux/uaccess.h>
 #include "alt_up_pci_device.h"
 
 /** 
@@ -90,7 +90,7 @@ static struct file_operations alt_up_pci_fops = {
 	.open		= alt_up_pci_open,
 	.release 	= alt_up_pci_release,
 	.unlocked_ioctl = alt_up_pci_ioctl_unlocked, 
-	.write		= alt_up_pci_write,
+	.write		= alt_up_pci_write,    
 	.read 		= alt_up_pci_read,
 	.llseek		= alt_up_pci_llseek,
 };
