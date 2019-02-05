@@ -5,6 +5,8 @@ else
 	KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 	PWD := $(shell pwd)
 
+export CONFIG_CC_STACKPROTECTOR_REGULAR=1
+
 default:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) modules
 endif

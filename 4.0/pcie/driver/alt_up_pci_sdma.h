@@ -12,6 +12,7 @@
 #define __ALT_UP_PCI_SDMA_H__
 
 #include "alt_up_pci_dma.h"
+#include <linux/uaccess.h>
 
 /// The size of the buffer allocated for the DMA transfer
 #define SDMA_BUF_SIZE 4096

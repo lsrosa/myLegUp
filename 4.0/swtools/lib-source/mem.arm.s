@@ -21,15 +21,16 @@
 memset:                                 @ @memset
 	.fnstart
 .Leh_func_begin0:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	cmp	r2, #0
 	bxeq	lr
 	mov	r3, r0
-.LBB0_1:                                @ =>This Inner Loop Header: Depth=1
+.LBB0_1:                                @ %while.body
+                                        @ =>This Inner Loop Header: Depth=1
 	strb	r1, [r3], #1
 	subs	r2, r2, #1
 	bne	.LBB0_1
-@ BB#2:                                 @ %._crit_edge
+@ BB#2:                                 @ %while.end
 	bx	lr
 .Ltmp0:
 	.size	memset, .Ltmp0-memset
@@ -42,17 +43,17 @@ memset:                                 @ @memset
 memcpy:                                 @ @memcpy
 	.fnstart
 .Leh_func_begin1:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	cmp	r2, #0
 	bxeq	lr
 	mov	r12, r0
-.LBB1_1:                                @ %.lr.ph
+.LBB1_1:                                @ %while.body
                                         @ =>This Inner Loop Header: Depth=1
 	ldrb	r3, [r1], #1
 	subs	r2, r2, #1
 	strb	r3, [r12], #1
 	bne	.LBB1_1
-@ BB#2:                                 @ %._crit_edge
+@ BB#2:                                 @ %while.end
 	bx	lr
 .Ltmp1:
 	.size	memcpy, .Ltmp1-memcpy
@@ -60,4 +61,4 @@ memcpy:                                 @ @memcpy
 	.fnend
 
 
-	.ident	"Ubuntu clang version 3.5.0-4ubuntu2~trusty2 (tags/RELEASE_350/final) (based on LLVM 3.5.0)"
+	.ident	"clang version 3.5.2 (tags/RELEASE_352/final)"

@@ -13,6 +13,7 @@
 
 #include "alt_up_pci_dma.h"
 
+
 /// The size of buffer for SG-DMA
 #define SGDMA_BUF_SIZE 4096
 /// The number of cycles of checking repeated to cause a time out in polling mode

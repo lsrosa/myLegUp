@@ -23,7 +23,7 @@ static LegupConfig LegupConfigObj;
 
 LegupConfig *LEGUP_CONFIG = &LegupConfigObj;
 
-#define NUM_PARAMETERS 140
+#define NUM_PARAMETERS 141
 const std::string validParameters[NUM_PARAMETERS] = {
     "DEBUG_LOOP_SELECT",
     //lp_solve or gurobi solver
@@ -35,6 +35,8 @@ const std::string validParameters[NUM_PARAMETERS] = {
     //leandro - GA parameters
     "GA_DEBUG", "GA_POPULATION_SIZE", "GA_MAXIMUM_GENERATIONS", "GA_MUTATION_PROB", "GA_OFFSPRING_SIZE",
     "GA_LAMBDA", "GA_THRESHOLD",
+    //leandro - DSE options
+    "DSE_PIPE_OFF",
     //legup native parameters
     "ALIAS_ANALYSIS", "CLOCK_PERIOD", "DEBUG_MODULO_DEPENDENT",
     "DEBUG_MODULO_TABLE", "DEBUG_PERTURBATION", "DEBUG_VERIFY_INCR_SDC",

@@ -21,7 +21,7 @@
 legup_start_counter:                    @ @legup_start_counter
 	.fnstart
 .Leh_func_begin0:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	movw	r1, :lower16:legup_counters
 	@APP
 	mrc	p15, #0, r2, c9, c13, #0
@@ -40,7 +40,7 @@ legup_start_counter:                    @ @legup_start_counter
 legup_stop_counter:                     @ @legup_stop_counter
 	.fnstart
 .Leh_func_begin1:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	movw	r2, :lower16:legup_counters
 	@APP
 	mrc	p15, #0, r1, c9, c13, #0
@@ -60,12 +60,12 @@ legup_stop_counter:                     @ @legup_stop_counter
 __legup_prof_init:                      @ @__legup_prof_init
 	.fnstart
 .Leh_func_begin2:
-@ BB#0:
-	push	{r4, lr}
+@ BB#0:                                 @ %entry
+	push	{r4, r5, lr}
 	movw	r0, #36868
 	mov	r1, #251658240
 	movt	r0, #65392
-	movw	lr, :lower16:entries
+	mvn	r2, #0
 	str	r1, [r0]
 	movw	r1, #20508
 	movt	r1, #65488
@@ -73,55 +73,58 @@ __legup_prof_init:                      @ @__legup_prof_init
 	str	r0, [r1]
 	movw	r1, #0
 	movt	r1, #65535
-	mvn	r2, #0
+	mov	r12, #164
 	str	r0, [r1]
 	movw	r1, :lower16:CURRENT
 	movt	r1, :upper16:CURRENT
-	movt	lr, :upper16:entries
+	movw	lr, #1023
 	str	r2, [r1]
 	movw	r1, :lower16:NEXT
 	movt	r1, :upper16:NEXT
-	mov	r12, #164
-	mov	r3, lr
-	mov	r2, #0
+	mov	r3, #0
 	str	r0, [r1]
-.LBB2_1:                                @ %.preheader2
+	movw	r1, :lower16:entries
+	movt	r1, :upper16:entries
+	mov	r2, r1
+.LBB2_1:                                @ %for.cond1.preheader
                                         @ =>This Loop Header: Depth=1
                                         @     Child Loop BB2_2 Depth 2
-	mov	r1, #44
-	mov	r4, r3
-.LBB2_2:                                @   Parent Loop BB2_1 Depth=1
+	mov	r4, #44
+	mov	r5, r2
+.LBB2_2:                                @ %for.body3
+                                        @   Parent Loop BB2_1 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
-	strb	r0, [r4], #1
-	subs	r1, r1, #1
+	strb	r0, [r5], #1
+	subs	r4, r4, #1
 	bne	.LBB2_2
-@ BB#3:                                 @ %.preheader19
+@ BB#3:                                 @ %for.end
                                         @   in Loop: Header=BB2_1 Depth=1
-	mla	r1, r2, r12, lr
-	add	r2, r2, #1
-	add	r3, r3, #164
-	cmp	r2, #1024
-	str	r0, [r1, #88]
-	str	r0, [r1, #92]
-	str	r0, [r1, #96]
-	str	r0, [r1, #100]
-	str	r0, [r1, #124]
-	str	r0, [r1, #104]
-	str	r0, [r1, #128]
-	str	r0, [r1, #108]
-	str	r0, [r1, #132]
-	str	r0, [r1, #112]
-	str	r0, [r1, #136]
-	str	r0, [r1, #116]
-	str	r0, [r1, #140]
-	str	r0, [r1, #120]
-	str	r0, [r1, #144]
-	str	r0, [r1, #148]
-	str	r0, [r1, #152]
-	str	r0, [r1, #156]
-	str	r0, [r1, #160]
+	mla	r4, r3, r12, r1
+	add	r2, r2, #164
+	cmp	r3, lr
+	str	r0, [r4, #88]
+	str	r0, [r4, #92]
+	str	r0, [r4, #96]
+	str	r0, [r4, #100]
+	str	r0, [r4, #124]
+	str	r0, [r4, #104]
+	str	r0, [r4, #128]
+	str	r0, [r4, #108]
+	str	r0, [r4, #132]
+	str	r0, [r4, #112]
+	str	r0, [r4, #136]
+	str	r0, [r4, #116]
+	str	r0, [r4, #140]
+	str	r0, [r4, #120]
+	str	r0, [r4, #144]
+	str	r0, [r4, #148]
+	str	r0, [r4, #152]
+	str	r0, [r4, #156]
+	str	r0, [r4, #160]
+	add	r4, r3, #1
+	mov	r3, r4
 	bne	.LBB2_1
-@ BB#4:                                 @ %.preheader
+@ BB#4:                                 @ %for.cond31.preheader
 	mov	r0, #0
 	mov	r2, #3
 	@APP
@@ -223,7 +226,7 @@ __legup_prof_init:                      @ @__legup_prof_init
 	@APP
 	mcr	p15, #0, r0, c9, c12, #0
 	@NO_APP
-	pop	{r4, pc}
+	pop	{r4, r5, pc}
 .Ltmp2:
 	.size	__legup_prof_init, .Ltmp2-__legup_prof_init
 	.cantunwind
@@ -235,7 +238,7 @@ __legup_prof_init:                      @ @__legup_prof_init
 update_counts:                          @ @update_counts
 	.fnstart
 .Leh_func_begin3:
-@ BB#0:                                 @ %.preheader5
+@ BB#0:                                 @ %entry
 	push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}
 	sub	sp, sp, #24
 	@APP
@@ -349,7 +352,7 @@ update_counts:                          @ @update_counts
 	add	r3, r3, r1
 	str	r3, [r2, #120]
 	b	.LBB3_2
-.LBB3_1:                                @ %.lr.ph
+.LBB3_1:                                @ %while.body
                                         @   in Loop: Header=BB3_2 Depth=1
 	mla	r2, r7, lr, r12
 	ldr	r3, [r2, #96]
@@ -380,11 +383,11 @@ update_counts:                          @ @update_counts
 	add	r3, r3, r10
 	str	r3, [r2, #160]
 	ldr	r7, [r2, #84]
-.LBB3_2:                                @ %.lr.ph
+.LBB3_2:                                @ %while.body
                                         @ =>This Inner Loop Header: Depth=1
 	cmp	r7, #0
 	bge	.LBB3_1
-@ BB#3:                                 @ %._crit_edge
+@ BB#3:                                 @ %while.end
 	add	sp, sp, #24
 	pop	{r4, r5, r6, r7, r8, r9, r10, r11, pc}
 .Ltmp3:
@@ -398,7 +401,7 @@ update_counts:                          @ @update_counts
 reset_counts:                           @ @reset_counts
 	.fnstart
 .Leh_func_begin4:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	@APP
 	mrc	p15, #0, r0, c9, c12, #0
 	@NO_APP
@@ -423,7 +426,7 @@ reset_counts:                           @ @reset_counts
 __legup_prof_begin:                     @ @__legup_prof_begin
 	.fnstart
 .Leh_func_begin5:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}
 	mov	r4, r0
 	bl	update_counts
@@ -435,7 +438,7 @@ __legup_prof_begin:                     @ @__legup_prof_begin
 	ldr	r10, [lr]
 	cmp	r2, #1
 	blt	.LBB5_18
-@ BB#1:                                 @ %.preheader8.lr.ph
+@ BB#1:                                 @ %while.cond.preheader.lr.ph
 	ldrb	r11, [r4]
 	movw	r7, :lower16:entries
 	movt	r7, :upper16:entries
@@ -446,58 +449,64 @@ __legup_prof_begin:                     @ @__legup_prof_begin
 	movw	r8, :lower16:entries
 	mov	r9, #164
 	movt	r8, :upper16:entries
-.LBB5_3:                                @ %.lr.ph22.us
+.LBB5_3:                                @ %while.body.lr.ph.us
                                         @ =>This Loop Header: Depth=1
                                         @     Child Loop BB5_4 Depth 2
 	mov	r3, #0
 	mov	r1, r7
 	mov	r5, r11
-.LBB5_4:                                @   Parent Loop BB5_3 Depth=1
+.LBB5_4:                                @ %while.body.us
+                                        @   Parent Loop BB5_3 Depth=1
                                         @ =>  This Inner Loop Header: Depth=2
 	ldrb	r6, [r1]
 	uxtb	r5, r5
 	cmp	r5, r6
 	bne	.LBB5_7
-@ BB#5:                                 @   in Loop: Header=BB5_4 Depth=2
+@ BB#5:                                 @ %while.cond.us
+                                        @   in Loop: Header=BB5_4 Depth=2
 	add	r12, r3, #1
 	add	r3, r4, r3
 	ldrb	r5, [r3, #1]
 	mov	r6, #1
 	cmp	r5, #0
 	beq	.LBB5_8
-@ BB#6:                                 @   in Loop: Header=BB5_4 Depth=2
+@ BB#6:                                 @ %while.cond.us
+                                        @   in Loop: Header=BB5_4 Depth=2
 	add	r1, r1, #1
 	mov	r3, r12
 	cmp	r12, #82
 	ble	.LBB5_4
 	b	.LBB5_8
-.LBB5_7:                                @ %.critedgethread-pre-split.us
+.LBB5_7:                                @ %while.endthread-pre-split.us
                                         @   in Loop: Header=BB5_3 Depth=1
 	ldrb	r5, [r4, r3]
 	mov	r6, #0
 	mov	r12, r3
-.LBB5_8:                                @ %.critedge.us
+.LBB5_8:                                @ %while.end.us
                                         @   in Loop: Header=BB5_3 Depth=1
 	cmp	r5, #0
 	bne	.LBB5_11
-@ BB#9:                                 @   in Loop: Header=BB5_3 Depth=1
+@ BB#9:                                 @ %land.lhs.true.us
+                                        @   in Loop: Header=BB5_3 Depth=1
 	mla	r1, r0, r9, r8
 	ldrb	r1, [r1, r12]
 	cmp	r1, #32
 	beq	.LBB5_12
-@ BB#10:                                @   in Loop: Header=BB5_3 Depth=1
+@ BB#10:                                @ %land.lhs.true.us
+                                        @   in Loop: Header=BB5_3 Depth=1
 	cmp	r1, #0
 	bne	.LBB5_13
-.LBB5_11:                               @   in Loop: Header=BB5_3 Depth=1
+.LBB5_11:                               @ %if.end32.us
+                                        @   in Loop: Header=BB5_3 Depth=1
 	cmp	r6, #0
 	beq	.LBB5_13
-.LBB5_12:                               @ %.thread7.us
+.LBB5_12:                               @ %if.then33.us
                                         @   in Loop: Header=BB5_3 Depth=1
 	mla	r1, r0, r9, r8
 	ldr	r1, [r1, #84]
 	cmp	r1, r10
 	beq	.LBB5_19
-.LBB5_13:                               @ %.thread.us
+.LBB5_13:                               @ %for.inc.us
                                         @   in Loop: Header=BB5_3 Depth=1
 	add	r0, r0, #1
 	add	r7, r7, #164
@@ -506,7 +515,7 @@ __legup_prof_begin:                     @ @__legup_prof_begin
 	b	.LBB5_18
 .LBB5_14:
 	add	r1, r7, #84
-.LBB5_15:                               @ %.critedge
+.LBB5_15:                               @ %land.lhs.true
                                         @ =>This Inner Loop Header: Depth=1
 	sub	r3, r1, #84
 	ldrb	r3, [r3]
@@ -514,18 +523,18 @@ __legup_prof_begin:                     @ @__legup_prof_begin
 	uxtb	r3, r3
 	cmp	r3, #32
 	bne	.LBB5_17
-@ BB#16:                                @ %.thread7
+@ BB#16:                                @ %if.then33
                                         @   in Loop: Header=BB5_15 Depth=1
 	ldr	r3, [r1]
 	cmp	r3, r10
 	beq	.LBB5_19
-.LBB5_17:                               @ %.thread
+.LBB5_17:                               @ %for.inc
                                         @   in Loop: Header=BB5_15 Depth=1
 	add	r0, r0, #1
 	add	r1, r1, #164
 	cmp	r0, r2
 	blt	.LBB5_15
-.LBB5_18:                               @ %._crit_edge
+.LBB5_18:                               @ %if.then42
 	movw	r0, :lower16:entries
 	mov	r1, #164
 	movt	r0, :upper16:entries
@@ -540,43 +549,45 @@ __legup_prof_begin:                     @ @__legup_prof_begin
 .LBB5_19:
 	mov	r2, r0
 	str	r2, [lr]
-.LBB5_20:                               @ %.preheader
+.LBB5_20:                               @ %do.body.preheader
 	movw	r0, :lower16:entries
 	mov	r1, #164
 	movt	r0, :upper16:entries
 	ldrb	r7, [r4], #1
 	mla	r3, r2, r1, r0
 	mov	r1, #0
-.LBB5_21:                               @ =>This Inner Loop Header: Depth=1
+.LBB5_21:                               @ %do.body
+                                        @ =>This Inner Loop Header: Depth=1
 	strb	r7, [r3, r1]
 	ldrb	r7, [r4, r1]
 	add	r1, r1, #1
 	cmp	r7, #0
 	beq	.LBB5_23
-@ BB#22:                                @   in Loop: Header=BB5_21 Depth=1
+@ BB#22:                                @ %do.body
+                                        @   in Loop: Header=BB5_21 Depth=1
 	cmp	r1, #83
 	blt	.LBB5_21
-.LBB5_23:                               @ %.critedge2.preheader
+.LBB5_23:                               @ %while.cond61.preheader
 	mov	r3, #164
 	cmp	r1, #15
 	mla	r3, r2, r3, r0
 	bgt	.LBB5_27
-@ BB#24:                                @ %.critedge2.preheader1
+@ BB#24:                                @ %while.body64.preheader
 	mov	r7, #32
-.LBB5_25:                               @ %.critedge2
+.LBB5_25:                               @ %while.body64
                                         @ =>This Inner Loop Header: Depth=1
 	strb	r7, [r3, r1]
 	add	r1, r1, #1
 	cmp	r1, #16
 	bne	.LBB5_25
-@ BB#26:                                @ %.critedge2._crit_edge
+@ BB#26:                                @ %while.cond61.while.end69_crit_edge
 	mov	r1, #164
 	mla	r0, r2, r1, r0
 	add	r0, r0, #16
 	b	.LBB5_28
 .LBB5_27:
 	add	r0, r3, r1
-.LBB5_28:
+.LBB5_28:                               @ %while.end69
 	mov	r1, #0
 	strb	r1, [r0]
 	mov	r1, #7
@@ -606,7 +617,7 @@ __legup_prof_begin:                     @ @__legup_prof_begin
 __legup_prof_end:                       @ @__legup_prof_end
 	.fnstart
 .Leh_func_begin6:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	push	{lr}
 	bl	update_counts
 	movw	r0, :lower16:CURRENT
@@ -643,7 +654,7 @@ __legup_prof_end:                       @ @__legup_prof_end
 __legup_prof_print:                     @ @__legup_prof_print
 	.fnstart
 .Leh_func_begin7:
-@ BB#0:
+@ BB#0:                                 @ %entry
 	push	{r4, r5, r6, r7, r8, r9, r10, r11, lr}
 	movw	r0, :lower16:.L.str
 	movt	r0, :upper16:.L.str
@@ -705,12 +716,13 @@ __legup_prof_print:                     @ @__legup_prof_print
 	movw	r4, :lower16:.L.str7
 	mov	r5, #200
 	movt	r4, :upper16:.L.str7
-.LBB7_1:                                @ =>This Inner Loop Header: Depth=1
+.LBB7_1:                                @ %for.body13
+                                        @ =>This Inner Loop Header: Depth=1
 	mov	r0, r4
 	bl	printf
 	subs	r5, r5, #1
 	bne	.LBB7_1
-@ BB#2:
+@ BB#2:                                 @ %for.end17
 	movw	r0, :lower16:.L.str6
 	movt	r0, :upper16:.L.str6
 	bl	printf
@@ -731,7 +743,7 @@ __legup_prof_print:                     @ @__legup_prof_print
 	movt	r6, :upper16:.L.str9
 	mov	r8, #164
 	movt	r11, :upper16:.L.str6
-.LBB7_4:                                @ %.lr.ph
+.LBB7_4:                                @ %while.body
                                         @ =>This Inner Loop Header: Depth=1
 	mov	r0, r5
 	mov	r1, r4
@@ -743,16 +755,19 @@ __legup_prof_print:                     @ @__legup_prof_print
 	ldr	r0, [r0]
 	cmp	r0, #0
 	blt	.LBB7_6
-@ BB#5:                                 @   in Loop: Header=BB7_4 Depth=1
+@ BB#5:                                 @ %if.then25
+                                        @   in Loop: Header=BB7_4 Depth=1
 	mla	r1, r0, r8, r10
 	mov	r0, r6
 	bl	printf
 	b	.LBB7_7
-.LBB7_6:                                @   in Loop: Header=BB7_4 Depth=1
+.LBB7_6:                                @ %if.else
+                                        @   in Loop: Header=BB7_4 Depth=1
 	movw	r0, :lower16:.L.str10
 	movt	r0, :upper16:.L.str10
 	bl	printf
-.LBB7_7:                                @   in Loop: Header=BB7_4 Depth=1
+.LBB7_7:                                @ %if.end33
+                                        @   in Loop: Header=BB7_4 Depth=1
 	sub	r0, r7, #72
 	ldr	r1, [r0]
 	mov	r0, r5
@@ -835,7 +850,7 @@ __legup_prof_print:                     @ @__legup_prof_print
 	add	r7, r7, #164
 	cmp	r4, r0
 	bne	.LBB7_4
-.LBB7_8:                                @ %._crit_edge
+.LBB7_8:                                @ %while.end
 	pop	{r4, r5, r6, r7, r8, r9, r10, r11, pc}
 .Ltmp7:
 	.size	__legup_prof_print, .Ltmp7-__legup_prof_print
@@ -970,4 +985,4 @@ L2C_EV_COUNTER1:
 	.size	.L.str10, 7
 
 
-	.ident	"Ubuntu clang version 3.5.0-4ubuntu2~trusty2 (tags/RELEASE_350/final) (based on LLVM 3.5.0)"
+	.ident	"clang version 3.5.2 (tags/RELEASE_352/final)"

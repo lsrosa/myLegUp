@@ -9,6 +9,7 @@
 #include "alt_up_pci_ioctl.h"
 
 
+
 #define RW_BUF_LEN 256
 
 /**
@@ -315,7 +316,8 @@ static ssize_t alt_up_pci_write  (struct file *filp, const char __user *buf, siz
 	// check whether the user buffer is readable
 	if( access_ok(VERIFY_READ, (void __user *)buf, count) ) {
 		// check the return value, if return not 0, copy imcompletely
-		if( copy_from_user(kernel_buf, buf, count) ) {  
+		
+		if(copy_from_user(kernel_buf, buf, count) ) {  
 			printk(KERN_DEBUG "copy_from_user() failed. \n");
 			return -1;                
 		}

@@ -1,2 +1,0 @@
-Name	InstCount	Allocation	Scheduling	Binding	SchedMapping	SchedSolve	SchedFSM	overhead	totalCycles
-main	28	0.001067	0.002933	0.000069	0.000693	0.001180	0.000201	0.000859	68

@@ -1,0 +1,1 @@
+cmd_/home/leandro/myLegUp/4.0/pcie/driver/alt_up_pci.o := ld -m elf_x86_64 -z max-page-size=0x200000   -r -o /home/leandro/myLegUp/4.0/pcie/driver/alt_up_pci.o /home/leandro/myLegUp/4.0/pcie/driver/alt_up_pci_driver.o /home/leandro/myLegUp/4.0/pcie/driver/alt_up_pci_sdma.o /home/leandro/myLegUp/4.0/pcie/driver/alt_up_pci_sgdma.o 
