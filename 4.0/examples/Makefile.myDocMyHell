@@ -300,8 +300,8 @@ endif
 
 	#first, get only folders and configs that generated hardware
 	$(eval LOOP_BUILTS:=./loops_out/*/out.config*.tcl/hardware_estimation.mat	)
-	#octave $(LEGUPHOME)/examples/loop_selection.m $(LOOP_BUILTS) full
-	#octave $(LEGUPHOME)/examples/cluster_correlation.m $(LOOP_BUILTS) full
+	octave $(LEGUPHOME)/examples/loop_selection.m $(LOOP_BUILTS) full
+	octave $(LEGUPHOME)/examples/cluster_correlation.m $(LOOP_BUILTS) full
 
 ################################################################################
 # Quartus stuff

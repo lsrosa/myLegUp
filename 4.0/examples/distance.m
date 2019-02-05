@@ -1,7 +1,6 @@
 arg_list = argv();
-bench = arg_list{1}
-pipe = strcat(bench, '/results_full.m')
-nopipe = strcat(bench, '-no-pipe/results_full.m')
+nopipe = strcat(arg_list{1}, '/results_full.m')
+pipe = strcat(arg_list{2}, '/results_full.m')
 
 load(pipe);
 pipeConsraints = constraints;

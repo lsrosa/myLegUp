@@ -213,10 +213,8 @@ void LoopFullDSE::addPipelineConstraint(LoopData *ld){
     std::string constString;
     if(schedulerType.compare("ILP")==0){
 	constString = std::string("set_parameter MODULO_SCHEDULER \"ILP\"");
-    }else if(schedulerType.compare("NI")==0){
+    }else {
 	constString = std::string("set_parameter MODULO_SCHEDULER \"NI\"");
-    }else{
-  	constString = std::string("set_parameter MODULO_SCHEDULER \"SDC\"");
     }
 
     constraint = new Constraint(constString, 0, 0);

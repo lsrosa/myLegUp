@@ -60,8 +60,8 @@ function [paretoPoints, idx] =  findPareto(x, y)
 end
 
 %vals
-outFolder = strcat(strsplit(arg_list{i}, '/')(1), '/', 'plots');
-mkdir(outFolder);
+outFolder = strcat(strsplit(arg_list{i}, '/')(1), '/', 'plots')
+mkdir(outFolder{1});
 
 %eliminate duplicates but concatenate the string names
 uniqueVals = [];
