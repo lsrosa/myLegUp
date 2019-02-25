@@ -1,6 +1,6 @@
 function [rn, radrs] = combineSetsDSE(constraints, pathSet, latticeSet, nreps = 1)
   totalInputSet = [pathSet; latticeSet];
-  totalConstraintsSet = [constraints; constraints];
+  totalConstraintsSet = [constraints zeros(rows(pathSet), 1); constraints ones(rows(latticeSet), 1)];
 
   %get the paretos over the combined sets
   [px, py, idx] = findPareto(totalInputSet(:,1), totalInputSet(:,2));
@@ -31,6 +31,7 @@ for cnt = 1:nreps
 
   accLattice = accLattice + latticeN;
   accADRS = accADRS + latticeADRS;
+  %pause
 end
 
 %make an average

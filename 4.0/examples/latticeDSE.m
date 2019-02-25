@@ -5,19 +5,31 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = latticeDSE(configIn,
   global cycles = 1;
   global ALMs = 2;
   plot = false;
-  global sigma = 0.25;
+  global sigma = 0.5;
+  popCoeff = 0.20;
+  alph = 0.5;
+  bet = alph;
 
   configsLattice = configIn;
   metricsLattice = metricsIn;
   alreadyCompiledLattice = [];
 
-  assert(rows(configIn) == rows(metricsIn), 'input configs and metrics numbers are different');
-  ndesigns = rows(configIn);
+  assert(rows(configsLattice) == rows(metricsIn), 'input configs and metrics numbers are different');
+  ndesigns = rows(configsLattice);
 
   %gets the maximum, minimum and 10%diffrence configsLattice
-  global maxConfig = max(configIn);
-  global oneConfig = min(configIn);
+  global maxConfig;
+  global oneConfig;
+  global radii;
+  global radii2;
 
+  maxConfig = max(configsLattice);
+  oneConfig = min(configsLattice);
+  radii = ceil(sigma*double(maxConfig-oneConfig));
+  radii2 = radii.^2;
+
+  %maxConfig
+  %configsLattice
   %find the index of these configsLattice
   [~, maxIdx] = ismember(maxConfig, configsLattice, 'rows');
   [~, oneIdx] = ismember(oneConfig, configsLattice, 'rows');
@@ -30,15 +42,13 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = latticeDSE(configIn,
     %according to Ferretti:2018b Cluster-Based Heuristic  ...
     %configsLattice
     %pause
-    nseeds = ceil(0.05*double(rows(configsLattice)));
+    nseeds = ceil(popCoeff*double(rows(configsLattice)));
     configs2Compile = [];
 
     while(rows(configs2Compile) < nseeds)
-      range = double(maxConfig - oneConfig);
-      alpha = 0.5;
-      beta = alpha;
-      probs = betainv(rand(size(oneConfig)), alpha, beta);
-      newconf = oneConfig + round(probs.*range);
+      rang = double(maxConfig - oneConfig);
+      probs = betainv(rand(size(oneConfig)), alph, bet);
+      newconf = oneConfig + round(probs.*rang);
       if( ~ismember(newconf, configs2Compile, 'rows'))
         %newconf
         configs2Compile = [configs2Compile; newconf];
@@ -98,40 +108,71 @@ function rn = getNeighbors(idx)
   global maxConfig;
   global oneConfig;
   global sigma;
+  global radii;
+  global radii2;
 
-  range = ceil(sigma*double(maxConfig-oneConfig));
-
-  n = columns(configsLattice);
-
+  %inputs = configsLattice(idx, :)
+  %inputs = configsLattice(idx, radii2 > 0)
+  %radii2
+  %we only count the resources which vary
+  vcols = radii2 > 0;
   rconfigs = [];
-  increaseIdxs = maxConfig > 1;
 
-  for ridx = 1:numel(idx)
-    config = configsLattice(idx(ridx), :);
-    reduceIdxs = config > 1;
-    for ci = 1:n
-      if(range(ci) > 0)
-        for ri=1:range(ci)
-          newConfigUp = config;
-          newConfigDown = config;
-          newConfigUp(ci) = newConfigUp(ci)+ri;
-          newConfigDown(ci) = newConfigDown(ci)-ri;
-          rconfigs = [rconfigs; newConfigUp; newConfigDown];
-        end
-      end
+  %we will calculate a ellipsoid centered in the current config, and get all points inside this ellipsoid between all configs. This causes some redundancy, which will be elliminated later, but allows to use a lot o matrix algebra, which gives us better runtime.
+  %we use an ellipsoid since we did not normalize the configuration spcae
+  for ci = 1:numel(idx)
+    centre = configsLattice(idx(ci), :);
 
-      %if (increaseIdxs(ci) == 1 && config(ci) < maxConfig(ci))
-      %  newConfig = config;
-      %  newConfig(ci) = newConfig(ci)+1;
-      %  c1 = ismember(newConfig, alreadyCompiledLattice, 'rows');
-      %  if( ~c1 )
-      %    rconfigs = [rconfigs; newConfig];
-      %  end
-      %end
-    end
+    %creates a matrix with the center repeated
+    centreMatrix = ones(size(configsLattice))*diag(centre);
+
+    diffs = configsLattice - centreMatrix;
+    diffs2 = diffs.^2;
+
+    %d2 = diffs2(:, vcols)
+    %r2 = radii2(:, vcols)
+
+    %caculate the \sum{(x-x0)^2/(r^2)}
+    coefs = sum(diffs2(:, vcols)./radii2(:, vcols), 2);
+
+    %eliminates the same point (distance == 0) and only gets the ones inside the ellipsoid
+    rconfigs = [rconfigs; configsLattice(coefs > 0 & coefs < 1, :)];
+    %pause
   end
 
+  %n = columns(configsLattice);
+  %rconfigs = [];
+  %increaseIdxs = maxConfig > 1;
+  %for ridx = 1:numel(idx)
+  %  config = configsLattice(idx(ridx), :);
+  %  reduceIdxs = config > 1;
+  %  for ci = 1:n
+  %    if(rang(ci) > 0)
+  %      for ri=1:rang(ci)
+  %        newConfigUp = config;
+  %        newConfigDown = config;
+  %        newConfigUp(ci) = newConfigUp(ci)+ri;
+  %        newConfigDown(ci) = newConfigDown(ci)-ri;
+  %        if(newConfigDown(ci) == 0)
+  %          newConfigDown(ci) = 1;
+  %        end
+  %        rconfigs = [rconfigs; newConfigUp; newConfigDown];
+  %      end
+  %    end
+  %
+  %    %if (increaseIdxs(ci) == 1 && config(ci) < maxConfig(ci))
+  %    %  newConfig = config;
+  %    %  newConfig(ci) = newConfig(ci)+1;
+  %    %  c1 = ismember(newConfig, alreadyCompiledLattice, 'rows');
+  %    %  if( ~c1 )
+  %    %    rconfigs = [rconfigs; newConfig];
+  %    %  end
+  %    %end
+  %  end
+  %end
+
   %rconfigs
+  %pause
   %removes configs out of the configuration space
   c1 = ismember(rconfigs, configsLattice, 'rows');
   rconfigs = rconfigs(c1 == 1,:);

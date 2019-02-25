@@ -39,13 +39,25 @@ end
 if(numel(arg_list) == 2)
   common = intersect(pipeConsraints, noPipeConsraints, 'rows');
 elseif(numel(arg_list) == 3)
+  %a = pipeConsraints(:, 1:2) == [1 7];
+  %a = a(:,1) & a(:,2);
+  %pipeConsraints(a,:)
+
+  %b = noPipeConsraints(:, 1:2) == [1 7];
+  %b = b(:,1) & b(:,2);
+  %noPipeConsraints(b,:)
+
+  %c = ilpPipeConsraints(:, 1:2) == [1 7];
+  %c = c(:,1) & c(:,2);
+  %ilpPipeConsraints(c,:)
+
   common = intersect(intersect(pipeConsraints, noPipeConsraints, 'rows'), ilpPipeConsraints, 'rows');
 end
 
-size(pipeConsraints)
-size(noPipeConsraints)
+%size(pipeConsraints)
+%size(noPipeConsraints)
 %size(ilpPipeConsraints)
-size(common)
+%size(common)
 
 c1 = ismember(common, pipeConsraints, 'rows');
 pipeConsraints = pipeConsraints(c1, :);
@@ -68,13 +80,21 @@ constraints = common;
 
 ndesigns = rows(constraints);
 
-figure(1); hold on;
-plot(noPipeMetrics(:,1), noPipeMetrics(:,2), '*b')
-plot(pipeMetrics(:,1), pipeMetrics(:,2), 'sr')
+fighandle = figure(1); hold on;
+plot(noPipeMetrics(:,1), noPipeMetrics(:,2), '^k')
+plot(pipeMetrics(:,1), pipeMetrics(:,2), '*b')
 if(numel(arg_list) == 3)
-  plot(ilpPipeMetrics(:,1), ilpPipeMetrics(:,2), 'ok')
+  plot(ilpPipeMetrics(:,1), ilpPipeMetrics(:,2), 'or')
 end
-pause
+legend('no-pipe', 'NIS-pipe', 'ILPS-pipe')
+
+xlabel('Clycles');
+ylabel('ALMs');
+mkdir('./plots')
+graphname = strcat('plots/', arg_list{2}, 'dses.jpg');
+print(fighandle, char(graphname), '-djpg');
+hold off;
+%pause
 %return;
 %---------------------------------------------------------------------------
 %---------------------------------------------------------------------------

@@ -15,15 +15,19 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = pathDSE(configIn, me
   assert(rows(configIn) == rows(metricsIn), 'input configs and metrics numbers are different');
   ndesigns = rows(configIn);
 
-  %gets the maximum, minimum and 10%diffrence configs
+  %gets the maximum, minimum   and 10%diffrence
+  %a = configIn(:, 1:2) == [1 7]
+  %a = a(:,1) & a(:,2)
+  %configIn(a,:)
   maxConfig = max(configIn);
   oneConfig = min(configIn);
-  tenDiffConst = floor(0.1*double(maxConfig - oneConfig));
+  tenDiffConst = ceil(0.1*double(maxConfig - oneConfig));
+  %pause
 
   %find the index of these configs
   [~, maxIdx] = ismember(maxConfig, configs, 'rows');
   [~, oneIdx] = ismember(oneConfig, configs, 'rows');
-
+  %pause
   %starts at max and walks toward one
   searchQueue = maxIdx;
   currMetrics = compileOne(maxIdx);
@@ -104,10 +108,11 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = pathDSE(configIn, me
         %notInConfigs = c4
 
         while( (c1 || c2 || ~c4) && ~c3)
+          %tenDiffConst
+          %oneConfig
           gt = newConfig > tenDiffConst;
           newConfig(~gt) = oneConfig(~gt);
           newConfig(gt) = newConfig(gt) - tenDiffConst(gt);
-          %oneConfig
           %newConfig
           c1 = ismember(newConfig, alreadyCompiledPath, 'rows');
           %newconfigcompiled = c1
