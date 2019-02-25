@@ -101,9 +101,9 @@ hold off;
 %---------------------------------------------------------------------------
 
 % this compares cases where the path DSE with no pipe is used to seed the Lattice DSE with pipe and vice versa, also compares with path, lattice, and path + lattice DSE over the combined sets
-seedingComparisons
+%seedingComparisons
 
-return;
+%return;
 %---------------------------------------------------------------------------
 %---------------------------------------------------------------------------
 %---------------------------------------------------------------------------
