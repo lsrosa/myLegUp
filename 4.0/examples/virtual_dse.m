@@ -1,6 +1,7 @@
 arg_list = argv();
 nreps = 50;
 
+
 nopipe = strcat(arg_list{1}, '/results_full.m')
 pipe = strcat(arg_list{2}, '/results_full.m')
 
@@ -109,4 +110,5 @@ hold off;
 %---------------------------------------------------------------------------
 %this runs the Path DSE, Lattice DSE, and Path+Lattice DSE over the config without pipe, with NIS pipe and with ILP pipe
 pathLatticeComparisons;
+
 return;

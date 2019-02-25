@@ -1,32 +1,32 @@
 function [constOut, metricsOut, idxOut, nCompiledDesigns] = pathDSE(configIn, metricsIn);
-  global configs = configIn;
-  global metrics = metricsIn;
-  global alreadyCompiledPath = [];
-  global alreadyDiscarded = [];
+  global configsPath;
+  global metricsPath;
+  global alreadyCompiledPath;
+  global alreadyDiscarded;
   global cycles = 1;
   global ALMs = 2;
   plot = false;
 
-  configs = configIn;
-  metrics = metricsIn;
+  configsPath = configIn;
+  metricsPath = metricsIn;
   alreadyCompiledPath = [];
   alreadyDiscarded = [];
 
-  assert(rows(configIn) == rows(metricsIn), 'input configs and metrics numbers are different');
-  ndesigns = rows(configIn);
+  assert(rows(configsPath) == rows(metricsPath), 'input configsPath and metricsPath numbers are different');
+  ndesigns = rows(configsPath);
 
   %gets the maximum, minimum   and 10%diffrence
-  %a = configIn(:, 1:2) == [1 7]
+  %a = configsPath(:, 1:2) == [1 7]
   %a = a(:,1) & a(:,2)
-  %configIn(a,:)
-  maxConfig = max(configIn);
-  oneConfig = min(configIn);
+  %configsPath(a,:)
+  maxConfig = max(configsPath);
+  oneConfig = min(configsPath);
   tenDiffConst = ceil(0.1*double(maxConfig - oneConfig));
   %pause
 
-  %find the index of these configs
-  [~, maxIdx] = ismember(maxConfig, configs, 'rows');
-  [~, oneIdx] = ismember(oneConfig, configs, 'rows');
+  %find the index of these configsPath
+  [~, maxIdx] = ismember(maxConfig, configsPath, 'rows');
+  [~, oneIdx] = ismember(oneConfig, configsPath, 'rows');
   %pause
   %starts at max and walks toward one
   searchQueue = maxIdx;
@@ -43,8 +43,8 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = pathDSE(configIn, me
     searchQueue = searchQueue(2:end);
 
     %dont need to compile it, since the search queue comes from the compiled designs
-    %currMetrics = compileOne(currIdx);
-    currMetrics = metrics(currIdx,:);
+    %currMetrics = compileOne(currIdx);;
+    currMetrics = metricsPath(currIdx,:);
 
     %get the neighbors
     neighbors = getNegNeighbors(currIdx);
@@ -52,7 +52,7 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = pathDSE(configIn, me
     %if there are no neighbors, we need to use the 10% rule
     if( numel(neighbors) > 0 )
       %currIdx
-      %configs(currIdx,:)
+      %configsPath(currIdx,:)
 
       %compile the neighbors (can we do this in RL?)
       neighborsMetrics = compile(currIdx, neighbors);
@@ -64,28 +64,28 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = pathDSE(configIn, me
       for ix = 1:rows(dt)
         %same time, area improved
         if(dt(ix) == 0 && da(ix) > 0)
-          searchQueue = [searchQueue; neighbors(ix)];
+          searchQueue = [neighbors(ix)];
         %worse time, area improved
         elseif(dt(ix) < 0 && da(ix) > 0)
           searchQueue = [searchQueue; neighbors(ix)];
         %time improved, same area
         elseif (dt(ix) > 0 && da(ix) == 0)
-          searchQueue = [searchQueue; neighbors(ix)];
+          searchQueue = [neighbors(ix)];
         %time improved, worse area
         elseif (dt(ix) > 0 && da(ix) < 0)
           searchQueue = [searchQueue; neighbors(ix)];
         %same time, same area
         elseif (dt(ix) == 0 && da(ix) == 0)
-          searchQueue = [searchQueue; neighbors(ix)];
+          searchQueue = [neighbors(ix)];
         %better time and better area
         elseif (dt(ix) > 0 && da(ix) > 0)
-          searchQueue = [searchQueue; neighbors(ix)];
+          searchQueue = [neighbors(ix)];
         endif
       endfor
     end
 
     %searchQueue
-
+    %pause
     %no neighbor and oneConfig not reached - we are trapped in a local cluster
     %numel(searchQueue) == 0
     %~ismember(oneConfig, alreadyCompiledPath, 'rows')
@@ -93,7 +93,7 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = pathDSE(configIn, me
         newConfig = [];
 
         %reduce 10% until find a non-compiled and non-discarded design or the oneConfig
-        newConfig = configs(currIdx,:);
+        newConfig = configsPath(currIdx,:);
         %tenDiffConst
         gt = newConfig > tenDiffConst;
         newConfig(~gt) = oneConfig(~gt);
@@ -104,7 +104,7 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = pathDSE(configIn, me
         %newConfigDiscarded = c2
         c3 = ismember(newConfig, oneConfig, 'rows');
         %newConfigIsOnes = c3
-        c4 = ismember(newConfig, configs, 'rows');
+        c4 = ismember(newConfig, configsPath, 'rows');
         %notInConfigs = c4
 
         while( (c1 || c2 || ~c4) && ~c3)
@@ -120,15 +120,16 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = pathDSE(configIn, me
           %newConfigDiscarded = c2
           c3 = ismember(newConfig, oneConfig, 'rows');
           %newConfigIsOnes = c3
-          c4 = ismember(newConfig, configs, 'rows');
+          c4 = ismember(newConfig, configsPath, 'rows');
           %notInConfigs = c4
           %disp('in a while');
-          %pause
+          newConfig
+          pause
         end
         %disp('after a while');
 
         %add the design to the seachQueue
-        [~, ix] = ismember(newConfig, configs, 'rows');
+        [~, ix] = ismember(newConfig, configsPath, 'rows');
         compileOne(ix);
         searchQueue = ix;
         %pause
@@ -137,12 +138,14 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = pathDSE(configIn, me
     %pause
     %searchQueue
     if(plot)
-      [~, pltoIdx] = ismember(alreadyCompiledPath, configs, 'rows');
-      plot(metrics(pltoIdx, 1), metrics(pltoIdx, 2), '*b');
+      [~, pltoIdx] = ismember(alreadyCompiledPath, configsPath, 'rows');
+      plot(metricsPath(pltoIdx, 1), metricsPath(pltoIdx, 2), '*b');
       pause
     endif
 
     %alreadyCompiledPath
+    %alreadyDiscarded
+    %assert(sum(ismember(alreadyDiscarded, alreadyCompiledPath, 'rows')) == 0, 'aaaaaaaaaaaaa')
     %pause
   until( numel(searchQueue) == 0 ) %remember that until stops at true
   %until(true) %remember that until stops at true
@@ -151,28 +154,28 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = pathDSE(configIn, me
   nCompiledDesigns = rows(alreadyCompiledPath);
 
   if(plot)
-    [~, pltoIdx] = ismember(alreadyCompiledPath, configs, 'rows');
-    plot(metrics(pltoIdx, 1), metrics(pltoIdx, 2), '*b');
+    [~, pltoIdx] = ismember(alreadyCompiledPath, configsPath, 'rows');
+    plot(metricsPath(pltoIdx, 1), metricsPath(pltoIdx, 2), '*b');
     figure(2)
-    plot(metrics(:, 1), metrics(:, 2), '*b');
+    plot(metricsPath(:, 1), metricsPath(:, 2), '*b');
     pause
   endif
 
   constOut = alreadyCompiledPath;
-  [~, idxOut] = ismember(alreadyCompiledPath, configs, 'rows');
-  metricsOut = metrics(idxOut, :);
+  [~, idxOut] = ismember(alreadyCompiledPath, configsPath, 'rows');
+  metricsOut = metricsPath(idxOut, :);
   %alreadyCompiledPath
 
 end %function
 
 %return non-compiled and non-discarded 1-neighbors reducing the constraints
 function rn = getNegNeighbors(idx)
-  global configs;
+  global configsPath;
   global alreadyCompiledPath;
   global alreadyDiscarded;
 
-  n = columns(configs);
-  config = configs(idx, :);
+  n = columns(configsPath);
+  config = configsPath(idx, :);
 
   rconfigs = [];
   reduceIdxs = config > 1;
@@ -189,27 +192,27 @@ function rn = getNegNeighbors(idx)
   end
 
   %get the indexes of the configures, which will be the return of the function
-  [~, rn] = ismember(rconfigs, configs, 'rows');
-  %this should exclude nonexisting configs caused by compilation errors
+  [~, rn] = ismember(rconfigs, configsPath, 'rows');
+  %this should exclude nonexisting configsPath caused by compilation errors
   rn = rn(rn > 0);
 end %function
 
 %this function should be substituted by the compilation and report reads
 function rMetrics = compile(curr, configsToCompile)
-  global metrics configs;
+  global metricsPath configsPath;
   global alreadyCompiledPath alreadyDiscarded;
   global cycles ALMs;
 
   %simulate compiling the current design
-  currMetric = metrics(curr, :);
+  currMetric = metricsPath(curr, :);
   %pause
-  %alreadyCompiledPath = [alreadyCompiledPath; configs(curr, :)];
-
-  %simulate the compilation of the other configs
+  %alreadyCompiledPath = [alreadyCompiledPath; configsPath(curr, :)];
+  %metricsPath(configsToCompile,:);
+  %simulate the compilation of the other configsPath
   compiled = [];
   for c = 1:rows(configsToCompile)
     %simulate compile this config
-    configsMetric = metrics(configsToCompile(c),:);
+    configsMetric = metricsPath(configsToCompile(c),:);
     dt = currMetric(cycles) - configsMetric(cycles);
     da = currMetric(ALMs) - configsMetric(  ALMs);
 
@@ -232,22 +235,22 @@ function rMetrics = compile(curr, configsToCompile)
   end
 
   %alreadyCompiledPath
-  alreadyCompiledPath = [alreadyCompiledPath; configs(compiled, :)];
+  alreadyCompiledPath = [alreadyCompiledPath; configsPath(compiled, :)];
   %discard the ones that were not compiled, happends when a dominant design is found
   discarded = setdiff(configsToCompile, compiled);
-  alreadyDiscarded = [alreadyDiscarded; configs(discarded,:)];
+  alreadyDiscarded = [alreadyDiscarded; configsPath(discarded,:)];
 
-  rMetrics = metrics(compiled,:);
+  rMetrics = metricsPath(compiled,:);
   %pause
 end
 
 function rMetrics = compileOne(curr)
-  global metrics configs;
+  global metricsPath configsPath;
   global alreadyCompiledPath alreadyDiscarded;
 
   %simulate compiling the current design
-  currMetric = metrics(curr, :);
-  alreadyCompiledPath = [alreadyCompiledPath; configs(curr, :)];
+  currMetric = metricsPath(curr, :);
+  alreadyCompiledPath = [alreadyCompiledPath; configsPath(curr, :)];
 
   rMetrics = currMetric;
   %pause
