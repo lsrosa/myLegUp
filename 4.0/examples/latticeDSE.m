@@ -6,7 +6,7 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = latticeDSE(configIn,
   global ALMs = 2;
   plot = false;
   global sigma = 0.25;
-  popCoeff = 0.05;
+  popCoeff = 0.1;
   alph = 0.5;
   bet = alph;
 

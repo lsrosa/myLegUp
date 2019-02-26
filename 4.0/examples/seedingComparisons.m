@@ -22,7 +22,7 @@ disp('')
 
 disp('')
 
-[combinedTotalConfigs, combinedADRS] = combineSetsDSE(constraints, noPipeMetrics, pipeMetrics, 10)
+[combinedTotalConfigs, combinedADRS] = combineSetsDSE(constraints, noPipeMetrics, pipeMetrics, nreps)
 
 if(numel(arg_list) == 3)
   disp('applying the Path DSE on no-pipe to seed Lattice on ILPS pipe')
@@ -48,5 +48,5 @@ if(numel(arg_list) == 3)
 
   disp('')
 
-  [combinedTotalConfigsIlp, combinedADRSIlp] = combineSetsDSE(constraints, noPipeMetrics, ilpPipeMetrics, 10)
+  [combinedTotalConfigsIlp, combinedADRSIlp] = combineSetsDSE(constraints, noPipeMetrics, ilpPipeMetrics, nreps)
 end
