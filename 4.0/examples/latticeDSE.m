@@ -6,7 +6,7 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = latticeDSE(configIn,
   global ALMs = 2;
   plot = false;
   global sigma = 0.25;
-  popCoeff = 0.20;
+  popCoeff = 0.05;
   alph = 0.5;
   bet = alph;
 
@@ -42,7 +42,7 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = latticeDSE(configIn,
     %according to Ferretti:2018b Cluster-Based Heuristic  ...
     %configsLattice
     %pause
-    nseeds = ceil(popCoeff*double(rows(configsLattice)));
+    nseeds = max(round(popCoeff*double(rows(configsLattice))), 1);
     configs2Compile = [];
 
     while(rows(configs2Compile) < nseeds)
@@ -59,12 +59,11 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = latticeDSE(configIn,
       %end
 
     end
+    %configs2Compile
   end
 
-  %configs2Compile
 
-  while( numel(configs2Compile) ~= 0 ) %remember that until stops at true
-
+  while( numel(configs2Compile) ~= 0 )
     %compile designs
     [~, configs2CompileIdx] = ismember(configs2Compile, configsLattice, 'rows');
     copiledMetrics = compile(configs2CompileIdx(configs2CompileIdx > 0));

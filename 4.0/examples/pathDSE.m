@@ -123,8 +123,8 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = pathDSE(configIn, me
           c4 = ismember(newConfig, configsPath, 'rows');
           %notInConfigs = c4
           %disp('in a while');
-          newConfig
-          pause
+          %newConfig
+          %pause
         end
         %disp('after a while');
 

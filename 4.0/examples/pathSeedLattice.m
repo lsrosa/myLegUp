@@ -13,6 +13,7 @@ function [rn, radrs] = pathSeedLattice(constraints, seedsSet, latticeSet, seedsA
     [px, py, pid] = findPareto(m(:,1), m(:,2));
     s = c(pid, :);
     [seedsSetConfigs, seedsSetMetrics, seedsSetIdx, seedsSetN] = latticeDSE(constraints, seedsSet, s);
+    seedsSetN = seedsSetN + n - rows(pid);
   else
     assert(false, 'choose path, lattice, or path+lattice');
   end

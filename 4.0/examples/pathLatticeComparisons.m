@@ -1,4 +1,4 @@
-disp('')
+
 disp('appliying the Path DSE in the no-pipe space')
 
 [noPipeConfigsPath, noPipeMetricsPath, noPipeIdxPath, noPipeDesignsPath] = pathDSE(constraints, noPipeMetrics);
@@ -7,11 +7,9 @@ disp('appliying the Path DSE in the no-pipe space')
 
 [noPipeParetoPathX,noPipeParetoPathY,noPipeParetoPathId] = findPareto(noPipeMetricsPath(:,1), noPipeMetricsPath(:,2));
 
-disp('')
-noPipeDesignsPath
-noPipePathADRS = adrs([noPipeParetoX, noPipeParetoY], [noPipeParetoPathX, noPipeParetoPathY])
+noPipeDesignsPath;
+noPipePathADRS = adrs([noPipeParetoX, noPipeParetoY], [noPipeParetoPathX, noPipeParetoPathY]);
 
-disp('')
 disp('appliying the lattice DSE in the no-pipe space without using seeds')
 
 accLattice = 0;
@@ -27,11 +25,11 @@ for cnt = 1:nreps
   accADRS = accADRS + noPipeLatticeADRS;
 end
 
-disp('')
-noPipeDesignsLattice = accLattice/nreps
-noPipeLatticeADRS = accADRS/nreps
 
-disp('')
+noPipeDesignsLattice = accLattice/nreps;
+noPipeLatticeADRS = accADRS/nreps;
+
+
 disp('appliying the lattice DSE in the no-pipe space using the pathDSE pareto points seeds')
 
 %get the pareto points of the PathDSE as seeds for the latticeDSE
@@ -41,14 +39,14 @@ seeds = noPipeConfigsPath(noPipeParetoPathId, :);
 
 [noPipeParetoLatticePathX, noPipeParetoLatticePathY, noPipeParetoLatticePathId] = findPareto(noPipeMetricsLatticePath(:,1), noPipeMetricsLatticePath(:,2));
 
-disp('')
-noPipeDesignsLatticePath = noPipeDesignsLatticePath - rows(seeds) + noPipeDesignsPath
-noPipeLatticePathADRS = adrs([noPipeParetoX, noPipeParetoY], [noPipeParetoLatticePathX, noPipeParetoLatticePathY])
+
+noPipeDesignsLatticePath = noPipeDesignsLatticePath - rows(seeds) + noPipeDesignsPath;
+noPipeLatticePathADRS = adrs([noPipeParetoX, noPipeParetoY], [noPipeParetoLatticePathX, noPipeParetoLatticePathY]);
 
 %---------------------------------------------------------------------------
 %---------------------------------------------------------------------------
 %---------------------------------------------------------------------------
-disp('')
+
 disp('appliying the Path DSE in the pipe space')
 
 [pipeConfigsPath, pipeMetricsPath, pipeIdxPath, pipeDesignsPath] = pathDSE(constraints, pipeMetrics);
@@ -57,11 +55,11 @@ disp('appliying the Path DSE in the pipe space')
 
 [pipeParetoPathX,pipeParetoPathY,pipeParetoPathId] = findPareto(pipeMetricsPath(:,1), pipeMetricsPath(:,2));
 
-disp('')
-pipeDesignsPath
-pipePathADRS = adrs([pipeParetoX, pipeParetoY], [pipeParetoPathX, pipeParetoPathY])
 
-disp('')
+pipeDesignsPath;
+pipePathADRS = adrs([pipeParetoX, pipeParetoY], [pipeParetoPathX, pipeParetoPathY]);
+
+
 disp('appliying the lattice DSE in the pipe space without using seeds')
 
 accLattice = 0;
@@ -75,8 +73,8 @@ for cnt = 1:nreps
   pipeLatticeADRS = adrs([pipeParetoX, pipeParetoY], [pipeParetoLatticeX, pipeParetoLatticeY]);
   accADRS = accADRS + pipeLatticeADRS;
 end
-pipeDesignsLattice = accLattice/nreps
-pipeLatticeADRS = accADRS/nreps
+pipeDesignsLattice = accLattice/nreps;
+pipeLatticeADRS = accADRS/nreps;
 
 
 disp('appliying the lattice DSE in the pipe space using the pathDSE pareto points seeds')
@@ -88,9 +86,9 @@ seeds = pipeConfigsPath(pipeParetoPathId, :);
 
 [pipeParetoLatticePathX, pipeParetoLatticePathY, pipeParetoLatticePathId] = findPareto(pipeMetricsLatticePath(:,1), pipeMetricsLatticePath(:,2));
 
-disp('')
-pipeDesignsLatticePath = pipeDesignsLatticePath - rows(seeds) + pipeDesignsPath
-pipeLatticePathADRS = adrs([pipeParetoX, pipeParetoY], [pipeParetoLatticePathX, pipeParetoLatticePathY])
+
+pipeDesignsLatticePath = pipeDesignsLatticePath - rows(seeds) + pipeDesignsPath;
+pipeLatticePathADRS = adrs([pipeParetoX, pipeParetoY], [pipeParetoLatticePathX, pipeParetoLatticePathY]);
 
 if(numel(arg_list) < 3)
   return;
@@ -98,7 +96,7 @@ end
 %---------------------------------------------------------------------------
 %---------------------------------------------------------------------------
 %---------------------------------------------------------------------------
-disp('')
+
 disp('appliying the Path DSE in the ilp-pipe space')
 
 [ilpPipeConfigsPath, ilpPipeMetricsPath, ilpPipeIdxPath, ilpPipeDesignsPath] = pathDSE(constraints, ilpPipeMetrics);
@@ -107,11 +105,11 @@ disp('appliying the Path DSE in the ilp-pipe space')
 
 [ilpPipeParetoPathX,ilpPipeParetoPathY,ilpPipeParetoPathId] = findPareto(ilpPipeMetricsPath(:,1), ilpPipeMetricsPath(:,2));
 
-disp('')
-ilpPipeDesignsPath
-ilpPipePathADRS = adrs([ilpPipeParetoX, ilpPipeParetoY], [ilpPipeParetoPathX, ilpPipeParetoPathY])
 
-disp('')
+ilpPipeDesignsPath;
+ilpPipePathADRS = adrs([ilpPipeParetoX, ilpPipeParetoY], [ilpPipeParetoPathX, ilpPipeParetoPathY]);
+
+
 disp('appliying the lattice DSE in the ilp-pipe space without using seeds')
 
 accLattice = 0;
@@ -127,12 +125,12 @@ for cnt = 1:nreps
 
 end
 
-disp('')
-ilpPipeDesignsLattice = accLattice/nreps
-ilpPipeLatticeADRS = accADRS/nreps
+
+ilpPipeDesignsLattice = accLattice/nreps;
+ilpPipeLatticeADRS = accADRS/nreps;
 
 
-disp('')
+
 disp('appliying the lattice DSE in the ilp-pipe space using the pathDSE pareto points seeds')
 
 %get the pareto points of the PathDSE as seeds for the latticeDSE
@@ -142,6 +140,25 @@ seeds = ilpPipeConfigsPath(ilpPipeParetoPathId, :);
 
 [ilpPipeParetoLatticePathX, ilpPipeParetoLatticePathY, ilpPipeParetoLatticePathId] = findPareto(ilpPipeMetricsLatticePath(:,1), ilpPipeMetricsLatticePath(:,2));
 
-disp('')
-ilpPipeDesignsLatticePath = ilpPipeDesignsLatticePath - rows(seeds) + ilpPipeDesignsPath
-ilpPipeLatticePathADRS = adrs([ilpPipeParetoX, ilpPipeParetoY], [ilpPipeParetoLatticePathX, ilpPipeParetoLatticePathY])
+
+ilpPipeDesignsLatticePath = ilpPipeDesignsLatticePath - rows(seeds) + ilpPipeDesignsPath;
+ilpPipeLatticePathADRS = adrs([ilpPipeParetoX, ilpPipeParetoY], [ilpPipeParetoLatticePathX, ilpPipeParetoLatticePathY]);
+
+
+%---------------------------------------------------------------------------
+%---------------------------------------------------------------------------
+%---------------------------------------------------------------------------
+rnpath = [noPipeDesignsPath; pipeDesignsPath; ilpPipeDesignsPath]
+radrspath = [noPipePathADRS; pipePathADRS ; ilpPipePathADRS]
+
+rnlattice = [noPipeDesignsLattice; pipeDesignsLattice; ilpPipeDesignsLattice]
+radrslattice = [noPipeLatticeADRS; pipeLatticeADRS; ilpPipeLatticeADRS]
+
+rnpathlattice = [noPipeDesignsLatticePath; pipeDesignsLatticePath; ilpPipeDesignsLatticePath]
+radrspathlattice = [noPipeLatticePathADRS; pipeLatticePathADRS; ilpPipeLatticePathADRS]
+
+figure(1); hold on;
+plot(rnpath,radrspath, '*b')
+plot(rnlattice,radrslattice, 'or')
+plot(rnpathlattice,radrspathlattice, 'sk')
+pause

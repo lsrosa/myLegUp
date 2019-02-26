@@ -1,6 +1,6 @@
 arg_list = argv();
 nreps = 50;
-
+plotFlag = false;
 
 nopipe = strcat(arg_list{1}, '/results_full.m')
 pipe = strcat(arg_list{2}, '/results_full.m')
@@ -80,35 +80,36 @@ end
 constraints = common;
 
 ndesigns = rows(constraints);
+if (plotFlag)
+  fighandle = figure(1); hold on;
+  plot(noPipeMetrics(:,1), noPipeMetrics(:,2), '^k')
+  plot(pipeMetrics(:,1), pipeMetrics(:,2), '*b')
+  if(numel(arg_list) == 3)
+    plot(ilpPipeMetrics(:,1), ilpPipeMetrics(:,2), 'or')
+  end
+  legend('no-pipe', 'NIS-pipe', 'ILPS-pipe')
 
-fighandle = figure(1); hold on;
-plot(noPipeMetrics(:,1), noPipeMetrics(:,2), '^k')
-plot(pipeMetrics(:,1), pipeMetrics(:,2), '*b')
-if(numel(arg_list) == 3)
-  plot(ilpPipeMetrics(:,1), ilpPipeMetrics(:,2), 'or')
+  xlabel('Clycles');
+  ylabel('ALMs');
+  mkdir('./plots')
+  graphname = strcat('plots/', arg_list{2}, 'dses.jpg');
+  print(fighandle, char(graphname), '-djpg');
+  hold off;
+  %pause
+  %return;
 end
-legend('no-pipe', 'NIS-pipe', 'ILPS-pipe')
-
-xlabel('Clycles');
-ylabel('ALMs');
-mkdir('./plots')
-graphname = strcat('plots/', arg_list{2}, 'dses.jpg');
-print(fighandle, char(graphname), '-djpg');
-hold off;
-%pause
-%return;
 %---------------------------------------------------------------------------
 %---------------------------------------------------------------------------
 %---------------------------------------------------------------------------
 
 % this compares cases where the path DSE with no pipe is used to seed the Lattice DSE with pipe and vice versa, also compares with path, lattice, and path + lattice DSE over the combined sets
-%seedingComparisons
+seedingComparisons
+return;
 
-%return;
 %---------------------------------------------------------------------------
 %---------------------------------------------------------------------------
 %---------------------------------------------------------------------------
 %this runs the Path DSE, Lattice DSE, and Path+Lattice DSE over the config without pipe, with NIS pipe and with ILP pipe
-pathLatticeComparisons;
 
+pathLatticeComparisons;
 return;
