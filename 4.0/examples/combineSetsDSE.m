@@ -49,6 +49,6 @@ latticeADRS = accADRS/nreps;
   seedLatticeADRS = adrs([px, py], [seedLatticeParetoX, seedLatticeParetoY]);
 %------------------------------------------------------------------------
 
-  rn = [pathN; latticeN; seedLatticeN];
+  rn = [pathN; latticeN; seedLatticeN-rows(seeds)+pathN];
   radrs = [pathADRS; latticeADRS; seedLatticeADRS];
 end
