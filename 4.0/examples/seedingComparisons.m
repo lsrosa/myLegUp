@@ -1,10 +1,10 @@
 disp('applying the Path DSE on no-pipe to seed Lattice on NIS pipe')
 
-disp('')
+disp('-')
 
-[pathSeedPipeTotalConfigs, pathSeedPipeADRS] = pathSeedLattice(constraints, noPipeMetrics, pipeMetrics, 'path')
+[pathSeedPipeTotalConfigs, pathSeedPipeADRS] = pathSeedLattice(constraints, noPipeMetrics, pipeMetrics, 'path');
 
-disp('')
+disp('-')
 
 accN = 0;
 accADRS = 0;
@@ -13,25 +13,36 @@ for cnt = 1:nreps
   accN = accN + latticeSeedPipeTotalConfigs;
   accADRS = accADRS + latticeSeedPipeADRS;
 end
-latticeSeedPipeTotalConfigs = accN/nreps
-latticeSeedPipeADRS = accADRS/nreps
+latticeSeedPipeTotalConfigs = accN/nreps;
+latticeSeedPipeADRS = accADRS/nreps;
 
-disp('')
+disp('-')
 
-[pathLatticeSeedPipeTotalConfigs, pathLatticeSeedPipeADRS] = pathSeedLattice(constraints, noPipeMetrics, pipeMetrics, 'path+lattice')
+[pathLatticeSeedPipeTotalConfigs, pathLatticeSeedPipeADRS] = pathSeedLattice(constraints, noPipeMetrics, pipeMetrics, 'path+lattice');
 
-disp('')
+disp('-')
 
-[combinedTotalConfigs, combinedADRS] = combineSetsDSE(constraints, noPipeMetrics, pipeMetrics, nreps)
+[separatedTotalConfigs, separatedADRS] = separateSetsDSE(constraints, noPipeMetrics, pipeMetrics, nreps);
+
+disp('-')
+
+[combinedTotalConfigs, combinedADRS] = combineSetsDSE(constraints, noPipeMetrics, pipeMetrics, nreps);
+
+
+rn = [pathSeedPipeTotalConfigs, latticeSeedPipeTotalConfigs, pathLatticeSeedPipeTotalConfigs, separatedTotalConfigs', combinedTotalConfigs'];
+ra = 100*[pathSeedPipeADRS, latticeSeedPipeADRS, pathLatticeSeedPipeADRS, separatedADRS', combinedADRS'];
+
+ num2str(rn)
+ num2str(ra)
 
 if(numel(arg_list) == 3)
   disp('applying the Path DSE on no-pipe to seed Lattice on ILPS pipe')
 
-  disp('')
+  disp('-')
 
-  [pathSeedIlpPipeTotalConfigs, pathSeedIlpPipeADRS] = pathSeedLattice(constraints, noPipeMetrics, ilpPipeMetrics, 'path')
+  [pathSeedIlpPipeTotalConfigs, pathSeedIlpPipeADRS] = pathSeedLattice(constraints, noPipeMetrics, ilpPipeMetrics, 'path');
 
-  disp('')
+  disp('-')
   accN = 0;
   accADRS = 0;
   for cnt = 1:nreps
@@ -39,14 +50,24 @@ if(numel(arg_list) == 3)
     accN = accN + latticeSeedIlpPipeTotalConfigs;
     accADRS = accADRS + latticeSeedIlpPipeADRS;
   end
-  latticeSeedIlpPipeTotalConfigs = accN/nreps
-  latticeSeedIlpPipeADRS = accADRS/nreps
+  latticeSeedIlpPipeTotalConfigs = accN/nreps;
+  latticeSeedIlpPipeADRS = accADRS/nreps;
 
-  disp('')
+  disp('-')
 
-  [pathLatticeSeedIlpPipeTotalConfigs, pathLatticeSeedIlpPipeADRS] = pathSeedLattice(constraints, noPipeMetrics, ilpPipeMetrics, 'path+lattice')
+  [pathLatticeSeedIlpPipeTotalConfigs, pathLatticeSeedIlpPipeADRS] = pathSeedLattice(constraints, noPipeMetrics, ilpPipeMetrics, 'path+lattice');
 
-  disp('')
+  disp('-')
 
-  [combinedTotalConfigsIlp, combinedADRSIlp] = combineSetsDSE(constraints, noPipeMetrics, ilpPipeMetrics, nreps)
+  [separatedTotalConfigsIlp, separatedADRSIlp] = separateSetsDSE(constraints, noPipeMetrics, ilpPipeMetrics, nreps);
+
+  disp('-')
+
+  [combinedTotalConfigsIlp, combinedADRSIlp] = combineSetsDSE(constraints, noPipeMetrics, ilpPipeMetrics, nreps);
+
+  rn = [pathSeedIlpPipeTotalConfigs, latticeSeedIlpPipeTotalConfigs, pathLatticeSeedIlpPipeTotalConfigs, separatedTotalConfigsIlp', combinedTotalConfigsIlp'];
+  ra = 100*[pathSeedIlpPipeADRS, latticeSeedIlpPipeADRS, pathLatticeSeedIlpPipeADRS, separatedADRSIlp', combinedADRSIlp'];
+
+   num2str(rn)
+   num2str(ra)
 end

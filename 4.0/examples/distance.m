@@ -36,6 +36,9 @@ partiald = zeros(nmetrics, 1);
 d = 0;
 
 for ci=1:ndesigns
+  if(mod(ci, 10) == 0)
+    disp(strcat('points: ', mat2str(ci)))
+  end
   for cj=ci:ndesigns
     temp = 1;
     %count = count + 1;

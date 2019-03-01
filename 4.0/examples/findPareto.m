@@ -5,6 +5,13 @@ function [rx, ry, idx] = findPareto(x, y)
   %x = x';
   %y = y';
 
+  if (numel(x) == 0)
+    rx = [];
+    ry = [];
+    idx = 0;
+    return;
+  end
+
   for i=1:numel(x)
     c1 = x < x(i) & y < y(i);
     c2 = x == x(i) & y < y(i);

@@ -61,27 +61,72 @@ function [constOut, metricsOut, idxOut, nCompiledDesigns] = pathDSE(configIn, me
       dt = currMetrics(cycles) - neighborsMetrics(:, cycles);
       da = currMetrics(ALMs) - neighborsMetrics(:, ALMs);
 
-      for ix = 1:rows(dt)
-        %same time, area improved
-        if(dt(ix) == 0 && da(ix) > 0)
-          searchQueue = [neighbors(ix)];
-        %worse time, area improved
-        elseif(dt(ix) < 0 && da(ix) > 0)
-          searchQueue = [searchQueue; neighbors(ix)];
-        %time improved, same area
-        elseif (dt(ix) > 0 && da(ix) == 0)
-          searchQueue = [neighbors(ix)];
-        %time improved, worse area
-        elseif (dt(ix) > 0 && da(ix) < 0)
-          searchQueue = [searchQueue; neighbors(ix)];
-        %same time, same area
-        elseif (dt(ix) == 0 && da(ix) == 0)
-          searchQueue = [neighbors(ix)];
-        %better time and better area
-        elseif (dt(ix) > 0 && da(ix) > 0)
-          searchQueue = [neighbors(ix)];
-        endif
-      endfor
+      %this is an option for testing which approach is better
+      discardQueue = false;
+      if(discardQueue)
+        for ix = 1:rows(dt)
+          %same time, area improved
+          if(dt(ix) == 0 && da(ix) > 0)
+            searchQueue = [neighbors(ix)];
+          %worse time, area improved
+          elseif(dt(ix) < 0 && da(ix) > 0)
+            searchQueue = [searchQueue; neighbors(ix)];
+          %time improved, same area
+          elseif (dt(ix) > 0 && da(ix) == 0)
+            searchQueue = [neighbors(ix)];
+          %time improved, worse area
+          elseif (dt(ix) > 0 && da(ix) < 0)
+            searchQueue = [searchQueue; neighbors(ix)];
+          %same time, same area
+          elseif (dt(ix) == 0 && da(ix) == 0)
+            searchQueue = [neighbors(ix)];
+          %better time and better area
+          elseif (dt(ix) > 0 && da(ix) > 0)
+            searchQueue = [neighbors(ix)];
+          endif
+        endfor
+      else %if(discardQueue)
+        for ix = 1:rows(dt)
+          %same time, area improved
+          if(dt(ix) == 0 && da(ix) > 0)
+            searchQueue = [searchQueue; neighbors(ix)];
+          %worse time, area improved
+          elseif(dt(ix) < 0 && da(ix) > 0)
+            searchQueue = [searchQueue; neighbors(ix)];
+          %time improved, same area
+          elseif (dt(ix) > 0 && da(ix) == 0)
+            searchQueue = [searchQueue; neighbors(ix)];
+          %time improved, worse area
+          elseif (dt(ix) > 0 && da(ix) < 0)
+            searchQueue = [searchQueue; neighbors(ix)];
+          %same time, same area
+          elseif (dt(ix) == 0 && da(ix) == 0)
+            searchQueue = [searchQueue; neighbors(ix)];
+          %better time and better area
+          elseif (dt(ix) > 0 && da(ix) > 0)
+            searchQueue = [searchQueue; neighbors(ix)];
+          endif
+        endfor
+      end
+    end
+
+
+    if(~discardQueue)
+      %TODO - filter search queue and remove non pareto points between it
+      %disp('discarding non pareto points in the search queue')
+      if(rows(searchQueue) > 1)
+        %prevsq = searchQueue
+        %metricsPath(searchQueue, :)
+        sqx = metricsPath(searchQueue, cycles);
+        sqy = metricsPath(searchQueue, ALMs);
+        [~, ~, sqIdx] = findPareto(sqx, sqy);
+        searchQueue = searchQueue(sqIdx);
+
+        %if(rows(prevsq) ~= rows(searchQueue))
+        %  disp('Hey check out this new search queue');
+        %  pause
+        %end
+      end
     end
 
     %searchQueue
