@@ -194,7 +194,7 @@ void LoopFullDSE::addPipelineConstraint(LoopData *ld){
   //if this loop has no sub-loops
   if(ld->subLoopsData.size() == 0){
     Constraint *constraint = NULL;
-    
+
     std::string pipeFlag = LEGUP_CONFIG->getParameter("DSE_PIPE_OFF");
     std::string constrName;
     if(pipeFlag.compare("1")==0){
@@ -202,7 +202,7 @@ void LoopFullDSE::addPipelineConstraint(LoopData *ld){
     }else{
     	constrName = std::string("loop_pipeline \"");
     }
-    
+
     constrName.append(ld->label);
     constrName.append("\"");
     constraint = new Constraint(constrName, 0, 0);
@@ -212,9 +212,13 @@ void LoopFullDSE::addPipelineConstraint(LoopData *ld){
     std::string schedulerType = LEGUP_CONFIG->getParameter("MODULO_SCHEDULER");
     std::string constString;
     if(schedulerType.compare("ILP")==0){
-	constString = std::string("set_parameter MODULO_SCHEDULER \"ILP\"");
-    }else {
-	constString = std::string("set_parameter MODULO_SCHEDULER \"NI\"");
+	     constString = std::string("set_parameter MODULO_SCHEDULER \"ILP\"");
+    }else if(schedulerType.compare("NI")==0){
+	     constString = std::string("set_parameter MODULO_SCHEDULER \"NI\"");
+    }else if(schedulerType.compare("GA")==0){
+	     constString = std::string("set_parameter MODULO_SCHEDULER \"GA\"");
+    }else{
+	     constString = std::string("set_parameter MODULO_SCHEDULER \"SDC\"");
     }
 
     constraint = new Constraint(constString, 0, 0);

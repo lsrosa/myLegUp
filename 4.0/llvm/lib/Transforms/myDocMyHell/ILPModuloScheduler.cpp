@@ -2476,7 +2476,7 @@ bool ILPModuloScheduler::iterativeSchedule(int budget) {
     std::string schedulerType = LEGUP_CONFIG->getParameter("MODULO_SCHEDULER");
     if (SDCdebug)
         File() << "Modulo Scheduler Type: " << schedulerType << "\n";
-    if (schedulerType == "SDC_BACKTRACKING" || schedulerType == "DEGRADE") {
+    if (schedulerType == "SDC_BACKTRACKING" || schedulerType == "DEGRADE" || schedulerType == "SDC") {
         return SDCWithBacktracking(budget);
     } else if (schedulerType == "SDC_GREEDY") {
         return SDCGreedy();
