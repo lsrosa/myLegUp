@@ -1,5 +1,5 @@
 arg_list = argv();
-nreps = 50;
+nreps = 1;
 plotFlag = false;
 
 nopipe = strcat(arg_list{1}, '/results_full.m')
@@ -9,7 +9,7 @@ if(numel(arg_list) == 3)
   ilppipe = strcat(arg_list{3}, '/results_full.m')
 end
 
-plotFlag = false;
+plotFlag = true;
 
 %loads the scripts in the legUP/4.0/examples folder
 path = strrep(mfilename('fullpath'), mfilename(), '');
@@ -79,6 +79,7 @@ end
 
 constraints = common;
 
+
 ndesigns = rows(constraints);
 if (plotFlag)
   fighandle = figure(1); hold on;
@@ -87,17 +88,19 @@ if (plotFlag)
   if(numel(arg_list) == 3)
     plot(ilpPipeMetrics(:,1), ilpPipeMetrics(:,2), 'or')
   end
-  legend('no-pipe', 'NIS-pipe', 'ILPS-pipe')
-
-  xlabel('Clycles');
-  ylabel('ALMs');
+  fs = 16;
+  h = legend('no-pipe', 'NIS', 'ILPS')
+  set (h, 'fontsize', fs);
+  xlabel('Cycles', 'fontsize', fs);
+  ylabel('ALMs', 'fontsize', fs);
   mkdir('./plots')
-  graphname = strcat('plots/', arg_list{2}, 'dses.jpg');
-  print(fighandle, char(graphname), '-djpg');
+  graphname = strcat('plots/', arg_list{2}, 'dses.eps');
+  print(fighandle, char(graphname), '-color');
   hold off;
   %pause
   %return;
 end
+return;
 %---------------------------------------------------------------------------
 %---------------------------------------------------------------------------
 %---------------------------------------------------------------------------

@@ -294,14 +294,14 @@ bool ILPModuloScheduler::runOnLoop(Loop *L, LPPassManager &LPM) {
     moduloScheduler.totalLoopsPipelined++;
     moduloScheduler.loopsPipelined.insert(moduloScheduler.loopLabel);
 
-    //if(SDCdebug || ILPdebug || GAdebug || NIdebug){
+    if(SDCdebug || ILPdebug || GAdebug || NIdebug){
       std::cout << "results:" << '\n';
       for(BasicBlock::iterator i = BB->begin(), ie = BB->end(); i!=ie; ++i){
         //i->dump();
         std::cout << " - " <<getLabel(i) << "_" << startVariableIndex[dag->getInstructionNode(i)] <<"_t=" << moduloScheduler.schedTime[i] << "\n";
       }
       std::cout << "\naaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n" << '\n';
-    //}
+    }
 
     return true;
 }

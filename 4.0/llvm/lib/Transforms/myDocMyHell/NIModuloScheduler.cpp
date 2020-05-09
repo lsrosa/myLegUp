@@ -1122,11 +1122,11 @@ void ILPModuloScheduler::createNIVariables() {
   numConstraints = 0;
 
   startVariableIndex.clear();
-  std::cout << "here1" << '\n';
+  //std::cout << "here1" << '\n';
   latencyInstMap.clear();
-  std::cout << "here2" << '\n';
+  //std::cout << "here2" << '\n';
   baseCongruenceClass.clear();
-  std::cout << "here3" << '\n';
+  //std::cout << "here3" << '\n';
   constrained_insts.clear();
   FUinstMap.clear();
   FUlimit.clear();
@@ -1190,14 +1190,14 @@ void ILPModuloScheduler::createNIVariables() {
     FUinstMap.insert(newFU);
   }
   //NIdebug = true;
-  /*
-  if(NIdebug){
+
+  //if(NIdebug){
     File() << "\n\n" << '\n';
     for(auto entry:instCounts){
       File() << "resource: " << entry.first << " - limited to: " << FUlimit[entry.first] << " - is used by # insts: " << entry.second << '\n';
     }
-  }
-  */
+  // }
+
   instCounts.clear();
   //NIdebug = false;
   //std::cout << "\n\naaaaaaaaaaaaaaaaaaaaaa" << '\n';

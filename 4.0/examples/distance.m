@@ -31,10 +31,11 @@ ndesigns = rows(pipeConsraints);
 
 % count = 0;
 nmetrics = columns(pipeMetrics)
-% nmetrics = 2;
+nmetrics = 2;
 partiald = zeros(nmetrics, 1);
 d = 0;
 
+relativeDist = 0;
 for ci=1:ndesigns
   if(mod(ci, 10) == 0)
     disp(strcat('points: ', mat2str(ci)))
@@ -49,6 +50,9 @@ for ci=1:ndesigns
     end
     %partiald
     %temp
+    if temp == 0
+      relativeDist = relativeDist + abs(pipeMetrics(ci, 2)-pipeMetrics(cj, 2))/pipeMetrics(ci, 2);
+    end
     d = d + temp;
   end
 end
@@ -58,3 +62,5 @@ ndistances = ndesigns*(ndesigns+1)/2
 
 ARPD = d/ndistances
 partialARPD = partiald/ndistances
+
+relativeDist = relativeDist/ndistances

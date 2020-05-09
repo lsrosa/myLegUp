@@ -71,12 +71,12 @@ endif
 
 	#read -p "Press any key to continue... " -n1 -s
 
-	-mv *.dot *.rpt *.mif *.qsf *.sdc *.txt $(LOOPS_OUTDIR)
-	-mv DetailedLegUPTiming $(LOOPS_OUTDIR)
-	-mv DetailedModuleSDCSchedulingTime $(LOOPS_OUTDIR)
-	-mv gantt* $(LOOPS_OUTDIR)
-	-cp Makefile $(LOOPS_OUTDIR)
-	-cp $< $(LOOPS_OUTDIR)
+	-mv *.dot *.rpt *.mif *.qsf *.sdc *.txt $(LOOPS_OUTDIR)/
+	-mv DetailedLegUPTiming $(LOOPS_OUTDIR)/
+	-mv DetailedModuleSDCSchedulingTime $(LOOPS_OUTDIR)/
+	-mv gantt* $(LOOPS_OUTDIR)/
+	-cp Makefile $(LOOPS_OUTDIR)/
+	-cp $< $(LOOPS_OUTDIR)/
 
 	#we are using quartus map estimations as estimation for now
 	#this is a bit slow, fairly precise but has may metrics modify_system_to_enable_profiling
