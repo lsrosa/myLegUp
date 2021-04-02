@@ -13,6 +13,7 @@ for ns=2:numel(arg_list)
 end
 %leg
 %pause}
+
 benchname = strsplit(arg_list{1}, '-')(1);
 filenames(1) = strcat(benchname, '-ilp');
 filenames(2) = strcat(benchname, '-sdc');
@@ -62,17 +63,51 @@ end
 %otherMetrics
 %otherConfigs
 dists = zeros(rows(constraints), numel(filenames)-1);
+
 for ns=1:numel(filenames)-1
   filenames{ns+1}
   %dists(:,ns) = geomean(double(baseMetrics(:,:) - otherMetrics{ns}(:,:)+1));
-  idx = prod(otherMetrics{ns}(:,1:2), 2) < prod(baseMetrics(:,1:2), 2);
+  %idx = prod(otherMetrics{ns}(:,1:2), 2) < prod(baseMetrics(:,1:2), 2);
   %[otherMetrics{ns}(idx,1:2) baseMetrics(idx,1:2)]
   dists(:,ns) = prod(otherMetrics{ns}(:,1:2), 2)./prod(baseMetrics(:,1:2), 2);
   %r = [baseMetrics(:, 1:2)'; otherMetrics{ns}(:, 1:2)'; dists(:, ns)'];
   %r(:, r(end,:)<1);
 end
 
-[y, x]= hist(dists, 50)
+
+% get the len of the configs
+%dists
+%constraints
+
+x = sum(constraints, 2)
+s1 = ['.b'; '.r'; '.k']
+s2 = ['-b'; '-r'; '-k']
+
+figure(1); hold on;
+
+c = dists
+%c(:, 3) = c(:, 3)/1.4
+
+yy = 4
+for sche = 1:3
+  pp = polyfit(x,c(:,sche),3);
+  ux = unique(x);
+  plot(ux, polyval(pp, ux), s2(sche,:))
+end
+ylim([0 yy])
+for sche = 1:3
+  s1(sche,:)
+  plot(x, c(:,sche), s1(sche,:), "markersize", 15)
+end
+
+legend('sdcs', 'gas', 'nis')
+
+pause
+return;
+
+
+
+[y, x]= hist(dists)
 fighandle = figure(1); hold on;
 c = x>0.8
 %sort(y(c), 'descend')
