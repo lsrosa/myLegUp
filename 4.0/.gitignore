@@ -14,6 +14,16 @@ cloog/libcloog*
 cloog/cloog
 cloog/isl/isl_codegen
 
+
+# thrash
+llvm-2.9_mips/include/llvm/Config/config.h
+llvm-2.9_mips/include/llvm/Config/llvm-config.h
+llvm-2.9_mips/tools/llvm-config/llvm-config.in
+llvm/include/llvm/Config/config.h
+llvm/include/llvm/Config/llvm-config.h
+llvm-2.9_mips/Makefile.config
+llvm/Makefile.config
+
 # legup
 examples/*/*.mif
 examples/*/*/*.mif
