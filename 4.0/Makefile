@@ -28,6 +28,9 @@ endif
 # Also change your LLVM_BUILD environment variable:
 #export LLVM_BUILD=Debug+Asserts
 
+# GOTTA REMEMBER OF ADDING THIS!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+export PYTHON_EXECUTABLE=python2.7
+
 all: llvm/tools/polly/Makefile.config llvm/Makefile.config llvm-2.9_mips/Makefile.config
 	$(MAKE) all -C swtools/binutils
 	# $(MAKE) -C mips-binutils
