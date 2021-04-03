@@ -1,1 +1,0 @@
-cmd_/home/leandro/myLegUp/4.0/pcie/riffa_driver/riffa.o := ld -m elf_x86_64  -z max-page-size=0x200000   -r -o /home/leandro/myLegUp/4.0/pcie/riffa_driver/riffa.o /home/leandro/myLegUp/4.0/pcie/riffa_driver/riffa_driver.o /home/leandro/myLegUp/4.0/pcie/riffa_driver/circ_queue.o 
