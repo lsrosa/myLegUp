@@ -38,3 +38,8 @@ projects/*
 !projects/Makefile
 # Clang, which is tracked independently.
 tools/clang
+
+include/llvm/Config/config.h
+include/llvm/Config/llvm-config.h
+tools/llvm-config/llvm-config.in
+

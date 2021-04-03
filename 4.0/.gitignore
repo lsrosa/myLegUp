@@ -28,6 +28,15 @@ swtools/binutils/bin/
 swtools/binutils/binutils-2.24/
 swtools/binutils/share/
 swtools/binutils/arm-altera-eabi/
+llvm-2.9_mips/.gitignore
+llvm-2.9_mips/include/llvm/Config/config.h
+llvm-2.9_mips/include/llvm/Config/llvm-config.h
+llvm-2.9_mips/tools/llvm-config/llvm-config.in
+llvm/include/llvm/Config/config.h
+llvm/include/llvm/Config/llvm-config.h
+llvm/tools/lli/ChildTarget/.dir
+llvm/tools/lli/ChildTarget/RemoteTarget.o
+
 
 # legup
 examples/*/*.mif

@@ -24,7 +24,7 @@ use Cwd 'abs_path';
 my $PACKAGE_NAME        = q{llvm};
 my $VERSION             = q{3.0svn};
 my $PREFIX              = q{/usr/local};
-my $LLVM_CONFIGTIME     = q{Mon Jun  4 19:08:13 -03 2018};
+my $LLVM_CONFIGTIME     = q{Sat Apr  3 13:00:07 CEST 2021};
 my $LLVM_SRC_ROOT       = q{/home/leandro/myLegUp/4.0/llvm-2.9_mips};
 my $LLVM_OBJ_ROOT       = q{/home/leandro/myLegUp/4.0/llvm-2.9_mips};
 my $ARCH                = lc(q{x86_64});
