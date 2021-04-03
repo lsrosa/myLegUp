@@ -116,7 +116,7 @@ class ILPModuloScheduler {
     //overlap congruence map
     std::map<std::pair<InstructionNode*, InstructionNode*>, int> mu;
 
-    float solver_time_budget=5;
+    float solver_time_budget=3*60;
 
     void addILPTimingConstraintsForKernel();
     void addOverlapConstraints(int II);
