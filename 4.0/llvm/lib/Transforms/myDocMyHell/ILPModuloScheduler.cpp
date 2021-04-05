@@ -991,7 +991,7 @@ int ILPModuloScheduler::runILPLPSolver() {
       //fclose(file);
       ILPGRBmodel = new GRBModel(env, "lp.mps");
       ILPGRBmodel->set(GRB_IntParam_OutputFlag, 1);
-      ILPGRBmodel->set(GRB_DoubleParam_TimeLimit, solver_time_budget*60.0);
+      //ILPGRBmodel->set(GRB_DoubleParam_TimeLimit, solver_time_budget*60.0);
 
       GRBsolution = ILPGRBmodel->getVars();
 
