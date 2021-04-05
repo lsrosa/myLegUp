@@ -36,7 +36,8 @@ llvm/include/llvm/Config/config.h
 llvm/include/llvm/Config/llvm-config.h
 llvm/tools/lli/ChildTarget/.dir
 llvm/tools/lli/ChildTarget/RemoteTarget.o
-
+swtools/*.a
+swtools/*.s
 
 # legup
 examples/*/*.mif
