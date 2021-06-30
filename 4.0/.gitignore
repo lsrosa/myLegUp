@@ -11,6 +11,11 @@ config.status
 
 # cloog
 cloog/libcloog*
+cloog/isl/*.log
+cloog/isl/*.trs
+cloog/test/*.log
+cloog/test/*.trs
+swtools/binutils/binutils-2.24/
 
 # legup
 examples/*/*.mif

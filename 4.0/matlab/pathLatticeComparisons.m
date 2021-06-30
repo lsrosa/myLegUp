@@ -1,4 +1,40 @@
 
+[refParetoX, refParetoY, refParetoId] = findPareto(noPipeMetrics(:,1), noPipeMetrics(:,2));
+[pmkConfigsPMK, pmkMetricsPMK, pmkIdxPMK, nDesignsPMK] = pmk10DSE(constraints, noPipeMetrics);
+[pmkParetoX,pmkParetoY,pmkParetoId] = findPareto(pmkMetricsPMK(:,1), pmkMetricsPMK(:,2));
+pmkADRS = adrs([refParetoX, refParetoY], [pmkParetoX, pmkParetoY]);
+disp(strcat('no pipe: nDesigns: ', num2str(nDesignsPMK), ' adrs: ', num2str(pmkADRS)))
+
+[refParetoX, refParetoY, refParetoId] = findPareto(pipeMetrics(:,1), pipeMetrics(:,2));
+[pmkConfigsPMK, pmkMetricsPMK, pmkIdxPMK, nDesignsPMK] = pmk10DSE(constraints, pipeMetrics);
+[pmkParetoX,pmkParetoY,pmkParetoId] = findPareto(pmkMetricsPMK(:,1), pmkMetricsPMK(:,2));
+pmkADRS = adrs([refParetoX, refParetoY], [pmkParetoX, pmkParetoY]);
+disp(strcat('   pipe: nDesigns: ', num2str(nDesignsPMK), ' adrs: ', num2str(pmkADRS)))
+
+
+disp('appliying the lattice DSE in the pipe space using the PMK pareto points seeds')
+[pmkConfigsPMK, pmkMetricsPMK, pmkIdxPMK, nDesignsPMK] = pmk10DSE(constraints, noPipeMetrics);
+[pmkParetoX,pmkParetoY,pmkParetoId] = findPareto(pmkMetricsPMK(:,1), pmkMetricsPMK(:,2));
+
+seeds = pmkConfigsPMK(pmkParetoId, :);
+[LatticepmkConfigsPMK, LatticepmkMetricsPMK, LatticepmkIdxPMK, LatticenDesignsPMK] = latticeDSE(constraints, pipeMetrics, seeds);
+
+[refParetoX, refParetoY, refParetoId] = findPareto([pipeMetrics(:,1); noPipeMetrics(:,1)], [pipeMetrics(:,2); noPipeMetrics(:,2)]);
+[pmkParetoX,pmkParetoY,pmkParetoId] = findPareto([pmkMetricsPMK(:,1); LatticepmkMetricsPMK(:,1)], [pmkMetricsPMK(:,2); LatticepmkMetricsPMK(:,2)]);
+pmkADRS = adrs([refParetoX, refParetoY], [pmkParetoX, pmkParetoY]);
+disp(strcat(' seeded: nDesigns: ', num2str(nDesignsPMK-rows(seeds)+LatticenDesignsPMK), ' adrs: ', num2str(pmkADRS)))
+
+disp('appliying the PMK in the pipe and no pipe spaces')
+[noPipepmkConfigsPMK, noPipepmkMetricsPMK, noPipepmkIdxPMK, noPipenDesignsPMK] = pmk10DSE(constraints, noPipeMetrics);
+[pipepmkConfigsPMK, pipepmkMetricsPMK, pipepmkIdxPMK, pipenDesignsPMK] = pmk10DSE(constraints, pipeMetrics);
+
+[refParetoX, refParetoY, refParetoId] = findPareto([pipeMetrics(:,1); noPipeMetrics(:,1)], [pipeMetrics(:,2); noPipeMetrics(:,2)]);
+[pmkParetoX,pmkParetoY,pmkParetoId] = findPareto([noPipepmkMetricsPMK(:,1); pipepmkMetricsPMK(:,1)], [noPipepmkMetricsPMK(:,2); pipepmkMetricsPMK(:,2)]);
+pmkADRS = adrs([refParetoX, refParetoY], [pmkParetoX, pmkParetoY]);
+disp(strcat('  union: nDesigns: ', num2str(noPipenDesignsPMK+pipenDesignsPMK), ' adrs: ', num2str(pmkADRS)))
+
+return;
+
 disp('appliying the Path DSE in the no-pipe space')
 
 [noPipeConfigsPath, noPipeMetricsPath, noPipeIdxPath, noPipeDesignsPath] = pathDSE(constraints, noPipeMetrics);

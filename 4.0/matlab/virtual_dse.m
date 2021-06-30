@@ -45,7 +45,7 @@ end
 %guaratee the 1-1 correspondence
 if(numel(arg_list) == 2)
   common = intersect(pipeConsraints, noPipeConsraints, 'rows');
-elseif(numel(arg_list) == 3 | numel(arg_list) == 1)
+elseif(numel(arg_list) == 3 || numel(arg_list) == 1)
   a = pipeConsraints(:, 1:2) == [1 7];
   a = a(:,1) & a(:,2);
   pipeConsraints(a,:)
@@ -112,7 +112,7 @@ end
 %---------------------------------------------------------------------------
 
 % this compares cases where the path DSE with no pipe is used to seed the Lattice DSE with pipe and vice versa, also compares with path, lattice, and path + lattice DSE over the combined sets
-seedingComparisons
+%seedingComparisons
 %return;
 
 %---------------------------------------------------------------------------
@@ -120,5 +120,5 @@ seedingComparisons
 %---------------------------------------------------------------------------
 %this runs the Path DSE, Lattice DSE, and Path+Lattice DSE over the config without pipe, with NIS pipe and with ILP pipe
 
-%pathLatticeComparisons;
+pathLatticeComparisons;
 return;
